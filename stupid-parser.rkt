@@ -21,12 +21,14 @@
    
    (tokens ops parens nums ending)
    
+   
    (grammar
-    (expr [(numexp) $1]
-          [(sumexp) $1])
-    (sumexp [(num plus num) (list $1 $3)])
-    (numexp [(num) $1])
+    ; (expr [(numexp) $1] [(sumexp) $1])
+    ; (sumexp [(expr plus expr) (list $1 '+ $3)])
+    ; (numexp [(num) $1])
     
+    (expr [(num expr) (cons $1 $2)]
+          [() '()])
     
     )
    
@@ -41,3 +43,5 @@
                      valid?))))
    
    ))
+
+;(parse (λ () (lex (current-input-port))))
