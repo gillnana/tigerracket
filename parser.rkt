@@ -71,6 +71,7 @@
    
    [whitespace (lex input-port)]
    [(eof) (token-eof)]
+   ;["EOF" (token-eof)]
    
    ; keywords
    ["type" (token-type)]
@@ -270,5 +271,23 @@
    
    ))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;  Helpers and tests  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 (define (run)
   (parse (λ () (lex (current-input-port)))))
+
+(define (tokenize str)
+  (tokenize-helper (open-input-string str)))
+
+(define (tokenize-helper istream)
+  (let [(first-token (lex istream))]
+    (if (eqv? first-token (token-eof))
+        empty
+        (cons first-token (tokenize-helper istream)))))
+
+(define (parse-string str)
+  (let [(port (open-input-string str))]
+    (parse (λ () (lex port)))))
