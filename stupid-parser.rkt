@@ -44,4 +44,5 @@
    
    ))
 
-;(parse (λ () (lex (current-input-port))))
+(define (run)
+  (parse (λ () (lex (current-input-port)))))

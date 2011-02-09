@@ -2,6 +2,7 @@
 (require parser-tools/yacc)
 (require parser-tools/lex)
 
+(require (prefix-in : parser-tools/lex-sre))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;  Lexer   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -61,6 +62,7 @@
    assign
    
    invalid ; for lexical errors
+   eof ; special end of file token
    ))
 
 
@@ -68,6 +70,7 @@
   (lexer
    
    [whitespace (lex input-port)]
+   [(eof) (token-eof)]
    
    ; keywords
    ["type" (token-type)]
@@ -137,7 +140,16 @@
                                (union alphabetic 
                                       (char-range #\0 #\9)
                                       "_")))
-    (token-id lexeme)]
+    (token-id (string->symbol lexeme))]
+   
+   ; numbers (integers)
+   [(repetition 1 +inf.0 (char-range #\0 #\9))
+    (token-int (string->number lexeme))]
+   
+   ; strings
+   [(:: "\"" (complement (:: any-string "\"" any-string)) "\"")
+    (token-string lexeme)]
+     
     ))
 
 
@@ -176,19 +188,25 @@
    
    
    (grammar
-;    (exp [(numexp) $1]
+;    (decs [(dec decs)    ]
+;          [() ])
+    (exp [(literal) $1])
+     
+    (literal [(int) $1]
+             [(string) $1]
+             [(id) (id $1)])
+    
+    
+    )
+   
+   ;    (exp [(numexp) $1]
 ;         [(sumexp) $1])
 ;    (sumexp [(expr plus expr) (list $1 '+ $3)])
 ;    (numexp [(num) $1])
-    (decs [(dec decs)    ] 
-          [() 
-    
-        
-    )
    
    
    (start exp)
-   (end EOF)
+   (end eof)
    (error (λ (valid? token value) 
             (error 
              (format "parse error at ~a: with value:~a was token valid?:~a"
@@ -198,4 +216,5 @@
    
    ))
 
-             
+(define (run)
+  (parse (λ () (lex (current-input-port)))))
