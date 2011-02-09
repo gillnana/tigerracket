@@ -46,7 +46,7 @@
    
    and
    or
-      if-token
+   if-token
    open-paren
    close-paren
    open-brace
@@ -244,9 +244,10 @@
     (control [(if-nonterminal) $1]
              [(while-nonterminal) $1]
              [(for-nonterminal) $1]
-             [(break) (break)])
-             ;[(let-nonterminal) $1])
-             ;[(sequence) $1])
+             [(break) (break)]
+             [(let-nonterminal) $1]
+             [(sequencing) $1])
+    
     (if-nonterminal [(if exp then exp) (if-statement $2 $4 empty)]
                     [(if exp then exp else exp) (if-statement $2 $4 $6)])
     (while-nonterminal [(while exp do exp) (while-statement $2 $4)])
@@ -255,16 +256,7 @@
     (expseq [() empty]
             [(exp) (cons $1 empty)]
             [(exp semicolon expseq) (cons $1 $3)])
-    (sequencing [(open-paren expseq close-paren) (sequence $2)])
-    ;let-nonterminal
-    
-   
-   ;    (exp [(numexp) $1]
-;         [(sumexp) $1])
-;    (sumexp [(expr plus expr) (list $1 '+ $3)])
-;    (numexp [(num) $1])
-    
-    )
+    (sequencing [(open-paren expseq close-paren) (sequence $2)]))
    
    
    (start exp)
