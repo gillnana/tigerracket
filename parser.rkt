@@ -179,6 +179,9 @@
 (struct let-statement (bindings expseq))
 (struct sequence (exps))
 
+
+;TODO: do we want these?
+
 (define parse
   (parser
    
@@ -190,11 +193,12 @@
    (grammar
 ;    (decs [(dec decs)    ]
 ;          [() ])
-    (exp [(literal) $1])
+    (exp [(literal) $1]
+         [(lvalue) $1])
      
     (literal [(int) $1]
              [(string) $1]
-             [(id) (id $1)])
+             [(nil) (])
     
     
     )
