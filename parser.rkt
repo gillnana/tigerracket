@@ -17,7 +17,7 @@
   (type
    array
    var
-   funtion
+   function
    if
    then
    else
@@ -76,7 +76,7 @@
    ["type" (token-type)]
    ["array" (token-array)]
    ["var" (token-var)]
-   ["funtion" (token-funtion)]
+   ["function" (token-function)]
    ["if" (token-if)]
    ["then" (token-then)]
    ["else" (token-else)]
