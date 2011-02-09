@@ -193,8 +193,22 @@
    
    (tokens tiger-tokens tiger-empty-tokens)
    (grammar
-;    (decs [(dec decs)    ]
-;          [() ])
+    (decs [(dec decs) (cons $1 $2)]
+          [() empty])
+    (dec [(tydec) $1]
+         [(vardec) $1]
+         [(fundec) $1])
+    (tydec [(type id equals ty) (tydec $2 $4)])
+    (ty [(id) (type-id $1)]
+        [(open-brace tyfields close-brace) $2]
+        [(array of id) (array-of $3)])
+    (tyfields [() empty]
+              [(id colon id) (cons (tyfield $1 $3) empty)]
+              [(id colon id comma tyfields) (cons (tyfield $1 $3) $5)])
+    (vardec [(var id assign exp) (vardec $2 #f $4)]
+            [(var id colon id assign exp) (vardec $2 $4 $6)])
+    (fundec [(function id open-paren tyfields close-paren equals exp) (fundec $2 $4 #f $7)]
+            [(function id open-paren tyfields close-paren colon id equals exp) (fundec $2 $4 $7 $9)])
     (exp [(literal) $1]
          [(lvalue) $1]
          [(funcall) $1]
@@ -236,7 +250,12 @@
     (if-nonterminal [(if exp then exp) (if-statement $2 $4 empty)]
                     [(if exp then exp else exp) (if-statement $2 $4 $6)])
     (while-nonterminal [(while exp do exp) (while-statement $2 $4)])
+    (let-nonterminal [(let decs in expseq end) (let-statement $2 $4)])
     (for-nonterminal [(for id assign exp to exp do exp) (for-statement $2 $4 $6 $8)])
+    (expseq [() empty]
+            [(exp) (cons $1 empty)]
+            [(exp semicolon expseq) (cons $1 $3)])
+    (sequencing [(open-paren expseq close-paren) (sequence $2)])
     ;let-nonterminal
     
    
