@@ -46,7 +46,7 @@
    
    and
    or
-   if-token
+
    open-paren
    close-paren
    open-brace
