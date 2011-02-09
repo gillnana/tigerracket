@@ -46,7 +46,7 @@
    
    and
    or
-   
+      if-token
    open-paren
    close-paren
    open-brace
@@ -148,7 +148,9 @@
    
    ; strings
    [(:: "\"" (complement (:: any-string "\"" any-string)) "\"")
-    (token-string lexeme)]
+    (token-string
+     (let [(l (string-length lexeme))]
+       (substring lexeme 1 (- l 1))))]
      
     ))
 
@@ -180,33 +182,70 @@
 (struct sequence (exps))
 
 
-;TODO: do we want these?
+;TODO: i added some more that i think we need.  do we need these?
+(struct nil ())
+(struct arithmetic-op (op arg1 arg2))
+(struct arithmetic-negation (arg))
+(struct break ())
 
 (define parse
   (parser
    
-   
-    
    (tokens tiger-tokens tiger-empty-tokens)
-   
-   
    (grammar
 ;    (decs [(dec decs)    ]
 ;          [() ])
     (exp [(literal) $1]
-         [(lvalue) $1])
-     
+         [(lvalue) $1]
+         [(funcall) $1]
+         ;[(arithmetic) $1])
+         [(structures) $1]
+         [(assignment) $1]
+         [(control) $1])
+    
+    (lvalue [(id) (id $1)]
+            [(lvalue dot id) (record-access $1 $3)]
+            [(lvalue open-bracket exp close-bracket) (array-access $1 $3)])       
     (literal [(int) $1]
              [(string) $1]
-             [(nil) (])
+             [(nil) (nil)])
     
+    (funcall [(exp open-paren funcall-args close-paren) (funcall $1 $3)])
+    (funcall-args [() empty]
+                  [(exp) (cons $1 empty)]
+                  [(exp comma funcall-args) (cons $1 $3)])
+    ;arithmetic
     
-    )
+    (structures [(record-creation) $1]
+                [(array-creation) $1])
+    (record-creation [(id open-brace record-creation-args close-brace) (record-creation (type-id $1) $3)])
+    (record-creation-args [() empty] 
+                          [(id equals exp) (cons (fieldval $1 $3) empty)]
+                          [(id equals exp comma record-creation-args) (cons (fieldval $1 $3) $5)])
+    ;TODO array-creation generates precedence problems because this also looks like an array access
+    (array-creation [(id open-bracket exp close-bracket of exp) (array-creation $1 $3 $6)])
+    
+    (assignment [(lvalue assign exp) (assignment $1 $3)]) 
+    
+    (control [(if-nonterminal) $1]
+             [(while-nonterminal) $1]
+             [(for-nonterminal) $1]
+             [(break) (break)])
+             ;[(let-nonterminal) $1])
+             ;[(sequence) $1])
+    (if-nonterminal [(if exp then exp) (if-statement $2 $4 empty)]
+                    [(if exp then exp else exp) (if-statement $2 $4 $6)])
+    (while-nonterminal [(while exp do exp) (while-statement $2 $4)])
+    (for-nonterminal [(for id assign exp to exp do exp) (for-statement $2 $4 $6 $8)])
+    ;let-nonterminal
+    
    
    ;    (exp [(numexp) $1]
 ;         [(sumexp) $1])
 ;    (sumexp [(expr plus expr) (list $1 '+ $3)])
 ;    (numexp [(num) $1])
+    
+    )
    
    
    (start exp)
