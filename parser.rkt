@@ -185,6 +185,7 @@
 
 ;TODO: i added some more that i think we need.  do we need these?
 (struct nil () #:transparent)
+(struct op (op) #:transparent)
 (struct arithmetic-op (op arg1 arg2) #:transparent)
 (struct arithmetic-negation (arg) #:transparent)
 (struct break () #:transparent)
@@ -213,7 +214,7 @@
     (exp [(literal) $1]
          [(lvalue) $1]
          [(funcall) $1]
-         ;[(arithmetic) $1])
+         [(arithmetic) $1]
          [(structures) $1]
          [(assignment) $1]
          [(control) $1])
@@ -229,7 +230,23 @@
     (funcall-args [() empty]
                   [(exp) (cons $1 empty)]
                   [(exp comma funcall-args) (cons $1 $3)])
-    ;arithmetic
+    
+    (arithmetic [(exp op exp) (arithmetic-op $2 $1 $3)]
+                [(minus exp) (arithmetic-negation $2)])
+    
+    ;strings are temporary
+    (op [(plus) "plus"]
+        [(minus) "minus"]
+        [(times) "times"]
+        [(divide) "divide"]
+        [(equals) "equals"]
+        [(not-equals) "not-equals"]
+        [(less-than) "less-than"]
+        [(greater-than) "greater-than"]
+        [(less-or-equal) "less-or-equal"]
+        [(greater-or-equal) "greater-or-equal"]
+        [(and) "and"]
+        [(or) "or"])
     
     (structures [(record-creation) $1]
                 [(array-creation) $1])
