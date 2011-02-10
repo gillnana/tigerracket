@@ -160,34 +160,34 @@
 ;;;;;;;;;;  Parser   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(struct tydec (type-id ty)) ; type declaration
-(struct type-id (name))
-(struct id (name))
-(struct record-of (tyfields)) ; record type contains list of tyfield
-(struct array-of (type)) ; array type
-(struct tyfield (id type-id))
-(struct vardec (id type-id val)) ; type-id can be #f
-(struct fundec (id tyfields type-id body)) ; type-id can be #f
-(struct record-access (lvalue id))
-(struct array-access (lvalue index))
-(struct funcall (fun-id args))
-(struct array-creation (type-id size initval))
-(struct record-creation (type-id fieldvals))
-(struct fieldval (name val))
-(struct assignment (lvalue val))
-(struct if-statement (cond then else)) ; else is optional
-(struct while-statement (cond body))
-(struct for-statement (var start end body))
+(struct tydec (type-id ty) #:transparent) ; type declaration
+(struct type-id (name) #:transparent)
+(struct id (name) #:transparent)
+(struct record-of (tyfields) #:transparent) ; record type contains list of tyfield
+(struct array-of (type) #:transparent) ; array type
+(struct tyfield (id type-id) #:transparent)
+(struct vardec (id type-id val) #:transparent) ; type-id can be #f
+(struct fundec (id tyfields type-id body) #:transparent) ; type-id can be #f
+(struct record-access (lvalue id) #:transparent)
+(struct array-access (lvalue index) #:transparent)
+(struct funcall (fun-id args) #:transparent)
+(struct array-creation (type-id size initval) #:transparent)
+(struct record-creation (type-id fieldvals) #:transparent)
+(struct fieldval (name val) #:transparent)
+(struct assignment (lvalue val) #:transparent)
+(struct if-statement (cond then else) #:transparent) ; else is optional
+(struct while-statement (cond body) #:transparent)
+(struct for-statement (var start end body) #:transparent)
 ; TODO: careful of sequence vs list-of exp
-(struct let-statement (bindings expseq))
-(struct sequence (exps))
+(struct let-statement (bindings expseq) #:transparent)
+(struct sequence (exps) #:transparent)
 
 
 ;TODO: i added some more that i think we need.  do we need these?
-(struct nil ())
-(struct arithmetic-op (op arg1 arg2))
-(struct arithmetic-negation (arg))
-(struct break ())
+(struct nil () #:transparent)
+(struct arithmetic-op (op arg1 arg2) #:transparent)
+(struct arithmetic-negation (arg) #:transparent)
+(struct break () #:transparent)
 
 (define parse
   (parser
