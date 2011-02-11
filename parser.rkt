@@ -170,8 +170,9 @@
 (struct tyfield (id type-id) #:transparent)
 (struct vardec (id type-id val) #:transparent) ; type-id can be #f
 (struct fundec (id tyfields type-id body) #:transparent) ; type-id can be #f
-(struct record-access (lvalue id) #:transparent)
-(struct array-access (lvalue index) #:transparent)
+(struct lvalue (id suffixes) #:transparent)
+(struct lvalue-record-access (id) #:transparent)
+(struct lvalue-array-access (index) #:transparent)
 (struct funcall (fun-id args) #:transparent)
 (struct array-creation (type-id size initval) #:transparent)
 (struct record-creation (type-id fieldvals) #:transparent)
@@ -186,8 +187,8 @@
 
 (struct nil () #:transparent)
 (struct op (op) #:transparent)
-(struct arithmetic-op (op arg1 arg2) #:transparent)
-(struct arithmetic-negation (arg) #:transparent)
+(struct binary-op (op arg1 arg2) #:transparent)
+(struct unary-op (op arg1) #:transparent)
 (struct break () #:transparent)
 
 (define parse
@@ -195,108 +196,110 @@
    
    (tokens tiger-tokens tiger-empty-tokens)
    (grammar
-    (decs [(dec decs) (cons $1 $2)]
-          [() empty])
-    (dec [(tydec) $1]
-         [(vardec) $1]
-         [(fundec) $1])
-    (tydec [(type id equals ty) (tydec $2 $4)])
-    (ty [(id) (type-id $1)]
-        [(open-brace tyfields close-brace) $2]
-        [(array of id) (array-of $3)])
-    (tyfields [() empty]
-              [(id colon id) (cons (tyfield $1 $3) empty)]
-              [(id colon id comma tyfields) (cons (tyfield $1 $3) $5)])
-    (vardec [(var id assign exp) (vardec $2 #f $4)]
-            [(var id colon id assign exp) (vardec $2 $4 $6)])
-    (fundec [(function id open-paren tyfields close-paren equals exp) (fundec $2 $4 #f $7)]
-            [(function id open-paren tyfields close-paren colon id equals exp) (fundec $2 $4 $7 $9)])
+;    (decs [(dec decs) (cons $1 $2)]
+;          [() empty])
+;    (dec [(tydec) $1]
+;         [(vardec) $1]
+;         [(fundec) $1])
+;    (tydec [(type id equals ty) (tydec $2 $4)])
+;    (ty [(id) (type-id $1)]
+;        [(open-brace tyfields close-brace) $2]
+;        [(array of id) (array-of $3)])
+;    (tyfields [() empty]
+;              [(id colon id) (cons (tyfield $1 $3) empty)]
+;              [(id colon id comma tyfields) (cons (tyfield $1 $3) $5)])
+;    (vardec [(var id assign exp) (vardec $2 #f $4)]
+;            [(var id colon id assign exp) (vardec $2 $4 $6)])
+;    (fundec [(function id open-paren tyfields close-paren equals exp) (fundec $2 $4 #f $7)]
+;            [(function id open-paren tyfields close-paren colon id equals exp) (fundec $2 $4 $7 $9)])
     (exp [(literal) $1]
-         [(lvalue) $1]
-         [(funcall) $1]
-         [(arithmetic) $1]
-         [(structures) $1]
-         [(assignment) $1]
-         [(control) $1])
+;         [(lvalue) $1]
+;         [(funcall) $1]
+          [(arithmetic) $1]
+;         [(structures) $1]
+;         [(assignment) $1]
+;         [(control) $1]
+         )
     
-    (lvalue [(id lvalue-rest) (id $1)])
-    (lvalue-rest [() empty]
-                 [(dot id lvalue-rest) (record-access $1 $3)]
-                 [(open-bracket exp close-bracket lvalue-rest) (array-access $1 $3)])
+    
+;    (lvalue [(id lvalue-rest) (lvalue (id $1) $2)])
+;    (lvalue-rest [() empty]
+;                 [(dot id lvalue-rest) (cons (lvalue-record-access $2) $3)]
+;                 [(open-bracket exp close-bracket lvalue-rest) (cons (lvalue-array-access $2) $4)])
     
     (literal [(int) $1]
              [(string) $1]
              [(nil) (nil)])
     
-    (funcall [(exp open-paren funcall-args close-paren) (funcall $1 $3)])
-    (funcall-args [() empty]
-                  [(exp) (cons $1 empty)]
-                  [(exp comma funcall-args) (cons $1 $3)])
+;    (funcall [(exp open-paren funcall-args close-paren) (funcall $1 $3)])
+;    (funcall-args [() empty]
+;                  [(exp) (cons $1 empty)]
+;                  [(exp comma funcall-args) (cons $1 $3)])
+;    
+    (arithmetic [(exp plus exp) (binary-op (op '+) $1 $3)]
+                [(exp minus exp) (prec plus) (binary-op (op '-) $1 $3)]
+                [(exp times exp) (binary-op (op '*) $1 $3)]
+                [(exp divide exp) (binary-op (op '/) $1 $3)]
+                [(exp equals exp) (binary-op (op '=) $1 $3)]
+                [(exp not-equals exp) (binary-op (op '<>) $1 $3)]
+                [(exp less-than exp) (binary-op (op '<) $1 $3)]
+                [(exp less-or-equal exp) (binary-op (op '<=) $1 $3)]
+                [(exp greater-than exp) (binary-op (op '>) $1 $3)]
+                [(exp greater-or-equal exp) (binary-op (op '>=) $1 $3)]
+                [(exp and exp) (binary-op (op '&) $1 $3)]
+                [(exp or exp) (binary-op (op '\|) $1 $3)]
+                [(minus exp) (unary-op (op '-) $2)]
+                )
     
-    (arithmetic [(exp op exp) (arithmetic-op $2 $1 $3)]
-                [(minus exp) (arithmetic-negation $2)])
-    
-    ;strings are temporary
-    (op [(plus) (prec times) "plus"]
-        [(minus) (prec times) "minus"]
-        [(times) "times"]
-        [(divide) "divide"]
-        [(equals) "equals"]
-        [(not-equals) "not-equals"]
-        [(less-than) "less-than"]
-        [(greater-than) "greater-than"]
-        [(less-or-equal) "less-or-equal"]
-        [(greater-or-equal) "greater-or-equal"]
-        [(and) "and"]
-        [(or) "or"])
-    
-    (structures [(record-creation) $1]
-                [(array-creation) $1])
-    (record-creation [(id open-brace record-creation-args close-brace) (record-creation (type-id $1) $3)])
-    (record-creation-args [() empty] 
-                          [(id equals exp) (cons (fieldval $1 $3) empty)]
-                          [(id equals exp comma record-creation-args) (cons (fieldval $1 $3) $5)])
-    ;TODO array-creation generates precedence problems because this also looks like an array access
-    (array-creation [(id open-bracket exp close-bracket of exp) (array-creation $1 $3 $6)])
-    
-    (assignment [(lvalue assign exp) (assignment $1 $3)]) 
-    
-    (control [(if-nonterminal) $1]
-             [(while-nonterminal) $1]
-             [(for-nonterminal) $1]
-             [(break) (break)]
-             [(let-nonterminal) $1]
-             [(sequencing) $1])
-    
-    (if-nonterminal [(if exp then exp) (if-statement $2 $4 empty)]
-                    [(if exp then exp else exp) (if-statement $2 $4 $6)])
-    (while-nonterminal [(while exp do exp) (while-statement $2 $4)])
-    (let-nonterminal [(let decs in expseq end) (let-statement $2 $4)])
-    (for-nonterminal [(for id assign exp to exp do exp) (for-statement $2 $4 $6 $8)])
-    (expseq [() empty]
-            [(exp) (cons $1 empty)]
-            [(exp semicolon expseq) (cons $1 $3)])
-    (sequencing [(open-paren expseq close-paren) (sequence $2)]))
+;    (structures [(record-creation) $1]
+;                [(array-creation) $1])
+;    (record-creation [(id open-brace record-creation-args close-brace) (record-creation (type-id $1) $3)])
+;    (record-creation-args [() empty] 
+;                          [(id equals exp) (cons (fieldval $1 $3) empty)]
+;                          [(id equals exp comma record-creation-args) (cons (fieldval $1 $3) $5)])
+;    ;TODO array-creation generates precedence problems because this also looks like an array access
+;    (array-creation [(id open-bracket exp close-bracket of exp) (array-creation $1 $3 $6)])
+;    
+;    (assignment [(lvalue assign exp) (assignment $1 $3)]) 
+;    
+;    (control [(if-nonterminal) $1]
+;             [(while-nonterminal) $1]
+;             [(for-nonterminal) $1]
+;             [(break) (break)]
+;             [(let-nonterminal) $1]
+;             [(sequencing) $1])
+;    
+;    (if-nonterminal [(if exp then exp) (if-statement $2 $4 empty)]
+;                    [(if exp then exp else exp) (if-statement $2 $4 $6)])
+;    (while-nonterminal [(while exp do exp) (while-statement $2 $4)])
+;    (let-nonterminal [(let decs in expseq end) (let-statement $2 $4)])
+;    (for-nonterminal [(for id assign exp to exp do exp) (for-statement $2 $4 $6 $8)])
+;    (expseq [() empty]
+;            [(exp) (cons $1 empty)]
+;            [(exp semicolon expseq) (cons $1 $3)])
+;    (sequencing [(open-paren expseq close-paren) (sequence $2)])
+    )
    
-   (precs 
-          (left and or)
+   (precs (left or)
+          (left and)
           (left plus minus)
-          (left times divide)
-          (right then else)
-          (nonassoc assign)
-          
-          ; as a rule, i don't understand how the follow precedences remove shift-reductions or if these are all correct.
-          
+          (left divide times)
+;          (right then else)
+;          (nonassoc assign)
+;          
+;          ; as a rule, i don't understand how the follow precedences remove shift-reductions or if these are all correct.
+;          
           (nonassoc equals not-equals greater-or-equal less-or-equal greater-than less-than)
-          (nonassoc of) ;this removed 12 shift-reduce conflicts.
-          (nonassoc open-paren) ;this removed 4 shift-reduce conflicts
-          (nonassoc open-bracket) ;this removed 1 shift-reduce conflict
-          (nonassoc do) ;this removed 26 shift-reduce conflicts
-          (nonassoc id) ;this removed 1 shift-reduce conflict
-
-          (nonassoc close-paren close-bracket open-brace close-brace)
-          (nonassoc var type array function break if while for to let in end)
-          (nonassoc invalid dot comma semicolon colon))
+;          (nonassoc of) ;this removed 12 shift-reduce conflicts.
+;          (nonassoc open-paren) ;this removed 4 shift-reduce conflicts
+;          (nonassoc open-bracket) ;this removed 1 shift-reduce conflict
+;          (nonassoc do) ;this removed 26 shift-reduce conflicts
+;          (nonassoc id) ;this removed 1 shift-reduce conflict
+;
+;          (nonassoc close-paren close-bracket open-brace close-brace)
+;          (nonassoc var type array function break if while for to let in end)
+;          (nonassoc invalid dot comma semicolon colon)
+          )
           
    (start exp)
    (end eof)
@@ -321,51 +324,59 @@
   (let [(port (open-input-string str))]
     (parse (λ () (lex port)))))
 
-(check-expect (parse-string "4") 4)
-(check-expect (parse-string "\"zoomba\"") "zoomba")
-(check-expect (parse-string "nil") (nil))
-(check-expect (parse-string "some_identifier") (id 'some_identifier))
+;(check-expect (parse-string "4") 4)
+;(check-expect (parse-string "\"zoomba\"") "zoomba")
+;(check-expect (parse-string "nil") (nil))
+;(check-expect (parse-string "some_identifier") (lvalue (id 'some_identifier) empty))
+;
+;;dangling else testing
+;(check-expect (parse-string "if 4 then 4")
+;              (if-statement 4 4 empty))
+;(check-expect (parse-string "if 5 then 5 else 5")
+;              (if-statement 5 5 5))
+;(check-expect (parse-string "if if 1 then 1 then if 2 then 2 else if 3 then 3")
+;              (if-statement (if-statement 1 1 empty) (if-statement 2 2 (if-statement 3 3 empty)) empty))
+;(check-expect (parse-string "if 4 then if 5 then 5 else 5")
+;              (if-statement 4 (if-statement 5 5 5) empty))
+;(check-expect (parse-string "if 4 then (if 5 then 5) else 4")
+;              (if-statement 4 (sequence (list (if-statement 5 5 empty))) 4))
+;
+;;dangling do testing
+;(check-expect (parse-string "while 4 do 4")
+;              (while-statement 4 4))
+;(check-expect (parse-string "while 5 do while 6 do 6")
+;              (while-statement 5 (while-statement 6 6)))
+;(check-expect (parse-string "while 5 do for pig := 7 to 7 do 7")
+;              (while-statement 5 (for-statement 'pig 7 7 7)))
+;(check-expect (parse-string "for pig := 8 to 8 do while 6 do 6")
+;              (for-statement 'pig 8 8 (while-statement 6 6)))
+;(check-expect (parse-string "for apple := 1 to 10 do for mike := 11 to 20 do 36")
+;              (for-statement 'apple 1 10 (for-statement 'mike 11 20 36)))
+;
+;(check-expect (parse-string "for apple := 1 to for mike := 11 to 20 do 36 do 21")
+;              (for-statement 'apple 1 (for-statement 'mike 11 20 36) 21))
+;
+;;lvalue testing including array accesses and declarations
+;(check-expect (parse-string "drugs.f")
+;              (lvalue (id 'drugs) (list (lvalue-record-access 'f))))
+;(check-expect (parse-string "bears[philip] of 7")
+;              (array-creation 'bears (lvalue (id 'philip) empty) 7))
+;(check-expect (parse-string "a[b]")
+;              (lvalue (id 'a) (list (lvalue-array-access (lvalue (id 'b) empty)))))
 
-;dangling else testing
-(check-expect (parse-string "if 4 then 4")
-              (if-statement 4 4 empty))
-(check-expect (parse-string "if 5 then 5 else 5")
-              (if-statement 5 5 5))
-(check-expect (parse-string "if if 1 then 1 then if 2 then 2 else if 3 then 3")
-              (if-statement (if-statement 1 1 empty) (if-statement 2 2 (if-statement 3 3 empty)) empty))
-(check-expect (parse-string "if 4 then if 5 then 5 else 5")
-              (if-statement 4 (if-statement 5 5 5) empty))
-(check-expect (parse-string "if 4 then (if 5 then 5) else 4")
-              (if-statement 4 (sequence (list (if-statement 5 5 empty))) 4))
-
-;dangling do testing
-(check-expect (parse-string "while 4 do 4")
-              (while-statement 4 4))
-(check-expect (parse-string "while 5 do while 6 do 6")
-              (while-statement 5 (while-statement 6 6)))
-(check-expect (parse-string "while 5 do for pig := 7 to 7 do 7")
-              (while-statement 5 (for-statement 'pig 7 7 7)))
-(check-expect (parse-string "for pig := 8 to 8 do while 6 do 6")
-              (for-statement 'pig 8 8 (while-statement 6 6)))
-(check-expect (parse-string "for apple := 1 to 10 do for mike := 11 to 20 do 36")
-              (for-statement 'apple 1 10 (for-statement 'mike 11 20 36)))
-
-(check-expect (parse-string "for apple := 1 to for mike := 11 to 20 do 36 do 21")
-              (for-statement 'apple 1 (for-statement 'mike 11 20 36) 21))
-
-;lvalue testing including array accesses and declarations
-(check-expect (parse-string "drugs.f")
-              (record-access (id 'drugs) 'f))
-(check-expect (parse-string "bears[philip] of 7")
-              (array-creation 'bears (id 'philip) 7))
-(check-expect (parse-string "a[b]")
-              (array-access 'a (id 'b)))
+;; let in sequence
+;(check-expect (parse-string "let in 1 end") (let-statement empty (list 1)))
+;(check-expect (parse-string "let in 1; 2 end") (let-statement empty (list 1 2)))
+;(check-expect (parse-string "let in (1; 2) end") (let-statement empty (list (sequence (list 1 2)))))
 
 ;precedence testing
 (check-expect (parse-string "4/5*6")
-              (arithmetic-op "times" (arithmetic-op "divide" 4 5) 6))
+              (binary-op (op '*) (binary-op (op '/) 4 5) 6))
+(check-expect (parse-string "4*5/6")
+              (binary-op (op '/) (binary-op (op '*) 4 5) 6))
 (check-expect (parse-string "1+2*3")
-              (arithmetic-op "plus" 1 (arithmetic-op "times" 2 3)))
+              (binary-op (op '+) 1 (binary-op (op '*) 2 3)))
 (check-expect (parse-string "1*4+5")
-              (arithmetic-op "plus" (arithmetic-op "times" 1 4) 5))
+              (binary-op (op '+) (binary-op (op '*) 1 4) 5))
+
 (test)
