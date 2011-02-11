@@ -184,8 +184,6 @@
 (struct let-statement (bindings expseq) #:transparent)
 (struct sequence (exps) #:transparent)
 
-
-;TODO: i added some more that i think we need.  do we need these?
 (struct nil () #:transparent)
 (struct op (op) #:transparent)
 (struct arithmetic-op (op arg1 arg2) #:transparent)
@@ -282,8 +280,21 @@
           (left and or)
           (left plus minus)
           (left times divide)
-          (right then else))
-   
+          (right then else)
+          (nonassoc assign)
+          
+          ; as a rule, i don't understand how the follow precedences remove shift-reductions or if these are all correct.
+          
+          (nonassoc of) ;this removed 12 shift-reduce conflicts.
+          (nonassoc open-paren) ;this removed 4 shift-reduce conflicts
+          (nonassoc open-bracket) ;this removed 1 shift-reduce conflict
+          (nonassoc do) ;this removed 26 shift-reduce conflicts
+          (nonassoc id) ;this removed 1 shift-reduce conflict
+
+          (nonassoc close-paren close-bracket open-brace close-brace)
+          (nonassoc var type array function break if while for to let in end)
+          (nonassoc invalid dot comma semicolon colon))
+          
    (start exp)
    (end eof)
    (error (λ (valid? token value) 
@@ -327,9 +338,10 @@
 ;lvalue testing including array accesses and declarations
 (check-expect (parse-string "drugs.f")
               (record-access (id 'drugs) 'f))
-(check-expect (parse-string "bears[philip]")
-              (array-access 'bears 'philip))
-
+(check-expect (parse-string "bears[philip] of 7")
+              (array-creation 'bears (id 'philip) 7))
+(check-expect (parse-string "a[b]")
+              (array-access 'a (id 'b)))
 
 ;precedence testing
 (check-expect (parse-string "4/5*6")
