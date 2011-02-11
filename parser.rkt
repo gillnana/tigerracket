@@ -4,6 +4,8 @@
 
 (require (prefix-in : parser-tools/lex-sre))
 
+(require test-engine/racket-tests)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;  Lexer   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -235,8 +237,8 @@
                 [(minus exp) (arithmetic-negation $2)])
     
     ;strings are temporary
-    (op [(plus) "plus"]
-        [(minus) "minus"]
+    (op [(plus) (prec times) "plus"]
+        [(minus) (prec times) "minus"]
         [(times) "times"]
         [(divide) "divide"]
         [(equals) "equals"]
@@ -276,6 +278,11 @@
             [(exp semicolon expseq) (cons $1 $3)])
     (sequencing [(open-paren expseq close-paren) (sequence $2)]))
    
+   (precs (left plus minus)
+          (left times divide)
+          (right then else))
+;         (left times divide plus minus)
+;         (nonassoc equals not-equals greater-or-equal less-or-equal greater-than less-than))
    
    (start exp)
    (end eof)
@@ -296,15 +303,31 @@
 (define (run)
   (parse (λ () (lex (current-input-port)))))
 
-(define (tokenize str)
-  (tokenize-helper (open-input-string str)))
-
-(define (tokenize-helper istream)
-  (let [(first-token (lex istream))]
-    (if (eqv? first-token (token-eof))
-        empty
-        (cons first-token (tokenize-helper istream)))))
-
 (define (parse-string str)
   (let [(port (open-input-string str))]
     (parse (λ () (lex port)))))
+
+(check-expect (parse-string "4") 4)
+(check-expect (parse-string "\"zoomba\"") "zoomba")
+(check-expect (parse-string "nil") (nil))
+(check-expect (parse-string "some_identifier") (id 'some_identifier))
+
+(check-expect (parse-string "if 4 then 4")
+              (if-statement 4 4 empty))
+(check-expect (parse-string "if 5 then 5 else 5")
+              (if-statement 5 5 5))
+(check-expect (parse-string "if if 1 then 1 then if 2 then 2 else if 3 then 3")
+              (if-statement (if-statement 1 1 empty) (if-statement 2 2 (if-statement 3 3 empty)) empty))
+(check-expect (parse-string "if 4 then if 5 then 5 else 5")
+              (if-statement 4 (if-statement 5 5 5) empty))
+(check-expect (parse-string "if 4 then (if 5 then 5) else 4")
+              (if-statement 4 (sequence (list (if-statement 5 5 empty))) 4))
+
+;precedence testing
+(check-expect (parse-string "4/5*6")
+              (arithmetic-op "times" (arithmetic-op "divide" 4 5) 6))
+(check-expect (parse-string "1+2*3")
+              (arithmetic-op "plus" 1 (arithmetic-op "times" 2 3)))
+(check-expect (parse-string "1*4+5")
+              (arithmetic-op "plus" (arithmetic-op "times" 1 4) 5))
+(test)

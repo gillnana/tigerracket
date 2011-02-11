@@ -2,10 +2,12 @@
 (require parser-tools/yacc)
 (require parser-tools/lex)
 
+(require test-engine/racket-tests)
+
 (define-empty-tokens ops (plus minus times divide))
 (define-empty-tokens parens (open close))
 (define-tokens nums (num))
-(define-empty-tokens ending (EOF))
+(define-empty-tokens ending (eof))
 
 
 (define lex
@@ -13,8 +15,12 @@
    [whitespace (lex input-port)]
    [(repetition 1 +inf.0 (char-range #\0 #\9)) (token-num (string->number lexeme))]
    ["+" (token-plus)]
-   [(eof) (token-EOF)]
+   ["*" (token-times)]
+   [(eof) (token-eof)]
    ))
+
+(struct sum (a b) #:transparent)
+(struct prod (a b) #:transparent)
 
 (define parse
   (parser
@@ -23,18 +29,19 @@
    
    
    (grammar
-    ; (expr [(numexp) $1] [(sumexp) $1])
-    ; (sumexp [(expr plus expr) (list $1 '+ $3)])
-    ; (numexp [(num) $1])
     
-    (expr [(num expr) (cons $1 $2)]
-          [() '()])
+    (expr [(sum) $1]
+          [(product) $1]
+          [(num) $1])
+    (sum [(expr plus expr) (sum $1 $3)])
+    (product [(expr times expr) (prod $1 $3)])
     
     )
    
+   (precs (left times) (left plus))
    
    (start expr)
-   (end EOF)
+   (end eof)
    (error (λ (valid? token value) 
             (error 
              (format "parse error at ~a: with value:~a was token valid?:~a"
@@ -46,3 +53,10 @@
 
 (define (run)
   (parse (λ () (lex (current-input-port)))))
+
+(define (parse-string str)
+  (let [(port (open-input-string str))]
+    (parse (λ () (lex port)))))
+
+(check-expect (parse-string "4 * 3 + 2") (sum (prod 4 3) 2))
+(test)
