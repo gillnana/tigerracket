@@ -219,9 +219,11 @@
          [(assignment) $1]
          [(control) $1])
     
-    (lvalue [(id) (id $1)]
-            [(lvalue dot id) (record-access $1 $3)]
-            [(lvalue open-bracket exp close-bracket) (array-access $1 $3)])       
+    (lvalue [(id lvalue-rest) (id $1)])
+    (lvalue-rest [() empty]
+                 [(dot id lvalue-rest) (record-access $1 $3)]
+                 [(open-bracket exp close-bracket lvalue-rest) (array-access $1 $3)])
+    
     (literal [(int) $1]
              [(string) $1]
              [(nil) (nil)])
@@ -276,7 +278,7 @@
             [(exp semicolon expseq) (cons $1 $3)])
     (sequencing [(open-paren expseq close-paren) (sequence $2)]))
    
-   (precs (nonassoc equals not-equals greater-or-equal less-or-equal greater-than less-than)
+   (precs 
           (left and or)
           (left plus minus)
           (left times divide)
@@ -285,6 +287,7 @@
           
           ; as a rule, i don't understand how the follow precedences remove shift-reductions or if these are all correct.
           
+          (nonassoc equals not-equals greater-or-equal less-or-equal greater-than less-than)
           (nonassoc of) ;this removed 12 shift-reduce conflicts.
           (nonassoc open-paren) ;this removed 4 shift-reduce conflicts
           (nonassoc open-bracket) ;this removed 1 shift-reduce conflict
