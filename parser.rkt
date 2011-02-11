@@ -278,11 +278,11 @@
             [(exp semicolon expseq) (cons $1 $3)])
     (sequencing [(open-paren expseq close-paren) (sequence $2)]))
    
-   (precs (left plus minus)
+   (precs (nonassoc equals not-equals greater-or-equal less-or-equal greater-than less-than)
+          (left and or)
+          (left plus minus)
           (left times divide)
           (right then else))
-;         (left times divide plus minus)
-;         (nonassoc equals not-equals greater-or-equal less-or-equal greater-than less-than))
    
    (start exp)
    (end eof)
@@ -312,6 +312,7 @@
 (check-expect (parse-string "nil") (nil))
 (check-expect (parse-string "some_identifier") (id 'some_identifier))
 
+;dangling else testing
 (check-expect (parse-string "if 4 then 4")
               (if-statement 4 4 empty))
 (check-expect (parse-string "if 5 then 5 else 5")
@@ -322,6 +323,13 @@
               (if-statement 4 (if-statement 5 5 5) empty))
 (check-expect (parse-string "if 4 then (if 5 then 5) else 4")
               (if-statement 4 (sequence (list (if-statement 5 5 empty))) 4))
+
+;lvalue testing including array accesses and declarations
+(check-expect (parse-string "drugs.f")
+              (record-access (id 'drugs) 'f))
+(check-expect (parse-string "bears[philip]")
+              (array-access 'bears 'philip))
+
 
 ;precedence testing
 (check-expect (parse-string "4/5*6")
