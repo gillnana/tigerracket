@@ -335,6 +335,21 @@
 (check-expect (parse-string "if 4 then (if 5 then 5) else 4")
               (if-statement 4 (sequence (list (if-statement 5 5 empty))) 4))
 
+;dangling do testing
+(check-expect (parse-string "while 4 do 4")
+              (while-statement 4 4))
+(check-expect (parse-string "while 5 do while 6 do 6")
+              (while-statement 5 (while-statement 6 6)))
+(check-expect (parse-string "while 5 do for pig := 7 to 7 do 7")
+              (while-statement 5 (for-statement 'pig 7 7 7)))
+(check-expect (parse-string "for pig := 8 to 8 do while 6 do 6")
+              (for-statement 'pig 8 8 (while-statement 6 6)))
+(check-expect (parse-string "for apple := 1 to 10 do for mike := 11 to 20 do 36")
+              (for-statement 'apple 1 10 (for-statement 'mike 11 20 36)))
+
+(check-expect (parse-string "for apple := 1 to for mike := 11 to 20 do 36 do 21")
+              (for-statement 'apple 1 (for-statement 'mike 11 20 36) 21))
+
 ;lvalue testing including array accesses and declarations
 (check-expect (parse-string "drugs.f")
               (record-access (id 'drugs) 'f))
