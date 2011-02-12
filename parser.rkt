@@ -14,6 +14,7 @@
   (id
    int
    string
+   comment
    ))
 (define-empty-tokens tiger-empty-tokens
   (type
@@ -33,6 +34,7 @@
    of
    break
    nil
+   unit
    
    plus
    minus
@@ -60,6 +62,7 @@
    comma
    semicolon
    colon
+   arrow
    
    assign
    
@@ -93,6 +96,7 @@
    ["of" (token-of)]
    ["break" (token-break)]
    ["nil" (token-nil)]
+   ["unit" (token-unit)]
    
    ; reserved words (like keywords, but no meaning)
    ["and" (token-invalid)]
@@ -133,6 +137,7 @@
    ["," (token-comma)]
    [";" (token-semicolon)]
    [":" (token-colon)]
+   ["->" (token-arrow)]
    
    ; assignment
    [":=" (token-assign)]
@@ -154,6 +159,10 @@
     (token-string
      (let [(l (string-length lexeme))]
        (substring lexeme 1 (- l 1))))]
+   
+   ; comments
+   [(:: "/*" (complement (:: any-string "*/" any-string)) "*/")
+    (token-comment lexeme)]
      
     ))
 
@@ -164,6 +173,7 @@
 
 (struct tydec (type-id ty) #:transparent) ; type declaration
 (struct type-id (name) #:transparent)
+(struct function-type (dom rng) #:transparent)
 (struct id (name) #:transparent)
 (struct record-of (tyfields) #:transparent) ; record type contains list of tyfield
 (struct array-of (type) #:transparent) ; array type
@@ -203,11 +213,17 @@
          [(fundec) $1])
     (tydec [(type id equals ty) (tydec $2 $4)])
     (ty [(id) (type-id $1)]
+        ;[(unit) (type-id 'unit)] ;TODO how to handle unit?
         [(open-brace tyfields close-brace) $2]
-        [(array of id) (array-of $3)])
+        [(array of id) (array-of (type-id $3))]
+        [(ty arrow ty) (function-type (list $1) $3)]
+        [(tylist arrow ty) (function-type $1 $3)]
+        )
+    (tylist [() empty]
+            [(ty comma tylist) (cons $1 $3)])
     (tyfields [() empty]
-              [(id colon id) (cons (tyfield $1 $3) empty)]
-              [(id colon id comma tyfields) (cons (tyfield $1 $3) $5)])
+              [(id colon id) (cons (tyfield $1 (type-id $3)) empty)]
+              [(id colon id comma tyfields) (cons (tyfield $1 (type-id $3)) $5)])
     (vardec [(var id assign exp) (vardec $2 #f $4)]
             [(var id colon id assign exp) (vardec $2 $4 $6)])
     (fundec [(function id open-paren tyfields close-paren equals exp) (fundec $2 $4 #f $7)]
@@ -280,6 +296,8 @@
     (sequencing [(open-paren expseq close-paren) (sequence $2)])
     )
    
+   ;TODO where do comments go?
+   
    (precs (left or)
           (left and)
           (left plus minus)
@@ -290,10 +308,10 @@
           (nonassoc assign)
           (nonassoc open-paren open-bracket close-paren close-bracket open-brace close-brace)
           (nonassoc of)
+          (nonassoc comma semicolon colon dot arrow)
 
 ;          (nonassoc id) ;this removed 1 shift-reduce conflict
 ;          (nonassoc var type array function break if while for to let in end)
-;          (nonassoc invalid dot comma semicolon colon)
           )
           
    (start exp)
@@ -374,5 +392,21 @@
               (binary-op (op '+) 1 (binary-op (op '*) 2 3)))
 (check-expect (parse-string "1*4+5")
               (binary-op (op '+) (binary-op (op '*) 1 4) 5))
+
+;type declaration tests
+(check-expect (parse-string "let type a = int in end")
+              (let-statement (list (tydec 'a (type-id 'int))) empty))
+;(check-expect (parse-string "let type aa = unit in end")
+;              (let-statement (list (tydec 'aa (type-id 'unit))) empty))
+(check-expect (parse-string "let type b = array of charlie in end")
+              (let-statement (list (tydec 'b (array-of (type-id 'charlie)))) empty))
+(check-expect (parse-string "let type c = {} in end")
+              (let-statement (list (tydec 'c empty)) empty))
+(check-expect (parse-string "let type d = { beer : int } in end")
+              (let-statement (list (tydec 'd (list (tyfield 'beer (type-id 'int))))) empty))
+(check-expect (parse-string "let type e = { chocolate : int, mufflepuff : stormclouds, wozzar : string} in end")
+              (let-statement (list (tydec 'e (list (tyfield 'chocolate (type-id 'int))
+                                                   (tyfield 'mufflepuff (type-id 'stormclouds))
+                                                   (tyfield 'wozzar (type-id 'string))))) empty))
 
 (test)
