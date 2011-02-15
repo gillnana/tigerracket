@@ -14,7 +14,7 @@
   (id
    int
    string
-   comment
+   ; comment ; this should not be a token; comments are like whitespace
    ))
 (define-empty-tokens tiger-empty-tokens
   (type
@@ -155,14 +155,18 @@
     (token-int (string->number lexeme))]
    
    ; strings
+   ; TODO: what about escaping?
    [(:: "\"" (complement (:: any-string "\"" any-string)) "\"")
     (token-string
      (let [(l (string-length lexeme))]
        (substring lexeme 1 (- l 1))))]
    
    ; comments
+   ; TODO:
    [(:: "/*" (complement (:: any-string "*/" any-string)) "*/")
-    (token-comment lexeme)]
+    ;(token-comment lexeme) ; comments should not be a token
+    (lex input-port) ; comments are the same as whitespace
+    ]
      
     ))
 
