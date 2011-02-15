@@ -105,7 +105,6 @@
    ["goto" (token-invalid)]
    
    ; arithmetic 
-   ; TODO: precedence
    ["+" (token-plus)]
    ["-" (token-minus)]
    ["*" (token-times)]
@@ -161,12 +160,10 @@
      (let [(l (string-length lexeme))]
        (substring lexeme 1 (- l 1))))]
    
-   ; comments
-   ; TODO:
+   ; comments are the same as whitespace
    [(:: "/*" (complement (:: any-string "*/" any-string)) "*/")
-    ;(token-comment lexeme) ; comments should not be a token
-    (lex input-port) ; comments are the same as whitespace
-    ]
+    (lex input-port)]
+    
      
     ))
 
@@ -277,7 +274,6 @@
     (record-creation-args [() empty] 
                           [(id equals exp) (cons (fieldval $1 $3) empty)]
                           [(id equals exp comma record-creation-args) (cons (fieldval $1 $3) $5)])
-    ;TODO array-creation generates precedence problems because this also looks like an array access
     (array-creation [(id open-bracket exp close-bracket of exp) (array-creation $1 $3 $6)])
     
     (assignment [(lvalue assign exp) (assignment $1 $3)]) 
@@ -299,8 +295,6 @@
             [(exp semicolon expseq) (cons $1 $3)])
     (sequencing [(open-paren expseq close-paren) (sequence $2)])
     )
-   
-   ;TODO where do comments go?
    
    (precs (left or)
           (left and)
@@ -412,5 +406,7 @@
               (let-statement (list (tydec 'e (list (tyfield 'chocolate (type-id 'int))
                                                    (tyfield 'mufflepuff (type-id 'stormclouds))
                                                    (tyfield 'wozzar (type-id 'string))))) empty))
-
+(check-expect (parse-string "let type f = {} -> {}")
+(check-expect (parse-string "7 /*****asdf***/ + /**omgwtfbbg*/ 2")
+              (binary-op (op '+) 7 2))
 (test)
