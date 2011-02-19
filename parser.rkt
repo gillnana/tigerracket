@@ -154,11 +154,7 @@
     (token-int (string->number lexeme))]
    
    ; strings
-   ; TODO: what about escaping?
-   [(:: "\"" (complement (:: any-string "\"" any-string)) "\"")
-    (token-string
-     (let [(l (string-length lexeme))]
-       (substring lexeme 1 (- l 1))))]
+   ["\"" (token-string (string-lex input-port))]
    
    ; comments are the same as whitespace
    [(:: "/*" (complement (:: any-string "*/" any-string)) "*/")
@@ -166,6 +162,30 @@
     
      
     ))
+
+; call this after eating the open double-quote character
+; it will eat up to and including the close double-quote
+; and return a list of string to concatenate together
+(define (string-lex input-port)
+  (define (prepend str)
+    (string-append str (string-lex input-port)))
+  ((lexer
+    [(repetition 1 +inf.0 (union alphabetic
+                                 blank ; excludes newlines
+                                 (intersection punctuation 
+                                               (complement "\\")
+                                               (complement "\""))
+                                 ))
+     (prepend lexeme)]
+    ["\\\\" (prepend "\\")]
+    ["\\\n" (prepend "\n")]
+    ["\\\t" (prepend "\t")]
+    ["\\\"" (prepend "\"")]
+    ["\"" ""]
+    [(eof) (error "eof in string")])
+   input-port))
+    
+    
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -192,9 +212,10 @@
 (struct if-statement (cond then else) #:transparent) ; else is optional
 (struct while-statement (cond body) #:transparent)
 (struct for-statement (var start end body) #:transparent)
-; TODO: careful of sequence vs list-of exp
 (struct let-statement (bindings expseq) #:transparent)
 (struct sequence (exps) #:transparent)
+(struct int-literal (value) #:transparent)
+(struct string-literal (value) #:transparent)
 
 (struct nil () #:transparent)
 (struct op (op) #:transparent)
@@ -244,8 +265,8 @@
                  [(dot id lvalue-rest) (cons (lvalue-record-access $2) $3)]
                  [(open-bracket exp close-bracket lvalue-rest) (cons (lvalue-array-access $2) $4)])
     
-    (literal [(int) $1]
-             [(string) $1]
+    (literal [(int) (int-literal $1)]
+             [(string) (string-literal $1)]
              [(nil) (nil)])
     
     (funcall [(exp open-paren funcall-args close-paren) (funcall $1 $3)])
@@ -335,61 +356,66 @@
   (let [(port (open-input-string str))]
     (parse (λ () (lex port)))))
 
-(check-expect (parse-string "4") 4)
-(check-expect (parse-string "\"zoomba\"") "zoomba")
+(define (lex-string str)
+  (let [(port (open-input-string str))]
+    (λ () (lex port))))
+
+(check-expect (parse-string "4") (int-literal 4))
+(check-expect (parse-string "\"zoomba\"") (string-literal "zoomba"))
+(check-expect (parse-string "\"he said \\\"hi\\\", right?\"") (string-literal "he said \"hi\", right?"))
 (check-expect (parse-string "nil") (nil))
 (check-expect (parse-string "some_identifier") (lvalue (id 'some_identifier) empty))
 
 ;;dangling else testing
 (check-expect (parse-string "if 4 then 4")
-              (if-statement 4 4 empty))
+              (if-statement (int-literal 4) (int-literal 4) empty))
 (check-expect (parse-string "if 5 then 5 else 5")
-              (if-statement 5 5 5))
+              (if-statement (int-literal 5) (int-literal 5) (int-literal 5)))
 (check-expect (parse-string "if if 1 then 1 then if 2 then 2 else if 3 then 3")
-              (if-statement (if-statement 1 1 empty) (if-statement 2 2 (if-statement 3 3 empty)) empty))
+              (if-statement (if-statement (int-literal 1) (int-literal 1) empty) (if-statement (int-literal 2) (int-literal 2) (if-statement (int-literal 3) (int-literal 3) empty)) empty))
 (check-expect (parse-string "if 4 then if 5 then 5 else 5")
-              (if-statement 4 (if-statement 5 5 5) empty))
+              (if-statement (int-literal 4) (if-statement (int-literal 5) (int-literal 5) (int-literal 5)) empty))
 (check-expect (parse-string "if 4 then (if 5 then 5) else 4")
-              (if-statement 4 (sequence (list (if-statement 5 5 empty))) 4))
+              (if-statement (int-literal 4) (sequence (list (if-statement (int-literal 5) (int-literal 5) empty))) (int-literal 4)))
 
 ;dangling do testing
 (check-expect (parse-string "while 4 do 4")
-              (while-statement 4 4))
+              (while-statement (int-literal 4) (int-literal 4)))
 (check-expect (parse-string "while 5 do while 6 do 6")
-              (while-statement 5 (while-statement 6 6)))
+              (while-statement (int-literal 5) (while-statement (int-literal 6) (int-literal 6))))
 (check-expect (parse-string "while 5 do for pig := 7 to 7 do 7")
-              (while-statement 5 (for-statement 'pig 7 7 7)))
+              (while-statement (int-literal 5) (for-statement 'pig (int-literal 7) (int-literal 7) (int-literal 7))))
 (check-expect (parse-string "for pig := 8 to 8 do while 6 do 6")
-              (for-statement 'pig 8 8 (while-statement 6 6)))
+              (for-statement 'pig (int-literal 8) (int-literal 8) (while-statement (int-literal 6) (int-literal 6))))
 (check-expect (parse-string "for apple := 10 to 10 do for mike := 20 to 20 do 20")
-              (for-statement 'apple 10 10 (for-statement 'mike 20 20 20)))
+              (for-statement 'apple (int-literal 10) (int-literal 10) (for-statement 'mike (int-literal 20) (int-literal 20) (int-literal 20))))
 
 (check-expect (parse-string "for apple := 36 to for mike := 11 to 11 do 11 do 36")
-              (for-statement 'apple 36 (for-statement 'mike 11 11 11) 36))
+              (for-statement 'apple (int-literal 36) (for-statement 'mike (int-literal 11) (int-literal 11) (int-literal 11)) (int-literal 36)))
 
 
 ;lvalue testing including array accesses and declarations
 (check-expect (parse-string "drugs.f")
               (lvalue (id 'drugs) (list (lvalue-record-access 'f))))
 (check-expect (parse-string "bears[philip] of 7")
-              (array-creation 'bears (lvalue (id 'philip) empty) 7))
+              (array-creation 'bears (lvalue (id 'philip) empty) (int-literal 7)))
 (check-expect (parse-string "a[b]")
               (lvalue (id 'a) (list (lvalue-array-access (lvalue (id 'b) empty)))))
 
 ;; let in sequence
-(check-expect (parse-string "let in 1 end") (let-statement empty (list 1)))
-(check-expect (parse-string "let in 1; 2 end") (let-statement empty (list 1 2)))
-(check-expect (parse-string "let in (1; 2) end") (let-statement empty (list (sequence (list 1 2)))))
+(check-expect (parse-string "let in 1 end") (let-statement empty (list (int-literal 1))))
+(check-expect (parse-string "let in 1; 2 end") (let-statement empty (list (int-literal 1) (int-literal 2))))
+(check-expect (parse-string "let in (1; 2) end") (let-statement empty (list (sequence (list (int-literal 1) (int-literal 2))))))
 
 ;precedence testing
 (check-expect (parse-string "4/5*6")
-              (binary-op (op '*) (binary-op (op '/) 4 5) 6))
+              (binary-op (op '*) (binary-op (op '/) (int-literal 4) (int-literal 5)) (int-literal 6)))
 (check-expect (parse-string "4*5/6")
-              (binary-op (op '/) (binary-op (op '*) 4 5) 6))
+              (binary-op (op '/) (binary-op (op '*) (int-literal 4) (int-literal 5)) (int-literal 6)))
 (check-expect (parse-string "1+2*3")
-              (binary-op (op '+) 1 (binary-op (op '*) 2 3)))
+              (binary-op (op '+) (int-literal 1) (binary-op (op '*) (int-literal 2) (int-literal 3))))
 (check-expect (parse-string "1*4+5")
-              (binary-op (op '+) (binary-op (op '*) 1 4) 5))
+              (binary-op (op '+) (binary-op (op '*) (int-literal 1) (int-literal 4)) (int-literal 5)))
 
 ;type declaration tests
 (check-expect (parse-string "let type a = int in end")
@@ -406,7 +432,7 @@
               (let-statement (list (tydec 'e (list (tyfield 'chocolate (type-id 'int))
                                                    (tyfield 'mufflepuff (type-id 'stormclouds))
                                                    (tyfield 'wozzar (type-id 'string))))) empty))
-(check-expect (parse-string "let type f = {} -> {}")
+;(check-expect (parse-string "let type f = {} -> {}")
 (check-expect (parse-string "7 /*****asdf***/ + /**omgwtfbbg*/ 2")
-              (binary-op (op '+) 7 2))
+              (binary-op (op '+) (int-literal 7) (int-literal 2)))
 (test)
