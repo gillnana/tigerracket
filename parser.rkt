@@ -193,6 +193,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; id is always a variable
+; an id is not an expression
+; an lvalue of an id and no suffixes is, however
+; see struct lvalue
 (struct id (name) #:transparent)
 
 ; literals
@@ -210,18 +213,20 @@
 (struct lvalue-record-access (id) #:transparent)
 (struct lvalue-array-access (index) #:transparent)
 
-; types
+; declarations
 (struct tydec (type-id ty) #:transparent) ; type declaration
+(struct vardec (id type-id val) #:transparent) ; type-id can be #f
+(struct fundec (id tyfields type-id body) #:transparent) ; type-id can be #f
+(struct funcall (fun-id args) #:transparent)
+
+; types
 (struct type-id (name) #:transparent)
-(struct function-type (dom rng) #:transparent)
+(struct function-type (dom rng) #:transparent) ; domain and range
 (struct record-of (tyfields) #:transparent) ; record type contains list of tyfield
 (struct tyfield (id type-id) #:transparent)
 (struct array-of (type) #:transparent) ; array type
 
 
-(struct vardec (id type-id val) #:transparent) ; type-id can be #f
-(struct fundec (id tyfields type-id body) #:transparent) ; type-id can be #f
-(struct funcall (fun-id args) #:transparent)
 
 (struct assignment (lvalue val) #:transparent)
 
@@ -310,7 +315,7 @@
     (record-creation-args [() empty] 
                           [(id equals exp) (cons (fieldval $1 $3) empty)]
                           [(id equals exp comma record-creation-args) (cons (fieldval $1 $3) $5)])
-    (array-creation [(id open-bracket exp close-bracket of exp) (array-creation $1 $3 $6)])
+    (array-creation [(id open-bracket exp close-bracket of exp) (array-creation (type-id $1) $3 $6)])
     
     (assignment [(lvalue assign exp) (assignment $1 $3)]) 
 ;    
@@ -418,7 +423,9 @@
 (check-expect (parse-string "drugs.f")
               (lvalue (id 'drugs) (list (lvalue-record-access 'f))))
 (check-expect (parse-string "bears[philip] of 7")
-              (array-creation 'bears (lvalue (id 'philip) empty) (int-literal 7)))
+              (array-creation (type-id 'bears) (lvalue (id 'philip) empty) (int-literal 7)))
+(check-expect (parse-string "int[philip] of 7")
+              (array-creation (type-id 'int) (lvalue (id 'philip) empty) (int-literal 7)))
 (check-expect (parse-string "a[b]")
               (lvalue (id 'a) (list (lvalue-array-access (lvalue (id 'b) empty)))))
 
@@ -477,4 +484,4 @@
 ; file io
 (check-expect (parse-file "./tests/four.tig")
               (int-literal 4))
-(test)
+;(test)
