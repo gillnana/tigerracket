@@ -335,6 +335,10 @@
   (let [(port (open-input-string str))]
     (parse (λ () (lex port)))))
 
+(define (parse-file file)
+  (let [(port (open-input-file file))]
+    (parse (λ () (lex port)))))
+
 (check-expect (parse-string "4") 4)
 (check-expect (parse-string "\"zoomba\"") "zoomba")
 (check-expect (parse-string "nil") (nil))
@@ -406,7 +410,7 @@
               (let-statement (list (tydec 'e (list (tyfield 'chocolate (type-id 'int))
                                                    (tyfield 'mufflepuff (type-id 'stormclouds))
                                                    (tyfield 'wozzar (type-id 'string))))) empty))
-(check-expect (parse-string "let type f = {} -> {}")
+;(check-expect (parse-string "let type f = {} -> {}"))
 (check-expect (parse-string "7 /*****asdf***/ + /**omgwtfbbg*/ 2")
               (binary-op (op '+) 7 2))
 (test)
