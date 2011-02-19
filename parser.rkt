@@ -1,10 +1,10 @@
 #lang racket
 (require parser-tools/yacc)
 (require parser-tools/lex)
-
 (require (prefix-in : parser-tools/lex-sre))
-
 (require test-engine/racket-tests)
+
+(provide (all-defined-out))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;  Lexer   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -192,32 +192,46 @@
 ;;;;;;;;;;  Parser   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(struct tydec (type-id ty) #:transparent) ; type declaration
-(struct type-id (name) #:transparent)
-(struct function-type (dom rng) #:transparent)
+; id is always a variable
 (struct id (name) #:transparent)
-(struct record-of (tyfields) #:transparent) ; record type contains list of tyfield
-(struct array-of (type) #:transparent) ; array type
-(struct tyfield (id type-id) #:transparent)
-(struct vardec (id type-id val) #:transparent) ; type-id can be #f
-(struct fundec (id tyfields type-id body) #:transparent) ; type-id can be #f
-(struct lvalue (id suffixes) #:transparent)
-(struct lvalue-record-access (id) #:transparent)
-(struct lvalue-array-access (index) #:transparent)
-(struct funcall (fun-id args) #:transparent)
+
+; literals
+(struct int-literal (value) #:transparent)
+(struct string-literal (value) #:transparent)
+(struct nil () #:transparent)
+
+; array and struct creation
 (struct array-creation (type-id size initval) #:transparent)
 (struct record-creation (type-id fieldvals) #:transparent)
 (struct fieldval (name val) #:transparent)
+
+; lvalues (also are expressions)
+(struct lvalue (id suffixes) #:transparent)
+(struct lvalue-record-access (id) #:transparent)
+(struct lvalue-array-access (index) #:transparent)
+
+; types
+(struct tydec (type-id ty) #:transparent) ; type declaration
+(struct type-id (name) #:transparent)
+(struct function-type (dom rng) #:transparent)
+(struct record-of (tyfields) #:transparent) ; record type contains list of tyfield
+(struct tyfield (id type-id) #:transparent)
+(struct array-of (type) #:transparent) ; array type
+
+
+(struct vardec (id type-id val) #:transparent) ; type-id can be #f
+(struct fundec (id tyfields type-id body) #:transparent) ; type-id can be #f
+(struct funcall (fun-id args) #:transparent)
+
 (struct assignment (lvalue val) #:transparent)
+
+; program structure
 (struct if-statement (cond then else) #:transparent) ; else is optional
 (struct while-statement (cond body) #:transparent)
 (struct for-statement (var start end body) #:transparent)
 (struct let-statement (bindings expseq) #:transparent)
 (struct sequence (exps) #:transparent)
-(struct int-literal (value) #:transparent)
-(struct string-literal (value) #:transparent)
 
-(struct nil () #:transparent)
 (struct op (op) #:transparent)
 (struct binary-op (op arg1 arg2) #:transparent)
 (struct unary-op (op arg1) #:transparent)
@@ -236,12 +250,13 @@
     (tydec [(type id equals ty) (tydec $2 $4)])
     (ty [(id) (type-id $1)]
         ;[(unit) (type-id 'unit)] ;TODO how to handle unit?
-        [(open-brace tyfields close-brace) $2]
+        [(open-brace tyfields close-brace) (record-of $2)]
         [(array of id) (array-of (type-id $3))]
         [(ty arrow ty) (function-type (list $1) $3)]
-        [(tylist arrow ty) (function-type $1 $3)]
+        [(open-paren tylist close-paren arrow ty) (function-type $2 $5)]
         )
     (tylist [() empty]
+            [(ty) (list $1)]
             [(ty comma tylist) (cons $1 $3)])
     (tyfields [() empty]
               [(id colon id) (cons (tyfield $1 (type-id $3)) empty)]
@@ -322,12 +337,13 @@
           (left plus minus)
           (left divide times)
           (right then else)
+          (right arrow)
           (nonassoc equals not-equals greater-or-equal less-or-equal greater-than less-than)
           (nonassoc do)
           (nonassoc assign)
           (nonassoc open-paren open-bracket close-paren close-bracket open-brace close-brace)
           (nonassoc of)
-          (nonassoc comma semicolon colon dot arrow)
+          (nonassoc comma semicolon colon dot)
 
 ;          (nonassoc id) ;this removed 1 shift-reduce conflict
 ;          (nonassoc var type array function break if while for to let in end)
@@ -424,18 +440,41 @@
 ;type declaration tests
 (check-expect (parse-string "let type a = int in end")
               (let-statement (list (tydec 'a (type-id 'int))) empty))
-;(check-expect (parse-string "let type aa = unit in end")
+;(check-expect (parse-string "let type aa = unit in end") ; TODO: are we implementing unit keyword?
 ;              (let-statement (list (tydec 'aa (type-id 'unit))) empty))
 (check-expect (parse-string "let type b = array of charlie in end")
               (let-statement (list (tydec 'b (array-of (type-id 'charlie)))) empty))
 (check-expect (parse-string "let type c = {} in end")
-              (let-statement (list (tydec 'c empty)) empty))
+              (let-statement (list (tydec 'c (record-of empty))) empty))
 (check-expect (parse-string "let type d = { beer : int } in end")
-              (let-statement (list (tydec 'd (list (tyfield 'beer (type-id 'int))))) empty))
+              (let-statement (list (tydec 'd (record-of (list (tyfield 'beer (type-id 'int)))))) empty))
 (check-expect (parse-string "let type e = { chocolate : int, mufflepuff : stormclouds, wozzar : string} in end")
-              (let-statement (list (tydec 'e (list (tyfield 'chocolate (type-id 'int))
-                                                   (tyfield 'mufflepuff (type-id 'stormclouds))
-                                                   (tyfield 'wozzar (type-id 'string))))) empty))
+              (let-statement (list (tydec 'e (record-of (list (tyfield 'chocolate (type-id 'int))
+                                                              (tyfield 'mufflepuff (type-id 'stormclouds))
+                                                              (tyfield 'wozzar (type-id 'string)))))) empty))
+; function types
+(check-expect (parse-string "let type f = {} -> {} in end")
+              (let-statement (list 
+                              (tydec 'f (function-type (list (record-of empty))
+                                                       (record-of empty))))
+                             empty))
+(check-expect (parse-string "let type f = int -> int -> int in end")
+              (let-statement (list 
+                              (tydec 'f (function-type (list (type-id 'int))
+                                                       (function-type (list (type-id 'int))
+                                                                      (type-id 'int)))))
+                             empty))
+(check-expect (parse-string "let type f = ( int, int ) -> int  in end")
+              (let-statement (list (tydec 'f (function-type (list (type-id 'int) (type-id 'int)) (type-id 'int)))) '()))
+(check-expect (parse-string "let type f = ( int -> int ) -> int  in end")
+              (let-statement (list 
+                              (tydec 'f (function-type (list (function-type (list (type-id 'int)) (type-id 'int)))
+                                                       (type-id 'int)))) 
+                             '()))
 (check-expect (parse-string "7 /*****asdf***/ + /**omgwtfbbg*/ 2")
               (binary-op (op '+) (int-literal 7) (int-literal 2)))
+
+; file io
+(check-expect (parse-file "./tests/four.tig")
+              (int-literal 4))
 (test)
