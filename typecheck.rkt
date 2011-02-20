@@ -14,6 +14,7 @@
 (struct t-int () #:transparent)
 (struct t-string () #:transparent)
 (struct t-bool () #:transparent)
+(struct t-void () ) ; not transparent
 (struct t-nil () #:transparent)
 
 (struct t-fun (args result) #:transparent) ; args is list of types
@@ -46,29 +47,35 @@
        [(not (equal? (type-of-env size te ve) (t-int))) (error "type of array size not int")]
        [(not (equal? type (type-of-env initval te ve))) (error "type of array not same as initial value")]
        [else (t-array (type-lookup type te))])]
-    [(binary-op (op '=) arg1 arg2)
-     (if (equal? (type-of-env arg1 te ve)
-                 (type-of-env arg2 te ve))
-         (t-bool)
-         (error ("arguments for equality comparison must be of the same type")))]
-    [(binary-op (op (and operator (or '+ '- '* '/))) arg1 arg2)
-     (cond
-       [(not (and (equal? (type-of-env arg1 te ve) (t-int))
-                  (equal? (type-of-env arg2 te ve) (t-int))))
-        (error (format "args to ~a must be ints!" operator))]
-       [else (t-int)])]
-    [(binary-op (op (and comparator (or '<> '< '> '<= '>=))) arg1 arg2)
-     (cond
-       [(not (and (equal? (type-of-env arg1 te ve) (t-int))
-                  (equal? (type-of-env arg2 te ve) (t-int))))
-        (error (format "args to ~a must be ints!" comparator))]
-       [else (t-bool)])]
-    [(binary-op (op (and operator (or '& '\|))) arg1 arg2)
-     (cond
-       [(not (and (equal? (type-of-env arg1 te ve) (t-bool))
-                  (equal? (type-of-env arg2 te ve) (t-bool))))
-        (error (format "args to ~a must be ints!" operator))]
-       [else (t-bool)])]
+    
+    [(binary-op (op sym) arg1 arg2)
+     (cond [(symbol=? sym '=) (if (equal? (type-of-env arg1 te ve) (type-of-env arg2 te ve))
+                                  (t-int)
+                                  (error "arguments for equality comparison must be of same type"))]
+           [(and (equal? (type-of-env arg1 te ve) (t-int))
+                      (equal? (type-of-env arg2 te ve) (t-int)))
+            (t-int)]
+           [else (error (format "args for operator ~a must be integers" sym))])]
+    
+    [(unary-op (op '-) arg1)
+     (if (not (equal? (type-of-env arg1 te ve) (t-int)))
+         (error "arg to unary minus must be int")
+         (t-int))]
+    
+    [(sequence (list)) (t-void)]
+    [(sequence (list a ... b))
+     (type-of-env b te ve)]
+    
+    [(if-statement c t (list))
+     (cond [(not (equal? (type-of-env c te ve) (t-int))) (error "condition of if statement must have boolean value")]
+           [(not (equal? (type-of-env t te ve) (t-void))) (error "then branch of an if statement must have no value")]
+           [else (t-void)])]
+    [(if-statement c t e)
+     (let ([type-of-t (type-of-env t te ve)]) 
+       (cond [(not (equal? (type-of-env c te ve) (t-int))) (error "condition of if statement must have boolean value")]
+             [(not (equal? type-of-t (type-of-env e te ve))) (error "then and else branches of if statement must have same type")]
+             [else type-of-t]))]
+              
     ;[(record-creation (type-id type) fields)
     ;(if (check-record-fields fields (type-lookup type te))
     ))
@@ -84,9 +91,17 @@
 (check-expect (type-of (parse-string "4-7")) 
               (t-int))
 (check-expect (type-of (parse-string "4>7")) 
-              (t-bool))
+              (t-int))
 (check-expect (type-of (parse-string "4=7")) 
-              (t-bool))
+              (t-int))
 (check-expect (type-of (parse-string "\"zoomba\"=\"pizza\"")) 
-              (t-bool))
+              (t-int))
+
+(check-expect (type-of (parse-string "-4"))
+              (t-int))
+(check-expect (type-of (parse-string "(4>7)=(5<6)"))
+              (t-int))
+(check-expect (type-of (parse-string "if 4 then 7 else 6"))
+              (t-int))
+
 (test)
