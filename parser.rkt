@@ -330,8 +330,11 @@
              [(let-nonterminal) $1]
              [(sequencing) $1])
     
-    (if-nonterminal [(if exp then exp) (if-statement $2 $4 empty)]
-                    [(if exp then exp else exp) (if-statement $2 $4 $6)])
+    (if-nonterminal [(if exp then exp else exp) (if-statement $2 $4 $6)]
+                    [(if exp then exp) (if-statement $2 $4 empty)]
+                    
+                    )
+    
     (while-nonterminal [(while exp do exp) (while-statement $2 $4)])
     (let-nonterminal [(let decs in expseq end) (let-statement $2 $4)])
     (for-nonterminal [(for id assign exp to exp do exp) (for-statement $2 $4 $6 $8)])
@@ -344,9 +347,8 @@
    ; lower on this list means binds tighter
    (precs (nonassoc do)
           (nonassoc assign)
-          (nonassoc open-paren open-bracket close-paren close-bracket open-brace close-brace)
-          (nonassoc of)
           (right then else)
+          (nonassoc of)
           (right arrow)
           
           (left or)
@@ -355,7 +357,10 @@
           (left plus)
           (left divide times)
           (left minus)
-          (nonassoc comma semicolon colon dot)
+          ; parens correspond to function application 
+          (nonassoc open-paren open-bracket close-paren close-bracket open-brace close-brace)
+           ;   (nonassoc comma semicolon colon dot)
+         ; ()
           
 ;          (nonassoc id) ;this removed 1 shift-reduce conflict
 ;          (nonassoc var type array function break if while for to let in end)
@@ -445,6 +450,17 @@
 (check-expect (parse-string "for apple := 36 to for mike := 11 to 11 do 11 do 36")
               (for-statement 'apple (int-literal 36) (for-statement 'mike (int-literal 11) (int-literal 11) (int-literal 11)) (int-literal 36)))
 
+(check-expect (parse-string "a.b.c.d.zoomba[pizza].lorg[a.b]")
+              (lvalue
+               (id 'a)
+               (list
+                (lvalue-record-access 'b)
+                (lvalue-record-access 'c)
+                (lvalue-record-access 'd)
+                (lvalue-record-access 'zoomba)
+                (lvalue-array-access (lvalue (id 'pizza) '()))
+                (lvalue-record-access 'lorg)
+                (lvalue-array-access (lvalue (id 'a) (list (lvalue-record-access 'b)))))))
 
 ;lvalue testing including array accesses and declarations
 (check-expect (parse-string "drugs.f")
@@ -511,4 +527,7 @@
 ; file io
 (check-expect (parse-file "./tests/four.tig")
               (int-literal 4))
-;(test)
+;; just check that it parses, don't examine the tree
+(check-expect (begin (parse-file "./tests/queens.tig") 'great)
+              'great)
+(test)
