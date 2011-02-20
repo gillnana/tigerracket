@@ -389,11 +389,8 @@
            (match lval-suf
              [(lvalue-record-access field-name) (record-access sub-lval field-name)]
              [(lvalue-array-access index) (array-access sub-lval index)]))
-         (lvalue-suffixes lv)
-         (lvalue-id lv))
-  
-  )
-
+         (lvalue-id lv)
+         (lvalue-suffixes lv)))
 
 
 
