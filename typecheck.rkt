@@ -13,7 +13,6 @@
 
 (struct t-int () #:transparent)
 (struct t-string () #:transparent)
-(struct t-bool () #:transparent)
 (struct t-void () ) ; not transparent
 (struct t-nil () #:transparent)
 
@@ -67,14 +66,49 @@
      (type-of-env b te ve)]
     
     [(if-statement c t (list))
-     (cond [(not (equal? (type-of-env c te ve) (t-int))) (error "condition of if statement must have boolean value")]
+     (cond [(not (equal? (type-of-env c te ve) (t-int))) (error "condition of if statement must have boolean/int value")]
            [(not (equal? (type-of-env t te ve) (t-void))) (error "then branch of an if statement must have no value")]
            [else (t-void)])]
     [(if-statement c t e)
      (let ([type-of-t (type-of-env t te ve)]) 
-       (cond [(not (equal? (type-of-env c te ve) (t-int))) (error "condition of if statement must have boolean value")]
+       (cond [(not (equal? (type-of-env c te ve) (t-int))) (error "condition of if statement must have boolean/int value")]
              [(not (equal? type-of-t (type-of-env e te ve))) (error "then and else branches of if statement must have same type")]
              [else type-of-t]))]
+    [(while-statement c body)
+     (if (equal? (type-of-env c te ve) (t-int))
+         (type-of-env body te ve)
+         (error "while statement condition must have boolean/int value"))]
+    [(for-statement var start end body)
+     (if (and ;l-value-of var = int
+              (equal? (type-of-env start te ve) (t-int))
+              (equal? (type-of-env end te ve) (t-int)))
+         (type-of-env body te ve)
+         (error "for statement must increment an int from start to end int values"))]
+    [(let-statement decs (list a ... b))
+     ; TODO: do this for each environments
+     (foldl (lambda (binding env)
+              (match binding
+                [(tydec type-id ty) 
+                 ; TODO: add the binding to the env
+                 (error 'TODO)
+                 ]
+                [(vardec id id-type val) 
+                 (error 'TODO)
+                 ; TODO: add the binding to the env
+                 ]
+                [(fundec id tyfields type-id body) 
+                 (error 'TODO)
+                 ; TODO: add the binding to the env
+                 ]
+              )
+            the-environment
+            decs
+            )
+     
+     
+     
+     (type-of-env b )]
+    
               
     ;[(record-creation (type-id type) fields)
     ;(if (check-record-fields fields (type-lookup type te))
@@ -103,5 +137,9 @@
               (t-int))
 (check-expect (type-of (parse-string "if 4 then 7 else 6"))
               (t-int))
+(check-error (type-of (parse-string "if 4 then \"hamburger\" else 12")) "then and else branches of if statement must have same type")
+(check-expect (type-of (parse-string "while 1 do (27; \"spain\")"))
+              (t-string))
+
 
 (test)
