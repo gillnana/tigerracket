@@ -171,15 +171,15 @@
     (string-append str (string-lex input-port)))
   ((lexer
     [(repetition 1 +inf.0 (union alphabetic
-                                 blank ; excludes newlines
+                                 whitespace ; excludes newlines
                                  (intersection punctuation 
                                                (complement "\\")
                                                (complement "\""))
                                  ))
      (prepend lexeme)]
     ["\\\\" (prepend "\\")]
-    ["\\\n" (prepend "\n")]
-    ["\\\t" (prepend "\t")]
+    ["\\n" (prepend "\n")]
+    ["\\t" (prepend "\t")]
     ["\\\"" (prepend "\"")]
     ["\"" ""]
     [(eof) (error "eof in string")])
@@ -213,6 +213,11 @@
 (struct lvalue-record-access (id) #:transparent)
 (struct lvalue-array-access (index) #:transparent)
 
+; lvalue and lvalue- structs above are messy but make parsing more conveniant
+; they will be turned into this form at the end of parsing:
+(struct record-access (rec-id field-id) #:transparent)
+(struct array-access (id index) #:transparent)
+
 ; declarations
 (struct tydec (type-id ty) #:transparent) ; type declaration
 (struct vardec (id type-id val) #:transparent) ; type-id can be #f
@@ -226,8 +231,7 @@
 (struct tyfield (id type-id) #:transparent)
 (struct array-of (type) #:transparent) ; array type
 
-
-
+; assignment
 (struct assignment (lvalue val) #:transparent)
 
 ; program structure
@@ -337,19 +341,22 @@
     (sequencing [(open-paren expseq close-paren) (sequence $2)])
     )
    
-   (precs (left or)
-          (left and)
-          (left plus minus)
-          (left divide times)
-          (right then else)
-          (right arrow)
-          (nonassoc equals not-equals greater-or-equal less-or-equal greater-than less-than)
-          (nonassoc do)
+   ; lower on this list means binds tighter
+   (precs (nonassoc do)
           (nonassoc assign)
           (nonassoc open-paren open-bracket close-paren close-bracket open-brace close-brace)
           (nonassoc of)
+          (right then else)
+          (right arrow)
+          
+          (left or)
+          (left and)
+          (nonassoc equals not-equals greater-or-equal less-or-equal greater-than less-than)
+          (left plus)
+          (left divide times)
+          (left minus)
           (nonassoc comma semicolon colon dot)
-
+          
 ;          (nonassoc id) ;this removed 1 shift-reduce conflict
 ;          (nonassoc var type array function break if while for to let in end)
           )
@@ -364,6 +371,26 @@
                      valid?))))
    
    ))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;  Post-parsing cleanup ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (transform-lvalue lv)
+  (foldl (lambda (lval-suf sub-lval) 
+           ; lval-suf is the first suffix in the suffix list
+           ; sub-lval is the new lvalue constructed so far
+           (match lval-suf
+             [(lvalue-record-access field-name) (record-access sub-lval field-name)]
+             [(lvalue-array-access index) (array-access sub-lval index)]))
+         (lvalue-suffixes lv)
+         (lvalue-id lv))
+  
+  )
+
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;  Helpers and tests  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
