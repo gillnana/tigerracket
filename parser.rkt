@@ -275,7 +275,15 @@
     (fundec [(function id open-paren tyfields close-paren equals exp) (fundec $2 $4 #f $7)]
             [(function id open-paren tyfields close-paren colon id equals exp) (fundec $2 $4 $7 $9)])
     (exp [(literal) $1]
-         [(lvalue) $1]
+         [(lvalue) (foldl (lambda (lval-suf sub-lval)
+                            ; transform-lvalue into left recursive representation
+                            ; lval-suf is the first suffix in the suffix list
+                            ; sub-lval is the new lvalue constructed so far
+                            (match lval-suf
+                              [(lvalue-record-access field-name) (record-access sub-lval field-name)]
+                              [(lvalue-array-access index) (array-access sub-lval index)]))
+                          (lvalue-id $1)
+                          (lvalue-suffixes $1))]
          [(funcall) $1]
          [(arithmetic) $1]
          [(structures) $1]
@@ -379,22 +387,6 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;  Post-parsing cleanup ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (transform-lvalue lv)
-  (foldl (lambda (lval-suf sub-lval) 
-           ; lval-suf is the first suffix in the suffix list
-           ; sub-lval is the new lvalue constructed so far
-           (match lval-suf
-             [(lvalue-record-access field-name) (record-access sub-lval field-name)]
-             [(lvalue-array-access index) (array-access sub-lval index)]))
-         (lvalue-id lv)
-         (lvalue-suffixes lv)))
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;  Helpers and tests  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -418,7 +410,7 @@
 (check-expect (parse-string "\"zoomba\"") (string-literal "zoomba"))
 (check-expect (parse-string "\"he said \\\"hi\\\", right?\"") (string-literal "he said \"hi\", right?"))
 (check-expect (parse-string "nil") (nil))
-(check-expect (parse-string "some_identifier") (lvalue (id 'some_identifier) empty))
+(check-expect (parse-string "some_identifier") (id 'some_identifier))
 
 ;;dangling else testing
 (check-expect (parse-string "if 4 then 4")
@@ -448,26 +440,19 @@
               (for-statement 'apple (int-literal 36) (for-statement 'mike (int-literal 11) (int-literal 11) (int-literal 11)) (int-literal 36)))
 
 (check-expect (parse-string "a.b.c.d.zoomba[pizza].lorg[a.b]")
-              (lvalue
-               (id 'a)
-               (list
-                (lvalue-record-access 'b)
-                (lvalue-record-access 'c)
-                (lvalue-record-access 'd)
-                (lvalue-record-access 'zoomba)
-                (lvalue-array-access (lvalue (id 'pizza) '()))
-                (lvalue-record-access 'lorg)
-                (lvalue-array-access (lvalue (id 'a) (list (lvalue-record-access 'b)))))))
+              (array-access
+ (record-access (array-access (record-access (record-access (record-access (record-access (id 'a) 'b) 'c) 'd) 'zoomba) (id 'pizza)) 'lorg)
+ (record-access (id 'a) 'b)))
 
 ;lvalue testing including array accesses and declarations
 (check-expect (parse-string "drugs.f")
-              (lvalue (id 'drugs) (list (lvalue-record-access 'f))))
+              (record-access (id 'drugs) 'f))
 (check-expect (parse-string "bears[philip] of 7")
-              (array-creation (type-id 'bears) (lvalue (id 'philip) empty) (int-literal 7)))
+              (array-creation (type-id 'bears) (id 'philip) (int-literal 7)))
 (check-expect (parse-string "int[philip] of 7")
-              (array-creation (type-id 'int) (lvalue (id 'philip) empty) (int-literal 7)))
+              (array-creation (type-id 'int) (id 'philip) (int-literal 7)))
 (check-expect (parse-string "a[b]")
-              (lvalue (id 'a) (list (lvalue-array-access (lvalue (id 'b) empty)))))
+              (array-access (id 'a) (id 'b)))
 
 ;; let in sequence
 (check-expect (parse-string "let in 1 end") (let-statement empty (list (int-literal 1))))
