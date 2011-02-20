@@ -35,7 +35,7 @@
 (define (type-of expr)
   (type-of-env expr empty empty))
 
-(define (type-of-env expr type-env var-env)
+(define (type-of-env expr te ve) ; type-env and var-env
   (match expr
     [(int-literal a) (t-int)]
     [(string-literal a) (t-string)]
@@ -43,28 +43,34 @@
     
     [(array-creation (type-id type) size initval)
      (cond
-       [(not (equal? (type-of-env size type-env var-env) (t-int))) (error "type of array size not int")]
-       [(not (equal? type (type-of-env initval type-env var-env))) (error "type of array not same as initial value")]
-       [else (t-array (type-lookup type type-env))])]
+       [(not (equal? (type-of-env size te ve) (t-int))) (error "type of array size not int")]
+       [(not (equal? type (type-of-env initval te ve))) (error "type of array not same as initial value")]
+       [else (t-array (type-lookup type te))])]
     [(binary-op (op '=) arg1 arg2)
-     (if (equal? (type-of-env arg1 type-env var-env)
-                 (type-of-env arg2 type-env var-env))
+     (if (equal? (type-of-env arg1 te ve)
+                 (type-of-env arg2 te ve))
          (t-bool)
          (error ("arguments for equality comparison must be of the same type")))]
     [(binary-op (op (and operator (or '+ '- '* '/))) arg1 arg2)
      (cond
-       [(not (and (equal? (type-of-env arg1 type-env var-env) (t-int))
-                  (equal? (type-of-env arg2 type-env var-env) (t-int))))
+       [(not (and (equal? (type-of-env arg1 te ve) (t-int))
+                  (equal? (type-of-env arg2 te ve) (t-int))))
         (error (format "args to ~a must be ints!" operator))]
        [else (t-int)])]
     [(binary-op (op (and comparator (or '<> '< '> '<= '>=))) arg1 arg2)
      (cond
-       [(not (and (equal? (type-of-env arg1 type-env var-env) (t-int))
-                  (equal? (type-of-env arg2 type-env var-env) (t-int))))
+       [(not (and (equal? (type-of-env arg1 te ve) (t-int))
+                  (equal? (type-of-env arg2 te ve) (t-int))))
         (error (format "args to ~a must be ints!" comparator))]
        [else (t-bool)])]
+    [(binary-op (op (and operator (or '& '\|))) arg1 arg2)
+     (cond
+       [(not (and (equal? (type-of-env arg1 te ve) (t-bool))
+                  (equal? (type-of-env arg2 te ve) (t-bool))))
+        (error (format "args to ~a must be ints!" operator))]
+       [else (t-bool)])]
     ;[(record-creation (type-id type) fields)
-    ;(if (check-record-fields fields (type-lookup type type-env))
+    ;(if (check-record-fields fields (type-lookup type te))
     ))
 
 
