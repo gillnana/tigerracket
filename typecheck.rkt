@@ -44,7 +44,7 @@
 ; takes the type of an identifier or function argument, and the type of a thing you want to put in it
 ; tells you if that's ok
 (define (assignable-to? variable value)
-  (or (equal? value (t-nil))
+  (or (t-nil? value)
       (equal? value variable)))
 
 
@@ -114,6 +114,17 @@
                 (match decl
                   [(vardec a b c) ty-env]
                   [(fundec a b c d) ty-env]
+                  [(tydec type-id (record-of tyfields))
+                   (cons (type-binding 
+                          type-id
+                          (t-record
+                           (map 
+                            (lambda (tyfield) 
+                              (field 
+                               (tyfield-id tyfield)
+                               (type-lookup (type-id-name (tyfield-type-id tyfield)) ty-env)))
+                            tyfields)))
+                         ty-env)]
                   [(tydec type-id ty) 
                    (cons (type-binding type-id ty) ty-env)]))
              
