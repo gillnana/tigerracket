@@ -61,7 +61,7 @@
     
     [(array-creation (type-id type) size initval)
      (cond
-       [(not (equal? (type-of-env size te ve) (t-int))) (error "type error: type of array size not int")]
+       [(not (t-int? (type-of-env size te ve))) (error "type error: type of array size not int")]
        [(not (equal? type (type-of-env initval te ve))) (error "type error: type of array not same as initial value")]
        [else (t-array (type-lookup type te))])]
     
@@ -69,13 +69,13 @@
      (cond [(symbol=? sym '=) (if (equal? (type-of-env arg1 te ve) (type-of-env arg2 te ve))
                                   (t-int)
                                   (error "type error: arguments for equality comparison must be of same type"))]
-           [(and (equal? (type-of-env arg1 te ve) (t-int))
-                      (equal? (type-of-env arg2 te ve) (t-int)))
+           [(and (t-int? (type-of-env arg1 te ve))
+                 (t-int? (type-of-env arg2 te ve)))
             (t-int)]
            [else (error (format "type error: args for operator ~a must be integers" sym))])]
     
     [(unary-op (op '-) arg1)
-     (if (not (equal? (type-of-env arg1 te ve) (t-int)))
+     (if (not (t-int? (type-of-env arg1 te ve)))
          (error "type error: arg to unary minus must be int")
          (t-int))]
     
@@ -87,22 +87,22 @@
            explist)]
     
     [(if-statement c t (list))
-     (cond [(not (equal? (type-of-env c te ve) (t-int))) (error "type error: condition of if statement must have boolean/int value")]
-           [(not (equal? (type-of-env t te ve) (t-void))) (error "type error: then branch of an if statement must have no value")]
+     (cond [(not (t-int? (type-of-env c te ve))) (error "type error: condition of if statement must have boolean/int value")]
+           [(not (t-void? (type-of-env t te ve))) (error "type error: then branch of an if statement must have no value")]
            [else (t-void)])]
     [(if-statement c t e)
      (let ([type-of-t (type-of-env t te ve)]) 
-       (cond [(not (equal? (type-of-env c te ve) (t-int))) (error "type error: condition of if statement must have boolean/int value")]
+       (cond [(not (t-int? (type-of-env c te ve))) (error "type error: condition of if statement must have boolean/int value")]
              [(not (equal? type-of-t (type-of-env e te ve))) (error "type error: then and else branches of if statement must have same type")]
              [else type-of-t]))]
     [(while-statement c body)
-     (if (equal? (type-of-env c te ve) (t-int))
+     (if (t-int? (type-of-env c te ve))
          (type-of-env body te ve)
          (error "type error: while statement condition must have boolean/int value"))]
     [(for-statement var start end body)
      (if (and ;l-value-of var = int
-              (equal? (type-of-env start te ve) (t-int))
-              (equal? (type-of-env end te ve) (t-int)))
+              (t-int? (type-of-env start te ve))
+              (t-int? (type-of-env end te ve)))
          (type-of-env body te ve)
          (error "type error: for statement must increment an int from start to end int values"))]
 
