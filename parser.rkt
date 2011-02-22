@@ -194,28 +194,36 @@
 
 
 ; literals
+; value is a scheme integer
 (struct int-literal (value) #:transparent)
+; value is a scheme string
 (struct string-literal (value) #:transparent)
 (struct nil () #:transparent)
 
 ; array and struct creation
+; type-id is a type-id struct
+; initval is an expression
 (struct array-creation (type-id size initval) #:transparent)
+; type-id is a type-id struct
+; fieldvals is a list of fieldval
 (struct record-creation (type-id fieldvals) #:transparent)
+; name is a symbol
+; val is an expression
 (struct fieldval (name val) #:transparent)
 
-; lvalues (also are expressions)
+; lvalues' intermediate representation
+; this is used within the parser to parse lvalues right-recursively
+; it is never returned by the parser at the top level
 (struct lvalue-record-access (id) #:transparent)
 (struct lvalue-array-access (index) #:transparent)
 
+
+; lvalues - true representation
 ; id is always a variable
 ; an id is not an expression
 ; an lvalue of an id and no suffixes is, however
 ; see struct lvalue
 (struct id (name) #:transparent)
-
-; lvalue and lvalue- structs above are messy but make parsing more convenient
-; they will be turned into this form at the end of parsing:
-
 ; rec-id is an lvalue
 (struct record-access (rec-id field-id) #:transparent)
 ; id is an lvalue
@@ -242,14 +250,20 @@
 (struct if-statement (cond then else) #:transparent) ; else is optional
 (struct while-statement (cond body) #:transparent)
 (struct for-statement (var start end body) #:transparent)
-(struct let-statement (bindings expseq) #:transparent)
 (struct sequence (expseq) #:transparent)
 (struct expseq (exps) #:transparent)
+
+; body is an expression
+(struct let-vars (bindings body) #:transparent)
+(struct let-types (bindings body) #:transparent)
+(struct let-funs (bindings body) #:transparent)
+
 
 (struct op (op) #:transparent)
 (struct binary-op (op arg1 arg2) #:transparent)
 (struct unary-op (op arg1) #:transparent)
 (struct break () #:transparent)
+
 
 (define parse
   (parser
@@ -350,7 +364,32 @@
                     )
     
     (while-nonterminal [(while exp do exp) (while-statement $2 $4)])
-    (let-nonterminal [(let decs in expseq end) (let-statement $2 (expseq $4))])
+    (let-nonterminal [(let decs in expseq end) 
+                      ; transform-let into 3 different types of lets
+                      (foldr (lambda (dec new-let) 
+                               (cond 
+                                 [(and (tydec? dec)
+                                       (let-types? new-let))   (let-types (cons dec (let-types-bindings new-let))
+                                                                          (let-types-body new-let))]
+                                 [(and (fundec? dec)
+                                       (let-funs? new-let))   (let-funs (cons dec (let-funs-bindings new-let))
+                                                                        (let-funs-body new-let))]
+                                 [(and (vardec? dec)
+                                       (let-vars? new-let))   (let-vars (cons dec (let-vars-bindings new-let))
+                                                                        (let-vars-body new-let))]
+                                 [(tydec? dec)   (let-types (list dec)
+                                                            new-let)]
+                                 [(fundec? dec)  (let-funs (list dec)
+                                                           new-let)]
+                                 [(vardec? dec)  (let-vars (list dec)
+                                                           new-let)]))
+                             (sequence (expseq $4))
+                             $2)
+                      
+                    ;  (let-statement $2 (expseq $4))
+                      
+                      
+                      ])
     (for-nonterminal [(for id assign exp to exp do exp) (for-statement $2 $4 $6 $8)])
     (expseq [() empty]
             [(exp) (cons $1 empty)]
@@ -467,9 +506,9 @@
               (array-access (id 'a) (id 'b)))
 
 ;; let in sequence
-(check-expect (parse-string "let in 1 end") (let-statement empty (expseq (list (int-literal 1)))))
-(check-expect (parse-string "let in 1; 2 end") (let-statement empty (expseq (list (int-literal 1) (int-literal 2)))))
-(check-expect (parse-string "let in (1; 2) end") (let-statement empty (expseq (list (sequence (expseq (list (int-literal 1) (int-literal 2))))))))
+(check-expect (parse-string "let in 1 end") (sequence (expseq (list (int-literal 1)))))
+(check-expect (parse-string "let in 1; 2 end") (sequence (expseq (list (int-literal 1) (int-literal 2)))))
+(check-expect (parse-string "let in (1; 2) end") (sequence (expseq (list (sequence (expseq (list (int-literal 1) (int-literal 2))))))))
 
 ;precedence testing
 (check-expect (parse-string "4/5*6")
@@ -483,38 +522,53 @@
 
 ;type declaration tests
 (check-expect (parse-string "let type a = int in end")
-              (let-statement (list (tydec 'a (type-id 'int))) (expseq empty)))
-;(check-expect (parse-string "let type aa = unit in end") ; TODO: are we implementing unit keyword?
-;              (let-statement (list (tydec 'aa (type-id 'unit))) empty))
+              (let-types (list (tydec 'a (type-id 'int))) (sequence (expseq empty))))
 (check-expect (parse-string "let type b = array of charlie in end")
-              (let-statement (list (tydec 'b (array-of (type-id 'charlie)))) (expseq empty)))
+              (let-types (list (tydec 'b (array-of (type-id 'charlie)))) (sequence (expseq empty))))
 (check-expect (parse-string "let type c = {} in end")
-              (let-statement (list (tydec 'c (record-of empty))) (expseq empty)))
+              (let-types (list (tydec 'c (record-of empty))) (sequence (expseq empty))))
 (check-expect (parse-string "let type d = { beer : int } in end")
-              (let-statement (list (tydec 'd (record-of (list (tyfield 'beer (type-id 'int)))))) (expseq empty)))
+              (let-types (list (tydec 'd (record-of (list (tyfield 'beer (type-id 'int)))))) (sequence (expseq empty))))
 (check-expect (parse-string "let type e = { chocolate : int, mufflepuff : stormclouds, wozzar : string} in end")
-              (let-statement (list (tydec 'e (record-of (list (tyfield 'chocolate (type-id 'int))
-                                                              (tyfield 'mufflepuff (type-id 'stormclouds))
-                                                              (tyfield 'wozzar (type-id 'string)))))) (expseq empty)))
+              (let-types (list (tydec 'e (record-of (list (tyfield 'chocolate (type-id 'int))
+                                                          (tyfield 'mufflepuff (type-id 'stormclouds))
+                                                          (tyfield 'wozzar (type-id 'string)))))) 
+                         (sequence (expseq empty))))
+
+; breaking up let-statement tests
+(check-expect (parse-string "let type a = horse type b = radish in end")
+              (let-types (list (tydec 'a (type-id 'horse))
+                               (tydec 'b (type-id 'radish)))
+                         (sequence (expseq empty))))
+(check-expect (parse-string "let var x := 12 var y := 47 in end")
+              (let-vars (list (vardec 'x false (int-literal 12))
+                               (vardec 'y false (int-literal 47)))
+                         (sequence (expseq empty))))
+(check-expect (parse-string "let function f() : int = 1 function g() : string = \"zebra\" in end")
+              (let-funs (list (fundec 'f empty 'int (int-literal 1))
+                               (fundec 'g empty 'string (string-literal "zebra")))
+                         (sequence (expseq empty))))
+
+
 ; function types
 (check-expect (parse-string "let type f = {} -> {} in end")
-              (let-statement (list 
-                              (tydec 'f (function-type (list (record-of empty))
+              (let-types (list 
+                          (tydec 'f (function-type (list (record-of empty))
                                                        (record-of empty))))
-                             (expseq empty)))
+                         (sequence (expseq empty))))
 (check-expect (parse-string "let type f = int -> int -> int in end")
-              (let-statement (list 
-                              (tydec 'f (function-type (list (type-id 'int))
-                                                       (function-type (list (type-id 'int))
-                                                                      (type-id 'int)))))
-                             (expseq empty)))
+              (let-types (list 
+                          (tydec 'f (function-type (list (type-id 'int))
+                                                   (function-type (list (type-id 'int))
+                                                                  (type-id 'int)))))
+                         (sequence (expseq empty))))
 (check-expect (parse-string "let type f = ( int, int ) -> int  in end")
-              (let-statement (list (tydec 'f (function-type (list (type-id 'int) (type-id 'int)) (type-id 'int)))) (expseq empty)))
+              (let-types (list (tydec 'f (function-type (list (type-id 'int) (type-id 'int)) (type-id 'int)))) (sequence (expseq empty))))
 (check-expect (parse-string "let type f = ( int -> int ) -> int  in end")
-              (let-statement (list 
-                              (tydec 'f (function-type (list (function-type (list (type-id 'int)) (type-id 'int)))
-                                                       (type-id 'int)))) 
-                             (expseq empty)))
+              (let-types (list 
+                          (tydec 'f (function-type (list (function-type (list (type-id 'int)) (type-id 'int)))
+                                                   (type-id 'int)))) 
+                         (sequence (expseq empty))))
 (check-expect (parse-string "7 /*****asdf***/ + /**omgwtfbbg*/ 2")
               (binary-op (op '+) (int-literal 7) (int-literal 2)))
 
