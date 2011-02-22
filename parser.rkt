@@ -192,11 +192,6 @@
 ;;;;;;;;;;  Parser   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; id is always a variable
-; an id is not an expression
-; an lvalue of an id and no suffixes is, however
-; see struct lvalue
-(struct id (name) #:transparent)
 
 ; literals
 (struct int-literal (value) #:transparent)
@@ -213,10 +208,20 @@
 (struct lvalue-record-access (id) #:transparent)
 (struct lvalue-array-access (index) #:transparent)
 
-; lvalue and lvalue- structs above are messy but make parsing more conveniant
+; id is always a variable
+; an id is not an expression
+; an lvalue of an id and no suffixes is, however
+; see struct lvalue
+(struct id (name) #:transparent)
+
+; lvalue and lvalue- structs above are messy but make parsing more convenient
 ; they will be turned into this form at the end of parsing:
+
+; rec-id is an lvalue
 (struct record-access (rec-id field-id) #:transparent)
+; id is an lvalue
 (struct array-access (id index) #:transparent)
+
 
 ; declarations
 (struct tydec (type-id ty) #:transparent) ; type declaration

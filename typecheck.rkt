@@ -43,9 +43,9 @@
              var-env)
       (error (format "unbound identifier ~a in environment ~a" var-symbol var-env))))
 
+; assignable-to? t-type t-type -> boolean
 ; takes the type of an identifier or function argument, and the type of a thing you want to put in it
 ; tells you if that's ok
-; assignable-to? t-type t-type -> boolean
 (define (assignable-to? variable value)
   ;(print variable)
   ;(print value)
@@ -179,13 +179,6 @@
      ;end let statement
               
     ))
-
-;(define (infer-primitive expr ve)
-;  (cond [(int-literal? expr) (t-int)]
-;        [(string-literal? expr) (t-string)]
-;        [(nil? expr) (error "type error: nil expressions must have a declared type")]
-;        [(id? expr) (var-lookup (type-id-name expr) ve)]
-;        [else (error (format "type error: failed to infer a basic primitive type from initial value ~a.  polymorphic types are not allowed" expr))]))
 
 
 ;;TESTS
