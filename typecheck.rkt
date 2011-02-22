@@ -54,6 +54,48 @@
        (or (equal? value (t-nil))
            (equal? value variable))))
 
+;; ast-type-node -> t-type
+;(define (ast-node->t-type ast-node te)
+;  (match ast-node
+;    [(record-of tyfields)
+;     ; TODO: mutual recursion
+;     (t-record
+;      (map 
+;       (lambda (the-tyfield) 
+;         (match the-tyfield
+;           [(tyfield id (type-id name)) (field 
+;                                         (tyfield-id tyfield)
+;                                         (ast-node->t-type name 
+;                                                           te))]))
+;       tyfields))]
+;    [(array-of (type-id name))  
+;     ; TODO: mutual recursion
+;     (t-array (type-lookup name te))]
+;    
+;    [(function-type args val)
+;     ; TODO: mutual recursion and complex types
+;     (error 'TODO)
+;     ;(cons (type-binding type-id (t-fun 
+;     ]
+;))
+
+
+
+
+(define (ast-node->t-type ast-node te)
+  (match ast-node
+    [(type-id name) (type-lookup name te)]
+    [(array-of ast-sub-node) (t-array (ast-node->t-type ast-sub-node te))]
+    [(record-of tyfields) (t-record (map (lambda (tyf) 
+                                           (match tyf
+                                             [(tyfield id ast-sub-node)
+                                              (field id (ast-node->t-type ast-sub-node))]))
+                                         tyfields))]
+    [(function-type arg-nodes val-node) (t-fun (map ast-node->t-type arg-nodes) (ast-node->t-type val-node))]
+  ))
+
+
+
 ; type-of expr -> t-type
 (define (type-of expr)
   (type-of-env expr empty empty))
@@ -124,41 +166,42 @@
          (error "type error: for statement must increment an int from start to end int values"))]
 
     ;begin let statement
-    [(let-statement decs expseq)
-     (local [
-             
-             (define (accumulate-type-declarations decl ty-env)
-                (match decl
-                  [(vardec a b c) ty-env]
-                  [(fundec a b c d) ty-env]
-                  [(tydec type-id (record-of tyfields))
-                   (cons (type-binding 
-                          type-id
-                          (t-record
-                           (map 
-                            (lambda (tyfield) 
-                              (field 
-                               (tyfield-id tyfield)
-                               (type-lookup (type-id-name (tyfield-type-id tyfield)) ty-env)))
-                            tyfields)))
-                         ty-env)]
-                  [(tydec type-id ty) 
-                   (cons (type-binding type-id ty) ty-env)]))
-             
-             (define (accumulate-var-declarations decl v-env)
+;    [(let-statement decs expseq)
+;     (local [
+;             ]
+;           
+;       ;TODO: test function definitions
+;       (type-of-env expseq
+;                    (foldl accumulate-type-declarations
+;                           te ; the environment
+;                           decs)
+;                    (foldl accumulate-var-declarations
+;                           ve ; the environment
+;                           decs)))]
+     ;end let statement
+    
+    [(let-vars decs exp)
+     (local [(define (accumulate-var-declarations decl v-env)
                (match decl
                  [(vardec id id-type val)
-                 
-                  (let [(expression-type (type-of-env val te ve))]
-                      (if (not id-type)
+                  (let [(expression-type (type-of-env val te v-env))]
+                    (if (not id-type)
                         (if (equal? (t-nil) expression-type)
                             (error (format "type error: variable ~a has value nil but no type" id))
                             (cons (var-binding id expression-type) v-env))
                         (let [(declared-type (type-lookup id-type te))]
                           (if (assignable-to? declared-type expression-type)
-                            (cons (var-binding id declared-type) v-env)
-                            (error (format "type error: type mismatch, found ~a; expected ~a"
-                                           declared-type expression-type))))))]
+                              (cons (var-binding id declared-type) v-env)
+                              (error (format "type error: type mismatch, found ~a; expected ~a"
+                                             declared-type expression-type))))))]))]
+       (type-of-env exp
+                    te
+                    (foldl accumulate-var-declarations
+                           ve
+                           decs)))]
+    [(let-funs decs exp)
+     (local [(define (accumulate-fun-declarations decl v-env)
+               (match decl
                  ; TODO: ensure that function argument names don't repeat
                  ; f(x, y) ok but f(x, x) bad
                  [(fundec id tyfields type-id body)
@@ -174,20 +217,54 @@
                           (if (assignable-to? declared-type body-type)
                               new-v-env
                               (error (format "type error: type mismatch, found ~a; expected ~a"
-                                             declared-type body-type))))))]
-                 [(tydec a b) v-env]
-                 [(while-statement cond body) (error "type error: while statement found in odd place")] ; just in case
-                 ))]
-           
-       ;TODO: test function definitions
-       (type-of-env expseq
-                    (foldl accumulate-type-declarations
-                           te ; the environment
-                           decs)
-                    (foldl accumulate-var-declarations
-                           ve ; the environment
+                                             declared-type body-type))))))]))]
+       (type-of-env exp
+                    te
+                    (foldl accumulate-fun-declarations
+                           ve
                            decs)))]
-     ;end let statement
+    [(let-types decs exp)
+     (local [(define (accumulate-type-declarations decl ty-env)
+               (match decl
+                 ; TODO: mutual recursion
+                 [(tydec name ast-type-node) (cons (type-binding name (ast-node->t-type ast-type-node ty-env))
+                                                   ty-env)])
+               
+;               (match decl
+;                 [(tydec type-id (record-of tyfields))
+;                  ; TODO: mutual recursion
+;                  (cons (type-binding 
+;                         type-id
+;                         (t-record
+;                          (map 
+;                           (lambda (tyfield) 
+;                             (field 
+;                              (tyfield-id tyfield)
+;                              (type-lookup (type-id-name (tyfield-type-id tyfield)) 
+;                                           ty-env)))
+;                           tyfields)))
+;                        ty-env)]
+;                 [(tydec type-id (array-of (type-id name)))   
+;                  ; TODO: mutual recursion
+;                  (cons (type-binding type-id (t-array (type-lookup name te)))
+;                        ty-env)]
+;                 
+;                 [(tydec type-id (function-type args val)) 
+;                  ; TODO: mutual recursion and complex types
+;                  ;(error 'TODO)
+;                 ; (cons (type-binding type-id (t-fun 
+;                  ]
+;                 
+;                 [(tydec type-id ty) 
+;                  (cons (type-binding type-id ty) ty-env)])
+               
+               
+               )]
+       (type-of-env exp
+                    (foldl accumulate-type-declarations
+                           te
+                           decs)
+                    ve))]
               
     
     [(funcall fun-id caller-args)
@@ -198,7 +275,7 @@
                    caller-args)
            (t-fun-result f)
            (error (format "type error: mismatched type applied to function argument, expected ~a, found ~a"
-                          (t-fun-args f) args))))]
+                          (t-fun-args f) caller-args))))]
      
     ))
 
@@ -254,8 +331,7 @@
 ; let-statement tests
 
 (check-error (type-of (parse-string "let var w : string := 22 in 1 end")) "type error: type mismatch, found #(struct:t-string); expected #(struct:t-int)")
-(check-error (type-of (parse-string "let type a = int in let var x : a := \"green\" in 37 end end")) "type error: type mismatch, found #(struct:type-id int); expected #(struct:t-string)")
-
+(check-error (type-of (parse-string "let type a = int in let var x : a := \"green\" in 37 end end")) "type error: type mismatch, found #(struct:t-int); expected #(struct:t-string)")
 (check-expect (type-of (parse-string "let var m : int := 4+4 in m end"))
               (t-int))
 (check-expect (type-of (parse-string "let var n := 5*3+2-12*66-304440403 in \"waaaa\" end"))
@@ -263,8 +339,16 @@
 (check-error (type-of (parse-string "let var z := nil in end")) "type error: variable z has value nil but no type")
 (check-error (type-of (parse-string "let var z := nil in zz end")) "type error: variable z has value nil but no type")
 (check-expect (type-of (parse-string "let var zz : int := nil in end")) (t-void))
-;(check-expect (type-of (parse-string "let type a = int var x : a := 2 in 154 end")) (t-int)) ; TODO: let*
-;(check-expect (type-of (parse-string "let type a = int type b = a in let var nobbish : b := 48 in 23 end end")) (t-int)) ; TODO: let = letrec*
+(check-expect (type-of (parse-string "let type a = int var x : a := 2 in 154 end")) (t-int)) ; TODO: let*
+(check-expect (type-of (parse-string "let type a = int type b = a in let var nobbish : b := 48 in 23 end end")) (t-int)) ; TODO: let = letrec*
+(check-expect (type-of (parse-string "let type a = array of int var x : a := int[7] of 1 in x end"))
+              (t-array (t-int)))
+(check-expect (type-of (parse-string "let var x := 7   var y := x in y  end"))
+              (t-int))
+(check-expect (type-of (parse-string "let var x := 7 in let var y := x in y end end"))
+              (t-int))
+
+
 
 ; fundec/funcall tests
 (check-expect (type-of (parse-string "let function f() : int = 25 in f end")) (t-fun empty (t-int)))

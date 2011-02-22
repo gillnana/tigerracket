@@ -578,4 +578,4 @@
 ;; just check that it parses, don't examine the tree
 (check-expect (begin (parse-file "./tests/queens.tig") 'great)
               'great)
-(test)
+;(test)
