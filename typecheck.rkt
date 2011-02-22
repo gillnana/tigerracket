@@ -47,6 +47,7 @@
 ; takes the type of an identifier or function argument, and the type of a thing you want to put in it
 ; tells you if that's ok
 (define (assignable-to? variable value)
+<<<<<<< HEAD:typecheck.rkt
   ;(print variable)
   ;(print value)
   (when (symbol? variable) (error "internal error: assignable-to received a symbol"))
@@ -55,6 +56,12 @@
            (equal? value variable))))
 
 ; type-of expr -> t-type
+=======
+  (or (t-nil? value)
+      (equal? value variable)))
+
+
+>>>>>>> 2ca0a3b8eead175bb757f7ac421010d345b1e380:typecheck.rkt
 (define (type-of expr)
   (type-of-env expr empty empty))
 
@@ -131,6 +138,17 @@
                 (match decl
                   [(vardec a b c) ty-env]
                   [(fundec a b c d) ty-env]
+                  [(tydec type-id (record-of tyfields))
+                   (cons (type-binding 
+                          type-id
+                          (t-record
+                           (map 
+                            (lambda (tyfield) 
+                              (field 
+                               (tyfield-id tyfield)
+                               (type-lookup (type-id-name (tyfield-type-id tyfield)) ty-env)))
+                            tyfields)))
+                         ty-env)]
                   [(tydec type-id ty) 
                    (cons (type-binding type-id ty) ty-env)]))
              
