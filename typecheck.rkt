@@ -112,8 +112,8 @@
              
              (define (accumulate-type-declarations decl ty-env)
                 (match decl
-                  [(vardec id id-type val) ty-env]
-                  [(fundec id tyfields type-id body) ty-env]
+                  [(vardec a b c) ty-env]
+                  [(fundec a b c d) ty-env]
                   [(tydec type-id ty) 
                    (cons (type-binding type-id ty) ty-env)]))
              
