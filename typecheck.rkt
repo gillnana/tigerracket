@@ -29,8 +29,8 @@
     ;[(equal? type-
     ;[(type-id? type-symbol) (type-lookup (type-id-name type-symbol) type-env)]
     [else (or (ormap (lambda (binding) (if (equal? (type-binding-id binding) type-symbol)
-                               (type-binding-ty binding)
-                               false))
+                                           (type-binding-ty binding)
+                                           false))
                      type-env)
               (error (format "unbound type ~a" type-symbol)))]))
 
@@ -47,7 +47,6 @@
 ; takes the type of an identifier or function argument, and the type of a thing you want to put in it
 ; tells you if that's ok
 (define (assignable-to? variable value)
-<<<<<<< HEAD:typecheck.rkt
   ;(print variable)
   ;(print value)
   (when (symbol? variable) (error "internal error: assignable-to received a symbol"))
@@ -56,12 +55,6 @@
            (equal? value variable))))
 
 ; type-of expr -> t-type
-=======
-  (or (t-nil? value)
-      (equal? value variable)))
-
-
->>>>>>> 2ca0a3b8eead175bb757f7ac421010d345b1e380:typecheck.rkt
 (define (type-of expr)
   (type-of-env expr empty empty))
 
@@ -106,9 +99,9 @@
     [(sequence expseq) (type-of-env expseq te ve)]
     [(expseq explist) ; foldl is sexy
      (foldl (λ (exp type)
-             (type-of-env exp te ve))
-           (t-void)
-           explist)]
+              (type-of-env exp te ve))
+            (t-void)
+            explist)]
     
     [(if-statement c t (list))
      (cond [(not (t-int? (type-of-env c te ve))) (error "type error: condition of if statement must have boolean/int value")]
@@ -196,6 +189,17 @@
                            decs)))]
      ;end let statement
               
+    
+    [(funcall fun-id caller-args)
+     (let* [(f (var-lookup (id-name fun-id) ve))
+            (fundef-args (t-fun-args f))]
+       (if (andmap (λ (fundef-arg caller-arg) (assignable-to? fundef-arg (type-of-env caller-arg te ve)))
+                   (t-fun-args f)
+                   caller-args)
+           (t-fun-result f)
+           (error (format "type error: mismatched type applied to function argument, expected ~a, found ~a"
+                          (t-fun-args f) args))))]
+     
     ))
 
 
@@ -261,5 +265,8 @@
 (check-expect (type-of (parse-string "let var zz : int := nil in end")) (t-void))
 ;(check-expect (type-of (parse-string "let type a = int var x : a := 2 in 154 end")) (t-int)) ; TODO: let*
 ;(check-expect (type-of (parse-string "let type a = int type b = a in let var nobbish : b := 48 in 23 end end")) (t-int)) ; TODO: let = letrec*
+
+; fundec/funcall tests
+(check-expect (type-of (parse-string "let function f() : int = 25 in f end")) (t-fun empty (t-int)))
 
 (test)
