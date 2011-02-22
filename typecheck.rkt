@@ -128,7 +128,7 @@
                             (cons (var-binding id expression-type) v-env))
                         (let [(declared-type (type-lookup id-type te))]
                           (if (assignable-to? declared-type expression-type)
-                            (cons (var-binding id (type-lookup id-type te)) v-env)
+                            (cons (var-binding id declared-type) v-env)
                             (error (format "type error: type mismatch, found ~a; expected ~a"
                                            declared-type expression-type))))))]
                  ; TODO: ensure that function argument names don't repeat
@@ -165,12 +165,12 @@
     ;(if (check-record-fields fields (type-lookup type te))
     ))
 
-(define (infer-primitive expr ve)
-  (cond [(int-literal? expr) (t-int)]
-        [(string-literal? expr) (t-string)]
-        [(nil? expr) (error "type error: nil expressions must have a declared type")]
-        [(id? expr) (var-lookup (type-id-name expr) ve)]
-        [else (error (format "type error: failed to infer a basic primitive type from initial value ~a.  polymorphic types are not allowed" expr))]))
+;(define (infer-primitive expr ve)
+;  (cond [(int-literal? expr) (t-int)]
+;        [(string-literal? expr) (t-string)]
+;        [(nil? expr) (error "type error: nil expressions must have a declared type")]
+;        [(id? expr) (var-lookup (type-id-name expr) ve)]
+;        [else (error (format "type error: failed to infer a basic primitive type from initial value ~a.  polymorphic types are not allowed" expr))]))
 
 
 ;;TESTS
