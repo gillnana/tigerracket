@@ -13,7 +13,7 @@
 
 (struct t-int () #:transparent)
 (struct t-string () #:transparent)
-(struct t-void () ) ; not transparent
+(struct t-void () #:transparent) ; NOT TRANSPARENT, FUCK YOU RACKET
 (struct t-nil () #:transparent)
 
 (struct t-fun (args result) #:transparent) ; args is list of types
@@ -25,6 +25,7 @@
   (cond 
     [(equal? type-symbol 'int) (t-int)]
     [(equal? type-symbol 'string) (t-string)]
+    ;[(equal? type-
     ;[(type-id? type-symbol) (type-lookup (type-id-name type-symbol) type-env)]
     [else (or (ormap (lambda (binding) (if (equal? (type-binding-id binding) type-symbol)
                                (type-binding-ty binding)
@@ -32,12 +33,19 @@
                      type-env)
               (error (format "unbound type ~a" type-symbol)))]))
 
-(define (var-lookup var-symbol var-env) 
+(define (var-lookup var-symbol var-env)
+  ;(print var-env)
   (or (ormap (lambda (binding) (if (equal? (var-binding-id binding) var-symbol)
                                    (var-binding-ty binding)
                                    false))
              var-env)
       (error (format "unbound identifier ~a" var-symbol))))
+
+; takes the type of an identifier or function argument, and the type of a thing you want to put in it
+; tells you if that's ok
+(define (assignable-to? variable value)
+  (or (equal? value (t-nil))
+      (equal? value variable)))
 
 
 (define (type-of expr)
@@ -48,6 +56,8 @@
     [(int-literal a) (t-int)]
     [(string-literal a) (t-string)]
     [(nil) (t-nil)]
+    
+    [(id a) (var-lookup a ve)]
     
     [(array-creation (type-id type) size initval)
      (cond
@@ -69,9 +79,12 @@
          (error "type error: arg to unary minus must be int")
          (t-int))]
     
-    [(sequence (list)) (t-void)]
-    [(sequence (list a ... b))
-     (type-of-env b te ve)]
+    [(sequence expseq) (type-of-env expseq te ve)]
+    [(expseq explist) ; foldl is sexy
+     (foldl (λ (exp type)
+             (type-of-env exp te ve))
+           (t-void)
+           explist)]
     
     [(if-statement c t (list))
      (cond [(not (equal? (type-of-env c te ve) (t-int))) (error "type error: condition of if statement must have boolean/int value")]
@@ -92,40 +105,61 @@
               (equal? (type-of-env end te ve) (t-int)))
          (type-of-env body te ve)
          (error "type error: for statement must increment an int from start to end int values"))]
-    [(let-statement decs (list))
-     (t-void)] ; TODO: handle void expressions more intelligently, by implementing the function defined below. since it needs access
-               ; to the environments, where should this function be located?
-    [(let-statement decs (list a ... b))
-     (local [(define (accumulate-declarations binding env)
-                (match binding
+
+    ;begin let statement
+    [(let-statement decs expseq)
+     (local [
+             
+             (define (accumulate-type-declarations decl ty-env)
+                (match decl
+                  [(vardec id id-type val) ty-env]
+                  [(fundec id tyfields type-id body) ty-env]
                   [(tydec type-id ty) 
-                   (cons (type-binding type-id ty) env)]
-                  [(vardec id id-type val)
-                   (if (not id-type)
-                       (cons (var-binding id (infer-primitive val ve)) env)
-                       (let [(declared-type (type-lookup id-type te))
-                             (expression-type (infer-primitive val ve))]
-                         (if (equal? declared-type expression-type)
-                             (cons (var-binding id id-type) env)
-                             (error (format "type error: type mismatch, found ~a; expected ~a"
-                                            declared-type expression-type)))))]
-                  [(fundec id tyfields type-id body) 
-                   (if (not type-id)
-                       env ; function definitions never add any new types and only need to be checked for mismatches, so we can ignore
-                           ; this case, right?
-                       (let [(declared-type (type-lookup type-id te))
-                             (expression-type (infer-primitive body ve))]
-                         (if (equal? declared-type expression-type)
-                             env
-                             (error (format "type error: type mismatch, found ~a; expected ~a"
-                                            declared-type expression-type)))))]))]
-                     ;TODO: test function definitions
-       (type-of-env b
-                    (foldl accumulate-declarations
+                   (cons (type-binding type-id ty) ty-env)]))
+             
+             (define (accumulate-var-declarations decl v-env)
+               (match decl
+                 [(vardec id id-type val)
+                 
+                  (let [(expression-type (type-of-env val te ve))]
+                      (if (not id-type)
+                        (if (equal? (t-nil) expression-type)
+                            (error (format "variable ~a has value nil but no type" id))
+                            (cons (var-binding id expression-type) v-env))
+                        (let [(declared-type (type-lookup id-type te))]
+                          (if (assignable-to? declared-type expression-type)
+                            (cons (var-binding id (type-lookup id-type te)) v-env)
+                            (error (format "type error: type mismatch, found ~a; expected ~a"
+                                           declared-type expression-type))))))]
+                 ; TODO: ensure that function argument names don't repeat
+                 ; f(x, y) ok but f(x, x) bad
+                 [(fundec id tyfields type-id body)
+                  (let* [(body-type (type-of-env body te ve))
+                         (new-v-env (cons (var-binding id  
+                                                       (t-fun (map (λ (tyfield) (type-lookup (tyfield-type-id tyfield) te))
+                                                                   tyfields)
+                                                              body-type)) ; TODO: modify ve to contain self for recursion!
+                                          v-env))]
+                    (if (not type-id)
+                        new-v-env
+                        (let [(declared-type (type-lookup type-id te))]
+                          (if (assignable-to? declared-type body-type)
+                              new-v-env
+                              (error (format "type error: type mismatch, found ~a; expected ~a"
+                                             declared-type body-type))))))]
+                 [(tydec a b) v-env]
+                 [(while-statement cond body) (error "while statement found in odd place")] ; just in case
+                 ))]
+           
+       ;TODO: test function definitions
+       (type-of-env expseq
+                    (foldl accumulate-type-declarations
                            te ; the environment
                            decs)
-                    ve))]
-    
+                    (foldl accumulate-var-declarations
+                           ve ; the environment
+                           decs)))]
+     ;end let statement
               
     ;[(record-creation (type-id type) fields)
     ;(if (check-record-fields fields (type-lookup type te))
@@ -175,9 +209,15 @@
 
 (check-error (type-of (parse-string "let var w : string := 22 in 1 end")) "type error: type mismatch, found #(struct:t-string); expected #(struct:t-int)")
 (check-error (type-of (parse-string "let type a = int in let var x : a := \"green\" in 37 end end")) "type error: type mismatch, found #(struct:type-id int); expected #(struct:t-string)")
-;(check-error (type-of (parse-string "let var z := nil in end")) "") ; TODO: handle nil values more intelligently
 
-;(check-expect (type-of (parse-string "let type a = int var x : a := 2 in 154 end")) (t-int))
+(check-expect (type-of (parse-string "let var m : int := 4+4 in m end"))
+              (t-int))
+(check-expect (type-of (parse-string "let var n := 5*3+2-12*66-304440403 in \"waaaa\" end"))
+              (t-string))
+(check-error (type-of (parse-string "let var z := nil in end")) "variable z has value nil but no type") ; TODO: handle nil values more intelligently
+(check-error (type-of (parse-string "let var z := nil in zz end")) "variable z has value nil but no type") ; TODO: handle nil values more intelligently
+(check-expect (type-of (parse-string "let var zz : int := nil in end")) (t-void))
+;(check-expect (type-of (parse-string "let type a = int var x : a := 2 in 154 end")) (t-int)) ; TODO: let*
 ;(check-expect (type-of (parse-string "let type a = int type b = a in let var nobbish : b := 48 in 23 end end")) (t-int)) ; TODO: let = letrec*
 
 (test)

@@ -239,7 +239,8 @@
 (struct while-statement (cond body) #:transparent)
 (struct for-statement (var start end body) #:transparent)
 (struct let-statement (bindings expseq) #:transparent)
-(struct sequence (exps) #:transparent)
+(struct sequence (expseq) #:transparent)
+(struct expseq (exps) #:transparent)
 
 (struct op (op) #:transparent)
 (struct binary-op (op arg1 arg2) #:transparent)
@@ -344,12 +345,12 @@
                     )
     
     (while-nonterminal [(while exp do exp) (while-statement $2 $4)])
-    (let-nonterminal [(let decs in expseq end) (let-statement $2 $4)])
+    (let-nonterminal [(let decs in expseq end) (let-statement $2 (expseq $4))])
     (for-nonterminal [(for id assign exp to exp do exp) (for-statement $2 $4 $6 $8)])
     (expseq [() empty]
             [(exp) (cons $1 empty)]
             [(exp semicolon expseq) (cons $1 $3)])
-    (sequencing [(open-paren expseq close-paren) (sequence $2)])
+    (sequencing [(open-paren expseq close-paren) (sequence (expseq $2))])
     )
    
    ; lower on this list means binds tighter
@@ -422,7 +423,7 @@
 (check-expect (parse-string "if 4 then if 5 then 5 else 5")
               (if-statement (int-literal 4) (if-statement (int-literal 5) (int-literal 5) (int-literal 5)) empty))
 (check-expect (parse-string "if 4 then (if 5 then 5) else 4")
-              (if-statement (int-literal 4) (sequence (list (if-statement (int-literal 5) (int-literal 5) empty))) (int-literal 4)))
+              (if-statement (int-literal 4) (sequence (expseq (list (if-statement (int-literal 5) (int-literal 5) empty)))) (int-literal 4)))
 
 ;dangling do testing
 (check-expect (parse-string "while 4 do 4")
@@ -455,9 +456,9 @@
               (array-access (id 'a) (id 'b)))
 
 ;; let in sequence
-(check-expect (parse-string "let in 1 end") (let-statement empty (list (int-literal 1))))
-(check-expect (parse-string "let in 1; 2 end") (let-statement empty (list (int-literal 1) (int-literal 2))))
-(check-expect (parse-string "let in (1; 2) end") (let-statement empty (list (sequence (list (int-literal 1) (int-literal 2))))))
+(check-expect (parse-string "let in 1 end") (let-statement empty (expseq (list (int-literal 1)))))
+(check-expect (parse-string "let in 1; 2 end") (let-statement empty (expseq (list (int-literal 1) (int-literal 2)))))
+(check-expect (parse-string "let in (1; 2) end") (let-statement empty (expseq (list (sequence (expseq (list (int-literal 1) (int-literal 2))))))))
 
 ;precedence testing
 (check-expect (parse-string "4/5*6")
@@ -471,38 +472,38 @@
 
 ;type declaration tests
 (check-expect (parse-string "let type a = int in end")
-              (let-statement (list (tydec 'a (type-id 'int))) empty))
+              (let-statement (list (tydec 'a (type-id 'int))) (expseq empty)))
 ;(check-expect (parse-string "let type aa = unit in end") ; TODO: are we implementing unit keyword?
 ;              (let-statement (list (tydec 'aa (type-id 'unit))) empty))
 (check-expect (parse-string "let type b = array of charlie in end")
-              (let-statement (list (tydec 'b (array-of (type-id 'charlie)))) empty))
+              (let-statement (list (tydec 'b (array-of (type-id 'charlie)))) (expseq empty)))
 (check-expect (parse-string "let type c = {} in end")
-              (let-statement (list (tydec 'c (record-of empty))) empty))
+              (let-statement (list (tydec 'c (record-of empty))) (expseq empty)))
 (check-expect (parse-string "let type d = { beer : int } in end")
-              (let-statement (list (tydec 'd (record-of (list (tyfield 'beer (type-id 'int)))))) empty))
+              (let-statement (list (tydec 'd (record-of (list (tyfield 'beer (type-id 'int)))))) (expseq empty)))
 (check-expect (parse-string "let type e = { chocolate : int, mufflepuff : stormclouds, wozzar : string} in end")
               (let-statement (list (tydec 'e (record-of (list (tyfield 'chocolate (type-id 'int))
                                                               (tyfield 'mufflepuff (type-id 'stormclouds))
-                                                              (tyfield 'wozzar (type-id 'string)))))) empty))
+                                                              (tyfield 'wozzar (type-id 'string)))))) (expseq empty)))
 ; function types
 (check-expect (parse-string "let type f = {} -> {} in end")
               (let-statement (list 
                               (tydec 'f (function-type (list (record-of empty))
                                                        (record-of empty))))
-                             empty))
+                             (expseq empty)))
 (check-expect (parse-string "let type f = int -> int -> int in end")
               (let-statement (list 
                               (tydec 'f (function-type (list (type-id 'int))
                                                        (function-type (list (type-id 'int))
                                                                       (type-id 'int)))))
-                             empty))
+                             (expseq empty)))
 (check-expect (parse-string "let type f = ( int, int ) -> int  in end")
-              (let-statement (list (tydec 'f (function-type (list (type-id 'int) (type-id 'int)) (type-id 'int)))) '()))
+              (let-statement (list (tydec 'f (function-type (list (type-id 'int) (type-id 'int)) (type-id 'int)))) (expseq empty)))
 (check-expect (parse-string "let type f = ( int -> int ) -> int  in end")
               (let-statement (list 
                               (tydec 'f (function-type (list (function-type (list (type-id 'int)) (type-id 'int)))
                                                        (type-id 'int)))) 
-                             '()))
+                             (expseq empty)))
 (check-expect (parse-string "7 /*****asdf***/ + /**omgwtfbbg*/ 2")
               (binary-op (op '+) (int-literal 7) (int-literal 2)))
 
