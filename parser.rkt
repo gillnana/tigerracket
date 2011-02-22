@@ -204,7 +204,6 @@
 (struct fieldval (name val) #:transparent)
 
 ; lvalues (also are expressions)
-(struct lvalue (id suffixes) #:transparent)
 (struct lvalue-record-access (id) #:transparent)
 (struct lvalue-array-access (index) #:transparent)
 
@@ -281,15 +280,7 @@
     (fundec [(function id open-paren tyfields close-paren equals exp) (fundec $2 $4 #f $7)]
             [(function id open-paren tyfields close-paren colon id equals exp) (fundec $2 $4 $7 $9)])
     (exp [(literal) $1]
-         [(lvalue) (foldl (lambda (lval-suf sub-lval)
-                            ; transform-lvalue into left recursive representation
-                            ; lval-suf is the first suffix in the suffix list
-                            ; sub-lval is the new lvalue constructed so far
-                            (match lval-suf
-                              [(lvalue-record-access field-name) (record-access sub-lval field-name)]
-                              [(lvalue-array-access index) (array-access sub-lval index)]))
-                          (lvalue-id $1)
-                          (lvalue-suffixes $1))]
+         [(lvalue) $1]
          [(funcall) $1]
          [(arithmetic) $1]
          [(structures) $1]
@@ -298,7 +289,16 @@
          )
     
     
-    (lvalue [(id lvalue-rest) (lvalue (id $1) $2)])
+    (lvalue [(id lvalue-rest) 
+             (foldl (lambda (lval-suf sub-lval)
+                            ; transform-lvalue into left recursive representation
+                            ; lval-suf is the first suffix in the suffix list
+                            ; sub-lval is the new lvalue constructed so far
+                            (match lval-suf
+                              [(lvalue-record-access field-name) (record-access sub-lval field-name)]
+                              [(lvalue-array-access index) (array-access sub-lval index)]))
+                          (id $1)
+                           $2)])
     (lvalue-rest [() empty]
                  [(dot id lvalue-rest) (cons (lvalue-record-access $2) $3)]
                  [(open-bracket exp close-bracket lvalue-rest) (cons (lvalue-array-access $2) $4)])
@@ -447,8 +447,14 @@
 
 (check-expect (parse-string "a.b.c.d.zoomba[pizza].lorg[a.b]")
               (array-access
- (record-access (array-access (record-access (record-access (record-access (record-access (id 'a) 'b) 'c) 'd) 'zoomba) (id 'pizza)) 'lorg)
- (record-access (id 'a) 'b)))
+               (record-access (array-access (record-access (record-access (record-access (record-access (id 'a) 'b) 'c) 'd) 'zoomba) (id 'pizza)) 'lorg)
+               (record-access (id 'a) 'b)))
+(check-expect (parse-string "a.b.c.d.zoomba[pizza].lorg[a.b] := 7")
+              (assignment
+               (array-access
+                (record-access (array-access (record-access (record-access (record-access (record-access (id 'a) 'b) 'c) 'd) 'zoomba) (id 'pizza)) 'lorg)
+                (record-access (id 'a) 'b))
+               (int-literal 7)))
 
 ;lvalue testing including array accesses and declarations
 (check-expect (parse-string "drugs.f")
