@@ -91,7 +91,9 @@
                                              [(tyfield id ast-sub-node)
                                               (field id (ast-node->t-type ast-sub-node))]))
                                          tyfields))]
-    [(function-type arg-nodes val-node) (t-fun (map ast-node->t-type arg-nodes) (ast-node->t-type val-node))]
+    [(function-type arg-nodes val-node) (t-fun (map ast-node->t-type 
+                                                    arg-nodes) 
+                                               (ast-node->t-type val-node))]
   ))
 
 
@@ -183,13 +185,13 @@
     [(let-vars decs exp)
      (local [(define (accumulate-var-declarations decl v-env)
                (match decl
-                 [(vardec id id-type val)
+                 [(vardec id type-id val) ; type-id is symbol or false, NOT an ast-node ex: 'int or 'string or 'zoomba or 'whatever or false or #f
                   (let [(expression-type (type-of-env val te v-env))]
-                    (if (not id-type)
+                    (if (not type-id)
                         (if (equal? (t-nil) expression-type)
                             (error (format "type error: variable ~a has value nil but no type" id))
                             (cons (var-binding id expression-type) v-env))
-                        (let [(declared-type (type-lookup id-type te))]
+                        (let [(declared-type (type-lookup type-id te))]
                           (if (assignable-to? declared-type expression-type)
                               (cons (var-binding id declared-type) v-env)
                               (error (format "type error: type mismatch, found ~a; expected ~a"
@@ -204,16 +206,22 @@
                (match decl
                  ; TODO: ensure that function argument names don't repeat
                  ; f(x, y) ok but f(x, x) bad
-                 [(fundec id tyfields type-id body)
+                 [(fundec id tyfields return-type body)
                   (let* [(body-type (type-of-env body te ve))
                          (new-v-env (cons (var-binding id  
-                                                       (t-fun (map (λ (tyfield) (type-lookup (tyfield-type-id tyfield) te))
+                                                       (t-fun (map (λ (the-tyfield) 
+                                                                     ;(print the-tyfield)
+                                                                     (match the-tyfield
+                                                                       [(tyfield fieldname (type-id name)) (type-lookup name te)])
+                                                                   ;  (type-lookup (tyfield-type-id tyfield) te)
+                                                                     
+                                                                     )
                                                                    tyfields)
                                                               body-type)) ; TODO: modify ve to contain self for recursion!
                                           v-env))]
-                    (if (not type-id)
+                    (if (not return-type)
                         new-v-env
-                        (let [(declared-type (type-lookup type-id te))]
+                        (let [(declared-type (type-lookup return-type te))]
                           (if (assignable-to? declared-type body-type)
                               new-v-env
                               (error (format "type error: type mismatch, found ~a; expected ~a"
@@ -228,38 +236,7 @@
                (match decl
                  ; TODO: mutual recursion
                  [(tydec name ast-type-node) (cons (type-binding name (ast-node->t-type ast-type-node ty-env))
-                                                   ty-env)])
-               
-;               (match decl
-;                 [(tydec type-id (record-of tyfields))
-;                  ; TODO: mutual recursion
-;                  (cons (type-binding 
-;                         type-id
-;                         (t-record
-;                          (map 
-;                           (lambda (tyfield) 
-;                             (field 
-;                              (tyfield-id tyfield)
-;                              (type-lookup (type-id-name (tyfield-type-id tyfield)) 
-;                                           ty-env)))
-;                           tyfields)))
-;                        ty-env)]
-;                 [(tydec type-id (array-of (type-id name)))   
-;                  ; TODO: mutual recursion
-;                  (cons (type-binding type-id (t-array (type-lookup name te)))
-;                        ty-env)]
-;                 
-;                 [(tydec type-id (function-type args val)) 
-;                  ; TODO: mutual recursion and complex types
-;                  ;(error 'TODO)
-;                 ; (cons (type-binding type-id (t-fun 
-;                  ]
-;                 
-;                 [(tydec type-id ty) 
-;                  (cons (type-binding type-id ty) ty-env)])
-               
-               
-               )]
+                                                   ty-env)]))]
        (type-of-env exp
                     (foldl accumulate-type-declarations
                            te
@@ -352,5 +329,8 @@
 
 ; fundec/funcall tests
 (check-expect (type-of (parse-string "let function f() : int = 25 in f end")) (t-fun empty (t-int)))
+(check-expect (type-of (parse-string "let function f(x : int) : int = 25 in f(12) end")) (t-int))
+;(check-expect (type-of (parse-string "let function f(x : int) = 25 in f end")) (t-fun empty (t-void)))
+
 
 (test)
