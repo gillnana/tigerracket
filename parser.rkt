@@ -393,7 +393,10 @@
     (for-nonterminal [(for id assign exp to exp do exp) (for-statement $2 $4 $6 $8)])
     (expseq [() empty]
             [(exp) (cons $1 empty)]
-            [(exp semicolon expseq) (cons $1 $3)])
+            [(exp semicolon expseq) (cons $1 $3)]
+            ; TODO: ACTUALLY MEET THE SPEC AND DON'T LISTEN TO ROAN'S LIES
+;            [(repetition
+            )
     (sequencing [(open-paren expseq close-paren) (sequence (expseq $2))])
     )
    

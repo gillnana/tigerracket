@@ -120,7 +120,7 @@
     [(array-access (id name) index)
      (if (t-int? (type-of-env index te ve))
          (t-array-elem-type (var-lookup name ve))
-         (error "type error: attempted to access array ~a with non-integer index"))]
+         (error (format "type error: attempted to access array ~a with non-integer index" name)))]
           
           
     ;[(record-creation (type-id type) fields)
@@ -213,19 +213,20 @@
                                                                      ;(print the-tyfield)
                                                                      (match the-tyfield
                                                                        [(tyfield fieldname (type-id name)) (type-lookup name te)])
-                                                                   ;  (type-lookup (tyfield-type-id tyfield) te)
+                                                                     ;  (type-lookup (tyfield-type-id tyfield) te)
                                                                      
                                                                      )
                                                                    tyfields)
                                                               body-type)) ; TODO: modify ve to contain self for recursion!
                                           v-env))]
                     (if (not return-type)
-                        new-v-env
+                        (if (t-void? body-type)
+                            new-v-env
+                            (error (format "type error: type mismatch, found ~a; expected (t-void)" body-type)))                             
                         (let [(declared-type (type-lookup return-type te))]
                           (if (assignable-to? declared-type body-type)
                               new-v-env
-                              (error (format "type error: type mismatch, found ~a; expected ~a"
-                                             declared-type body-type))))))]))]
+                              (error (format "type error: type mismatch, found ~a; expected ~a" declared-type body-type))))))]))]
        (type-of-env exp
                     te
                     (foldl accumulate-fun-declarations
@@ -292,15 +293,15 @@
               (t-int))
 
 ; array creation/access tests
-(check-error (type-of (parse-string "a[\"zoomba\"]")) "type error: attempted to access array ~a with non-integer index")
+(check-error (type-of (parse-string "a[\"zoomba\"]")) "type error: attempted to access array a with non-integer index")
 (check-error (type-of (parse-string "let var x := int[4] of \"pizza\" in end")) "type error: type of array not same as initial value")
 (check-expect (type-of (parse-string "let var y := int[26] of nil in y end")) (t-array (t-int)))
 
 (check-error (type-of (parse-string "a[4]")) "unbound identifier a in environment ()")
 
 (check-expect (type-of (parse-string "let var ab := int[10] of 5 in ab[24] end")) (t-int))
-;(check-error (type-of (parse-string "let var z := int[10] of 5 in z[\"pizza\"] end")) "")
-;(check-error (type-of (parse-string "let var aa := int[10] of 5 in aa[nil] end")) "")
+(check-error (type-of (parse-string "let var z := int[10] of 5 in z[\"pizza\"] end")) "type error: attempted to access array z with non-integer index")
+(check-error (type-of (parse-string "let var aa := int[10] of 5 in aa[nil] end")) "type error: attempted to access array aa with non-integer index")
 
 
 (check-expect (type-of (parse-string "(34; 27)")) (t-int))
@@ -330,7 +331,7 @@
 ; fundec/funcall tests
 (check-expect (type-of (parse-string "let function f() : int = 25 in f end")) (t-fun empty (t-int)))
 (check-expect (type-of (parse-string "let function f(x : int) : int = 25 in f(12) end")) (t-int))
-;(check-expect (type-of (parse-string "let function f(x : int) = 25 in f end")) (t-fun empty (t-void)))
+(check-expect (type-of (parse-string "let function f(x : int) = (25;()) in f end")) (t-fun (list (t-int)) (t-void)))
 
 
 (test)
