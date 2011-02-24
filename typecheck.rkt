@@ -151,22 +151,7 @@
               (t-int? (type-of-env end te ve)))
          (type-of-env body te ve)
          (error "type error: for statement must increment an int from start to end int values"))]
-
-    ;begin let statement
-;    [(let-statement decs expseq)
-;     (local [
-;             ]
-;           
-;       ;TODO: test function definitions
-;       (type-of-env expseq
-;                    (foldl accumulate-type-declarations
-;                           te ; the environment
-;                           decs)
-;                    (foldl accumulate-var-declarations
-;                           ve ; the environment
-;                           decs)))]
-     ;end let statement
-    
+    ;let-vars
     [(let-vars decs exp)
      (local [(define (accumulate-var-declarations decl v-env)
                (match decl
@@ -186,6 +171,7 @@
                     (foldl accumulate-var-declarations
                            ve
                            decs)))]
+    ;let-funs
     [(let-funs decs exp)
      (local [(define (accumulate-fun-declarations decl v-env)
                (match decl
@@ -197,10 +183,7 @@
                                                        (t-fun (map (λ (the-tyfield) 
                                                                      ;(print the-tyfield)
                                                                      (match the-tyfield
-                                                                       [(tyfield fieldname (type-id name)) (type-lookup name te)])
-                                                                     ;  (type-lookup (tyfield-type-id tyfield) te)
-                                                                     
-                                                                     )
+                                                                       [(tyfield fieldname (type-id name)) (type-lookup name te)]))
                                                                    tyfields)
                                                               body-type)) ; TODO: modify ve to contain self for recursion!
                                           v-env))]
@@ -217,6 +200,7 @@
                     (foldl accumulate-fun-declarations
                            ve
                            decs)))]
+    ;let-types
     [(let-types decs exp)
      (local [(define (accumulate-type-declarations decl ty-env)
                (match decl
