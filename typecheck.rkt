@@ -26,7 +26,6 @@
   (cond 
     [(equal? type-symbol 'int) (t-int)]
     [(equal? type-symbol 'string) (t-string)]
-    ;[(equal? type-
     ;[(type-id? type-symbol) (type-lookup (type-id-name type-symbol) type-env)]
     [else (or (ormap (lambda (binding) (if (equal? (type-binding-id binding) type-symbol)
                                            (type-binding-ty binding)
@@ -52,34 +51,13 @@
   (when (symbol? variable) (error "internal error: assignable-to received a symbol"))
   (and (not (t-void? value))
        (or (equal? value (t-nil))
-           (equal? value variable))))
+           (same-type? value variable))))
 
-;; ast-type-node -> t-type
-;(define (ast-node->t-type ast-node te)
-;  (match ast-node
-;    [(record-of tyfields)
-;     ; TODO: mutual recursion
-;     (t-record
-;      (map 
-;       (lambda (the-tyfield) 
-;         (match the-tyfield
-;           [(tyfield id (type-id name)) (field 
-;                                         (tyfield-id tyfield)
-;                                         (ast-node->t-type name 
-;                                                           te))]))
-;       tyfields))]
-;    [(array-of (type-id name))  
-;     ; TODO: mutual recursion
-;     (t-array (type-lookup name te))]
-;    
-;    [(function-type args val)
-;     ; TODO: mutual recursion and complex types
-;     (error 'TODO)
-;     ;(cons (type-binding type-id (t-fun 
-;     ]
-;))
-
-
+(define (same-type? a b)
+  (cond [(or (t-int? a) (t-string? a) (t-void? a) (t-nil? a)) (equal? a b)]
+        [(or (t-array? a) (t-record? a)) (eq? a b)]
+        [(t-fun? a) (same-type? a b)]
+        [else (error "internal error: unknown types specified")]))
 
 
 (define (ast-node->t-type ast-node te)
@@ -113,10 +91,17 @@
     [(array-creation (type-id type) size initval)
      ;(print type)
      ;(print initval)
-     (cond
-       [(not (t-int? (type-of-env size te ve))) (error "type error: type of array size not int")]
-       [(not (assignable-to? (type-lookup type te) (type-of-env initval te ve))) (error "type error: type of array not same as initial value")]
-       [else (t-array (type-lookup type te))])]
+     (let [(size-type (type-of-env size te ve))]
+            (if (not (t-int? size-type))
+                (error (format "type error: expected type of array size to be int, instead it was ~a" size-type))
+                (let [(declared-type (type-lookup type te))]
+                  (if (not (t-array? declared-type))
+                      (error (format "type error: type of array must be declared as an array, instead found ~a" declared-type))
+                      (let [(initval-type (type-of-env initval te ve))]
+                        (if (not (assignable-to? (t-array-elem-type declared-type) initval-type))
+                            (error (format "type error: type mismatch; initial value ~a must match array type ~a"
+                                           initval-type declared-type))
+                            declared-type))))))]
     [(array-access (id name) index)
      (if (t-int? (type-of-env index te ve))
          (t-array-elem-type (var-lookup name ve))
@@ -226,7 +211,7 @@
                         (let [(declared-type (type-lookup return-type te))]
                           (if (assignable-to? declared-type body-type)
                               new-v-env
-                              (error (format "type error: type mismatch, found ~a; expected ~a" declared-type body-type))))))]))]
+                              (error (format "type error: type mismatch, found ~a; expected ~a." declared-type body-type))))))]))]
        (type-of-env exp
                     te
                     (foldl accumulate-fun-declarations
@@ -294,14 +279,20 @@
 
 ; array creation/access tests
 (check-error (type-of (parse-string "a[\"zoomba\"]")) "type error: attempted to access array a with non-integer index")
-(check-error (type-of (parse-string "let var x := int[4] of \"pizza\" in end")) "type error: type of array not same as initial value")
-(check-expect (type-of (parse-string "let var y := int[26] of nil in y end")) (t-array (t-int)))
+(check-error (type-of (parse-string "let type intarray = array of int var x := intarray[4] of \"pizza\" in end")) "type error: type mismatch; initial value #(struct:t-string) must match array type #(struct:t-array #(struct:t-int))")
+(check-error (type-of (parse-string "let var x := int[10] of 338 in end")) "type error: type of array must be declared as an array, instead found #(struct:t-int)")
+(check-expect (type-of (parse-string "let type intarray = array of int var y := intarray[26] of nil in y end")) (t-array (t-int)))
+(check-expect (type-of (parse-string "let type intarray = array of int var y := intarray[26] of nil in y[3] end")) (t-int))
 
 (check-error (type-of (parse-string "a[4]")) "unbound identifier a in environment ()")
 
-(check-expect (type-of (parse-string "let var ab := int[10] of 5 in ab[24] end")) (t-int))
-(check-error (type-of (parse-string "let var z := int[10] of 5 in z[\"pizza\"] end")) "type error: attempted to access array z with non-integer index")
-(check-error (type-of (parse-string "let var aa := int[10] of 5 in aa[nil] end")) "type error: attempted to access array aa with non-integer index")
+(check-expect (type-of (parse-string "let type intarray = array of int var ab := intarray[10] of 5 in ab[24] end")) (t-int))
+(check-error (type-of (parse-string "let type intarray = array of int var z := intarray[10] of 5 in z[\"pizza\"] end")) "type error: attempted to access array z with non-integer index")
+(check-error (type-of (parse-string "let type intarray = array of int var aa := intarray[10] of 5 in aa[nil] end")) "type error: attempted to access array aa with non-integer index")
+(check-expect (type-of (parse-string "let type a = array of int var x : a := a[7] of 1 in x end"))
+              (t-array (t-int)))
+
+(check-error (type-of (parse-string "let type a = array of int type b = array of int var x : a := b[10] of 0 in end")) "type error: type mismatch, found #(struct:t-array #(struct:t-int)); expected #(struct:t-array #(struct:t-int))") ; TODO: can this error message be improved?
 
 
 (check-expect (type-of (parse-string "(34; 27)")) (t-int))
@@ -319,8 +310,6 @@
 (check-expect (type-of (parse-string "let var zz : int := nil in end")) (t-void))
 (check-expect (type-of (parse-string "let type a = int var x : a := 2 in 154 end")) (t-int)) ; TODO: let*
 (check-expect (type-of (parse-string "let type a = int type b = a in let var nobbish : b := 48 in 23 end end")) (t-int)) ; TODO: let = letrec*
-(check-expect (type-of (parse-string "let type a = array of int var x : a := int[7] of 1 in x end"))
-              (t-array (t-int)))
 (check-expect (type-of (parse-string "let var x := 7   var y := x in y  end"))
               (t-int))
 (check-expect (type-of (parse-string "let var x := 7 in let var y := x in y end end"))
