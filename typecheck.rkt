@@ -51,11 +51,13 @@
   ;(print value)
   (when (symbol? variable) (error "internal error: assignable-to received a symbol"))
   (and (not (t-void? value))
-       (or (equal? value (t-nil))
+       (or (and (equal? value (t-nil)) (t-record? variable))
            (same-type? value variable))))
 
 (define (same-type? a b)
-  (cond [(or (t-int? a) (t-string? a) (t-void? a) (t-nil? a)) (equal? a b)]
+  (cond [(and (t-nil? a) (t-nil? b)) #t] 
+        [(or (t-nil? a) (t-nil? b)) (or (t-record? a) (t-record? b))]
+        [(or (t-int? a) (t-string? a) (t-void? a)) (equal? a b)]
         [(or (t-array? a) (t-record? a)) (eq? a b)]
         [(t-fun? a) (and (andmap same-type? (t-fun-args a) (t-fun-args b))
                          (same-type? (t-fun-result a) (t-fun-result b)))]
@@ -147,14 +149,16 @@
      
     
     [(binary-op (op sym) arg1 arg2)
-     (cond [(symbol=? sym '=) (if (equal? (type-of-env arg1 te ve) (type-of-env arg2 te ve))
-                                  (t-int)
-                                  (error "type error: arguments for equality comparison must be of same type"))]
-           [(and (t-int? (type-of-env arg1 te ve))
-                 (t-int? (type-of-env arg2 te ve)))
-            (t-int)]
-           [else (error (format "type error: args for operator ~a must be integers" sym))])]
-    
+     (let [(t1 (type-of-env arg1 te ve))
+           (t2 (type-of-env arg2 te ve))]
+       (cond [(symbol=? sym '=) (cond [(and (t-nil? t1) (t-nil? t2)) (error "type error: found illegal expression \"nil == nil\"")]
+                                      [(same-type? (type-of-env arg1 te ve) (type-of-env arg2 te ve)) (t-int)]
+                                      [else (error "type error: arguments for equality comparison must be of same type")])]
+             [(and (t-int? (type-of-env arg1 te ve))
+                   (t-int? (type-of-env arg2 te ve)))
+              (t-int)]
+             [else (error (format "type error: args for operator ~a must be integers" sym))]))]
+
     [(unary-op (op '-) arg1)
      (if (not (t-int? (type-of-env arg1 te ve)))
          (error "type error: arg to unary minus must be int")
@@ -173,10 +177,13 @@
            [(not (t-void? (type-of-env t te ve))) (error "type error: then branch of an if statement must have no value")]
            [else (t-void)])]
     [(if-statement c t e)
-     (let ([type-of-t (type-of-env t te ve)]) 
+     (let ([type-of-t (type-of-env t te ve)]
+           [type-of-e (type-of-env e te ve)] )
        (cond [(not (t-int? (type-of-env c te ve))) (error "type error: condition of if statement must have boolean/int value")]
-             [(not (equal? type-of-t (type-of-env e te ve))) (error "type error: then and else branches of if statement must have same type")]
-             [else type-of-t]))]
+             [(not (same-type? type-of-t type-of-e)) (error "type error: then and else branches of if statement must have same type")]
+             [else (if (not (t-nil? type-of-t))
+                       type-of-t
+                       type-of-e)]))]
     [(while-statement c body)
      (if (t-int? (type-of-env c te ve))
          (type-of-env body te ve)
@@ -310,8 +317,10 @@
 (check-error (type-of (parse-string "a[\"zoomba\"]")) "type error: attempted to access array a with non-integer index")
 (check-error (type-of (parse-string "let type intarray = array of int var x := intarray[4] of \"pizza\" in end")) "type error: type mismatch; initial value #(struct:t-string) must match array type #(struct:t-array #(struct:t-int))")
 (check-error (type-of (parse-string "let var x := int[10] of 338 in end")) "type error: type of array must be declared as an array, instead found #(struct:t-int)")
-(check-expect (type-of (parse-string "let type intarray = array of int var y := intarray[26] of nil in y end")) (t-array (t-int)))
-(check-expect (type-of (parse-string "let type intarray = array of int var y := intarray[26] of nil in y[3] end")) (t-int))
+(check-expect (type-of (parse-string "let type intarray = array of int var y := intarray[26] of 0 in y end")) (t-array (t-int)))
+(check-expect (type-of (parse-string "let type intarray = array of int var y := intarray[26] of 0 in y[3] end")) (t-int))
+
+(check-expect (type-of (parse-string "let type point = {x : int, y:int} type pointarray = array of point var y := pointarray[50] of nil in y end")) (t-array (t-record (list (field 'x (t-int)) (field 'y (t-int))))))
 
 (check-error (type-of (parse-string "a[4]")) "unbound identifier a in environment ()")
 
@@ -349,7 +358,7 @@
               (t-string))
 (check-error (type-of (parse-string "let var z := nil in end")) "type error: variable z has value nil but no type")
 (check-error (type-of (parse-string "let var z := nil in zz end")) "type error: variable z has value nil but no type")
-(check-expect (type-of (parse-string "let var zz : int := nil in end")) (t-void))
+(check-error (type-of (parse-string "let var zz : int := nil in end")) "type error: type mismatch, found type int; expected #(struct:t-nil)")
 (check-expect (type-of (parse-string "let type a = int var x : a := 2 in 154 end")) (t-int)) ; TODO: let*
 (check-expect (type-of (parse-string "let type a = int type b = a in let var nobbish : b := 48 in 23 end end")) (t-int)) ; TODO: let = letrec*
 (check-expect (type-of (parse-string "let var x := 7   var y := x in y  end"))
@@ -372,6 +381,9 @@
 ; misc tests
 (check-expect (type-of (parse-string "if 1 then nil else nil")) (t-nil))
 (check-error (type-of (parse-string "let var x := if 1 then nil else nil in end")) "type error: variable x has value nil but no type")
+
+(check-expect (type-of (parse-string "let type a = {x:int} in if 1 then nil else a{x=1} end")) (t-record (list (field 'x (t-int)))))
+(check-expect (type-of (parse-string "let type a = {x:int} in if 1 then a{x=1} else nil end")) (t-record (list (field 'x (t-int)))))
 
 
 (test)

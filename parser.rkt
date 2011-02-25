@@ -141,6 +141,7 @@
    ; assignment
    [":=" (token-assign)]
    
+   ;TODO fix 4a
    ; identifiers
    [(concatenation alphabetic 
                    (repetition 0 +inf.0 
