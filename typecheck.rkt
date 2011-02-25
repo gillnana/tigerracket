@@ -2,6 +2,7 @@
 
 (require "parser.rkt")
 (require test-engine/racket-tests)
+
 ; type-binding represents creating a new type
 ; let type a = int in ... end
 (struct type-binding (id ty) #:transparent)
@@ -56,7 +57,8 @@
 (define (same-type? a b)
   (cond [(or (t-int? a) (t-string? a) (t-void? a) (t-nil? a)) (equal? a b)]
         [(or (t-array? a) (t-record? a)) (eq? a b)]
-        [(t-fun? a) (same-type? a b)]
+        [(t-fun? a) (and (same-type? (t-fun-args a) (t-fun-args b))
+                         (same-type? (t-fun-result a) (t-fun-result b)))]
         [else (error "internal error: unknown types specified")]))
 
 
@@ -67,11 +69,12 @@
     [(record-of tyfields) (t-record (map (lambda (tyf) 
                                            (match tyf
                                              [(tyfield id ast-sub-node)
-                                              (field id (ast-node->t-type ast-sub-node))]))
+                                              (field id (ast-node->t-type ast-sub-node te))]))
                                          tyfields))]
-    [(function-type arg-nodes val-node) (t-fun (map ast-node->t-type 
-                                                    arg-nodes) 
-                                               (ast-node->t-type val-node))]
+    [(function-type arg-nodes val-node) (t-fun (map (λ (an) 
+                                                      (ast-node->t-type an te)) 
+                                                    arg-nodes)
+                                               (ast-node->t-type val-node te))]
   ))
 
 
@@ -88,9 +91,8 @@
     
     [(id a) (var-lookup a ve)]
     
+    ;arrays
     [(array-creation (type-id type) size initval)
-     ;(print type)
-     ;(print initval)
      (let [(size-type (type-of-env size te ve))]
             (if (not (t-int? size-type))
                 (error (format "type error: expected type of array size to be int, instead it was ~a" size-type))
@@ -107,9 +109,42 @@
          (t-array-elem-type (var-lookup name ve))
          (error (format "type error: attempted to access array ~a with non-integer index" name)))]
           
-          
-    ;[(record-creation (type-id type) fields)
-    ;(if (check-record-fields fields (type-lookup type te))
+    ;records      
+    [(record-creation (type-id type) var-fields)
+     (let [(decl-fields (type-lookup type te))]
+       (cond [(not (= (length var-fields) (length (t-record-fields decl-fields))))
+              ;TODO: improve this error message by telling you which fields you missed/overspecified
+              (error (format "type error: type mismatch; wrong number of fields ~a specified for creation of record ~a"
+                          var-fields decl-fields))]
+             [(andmap
+               (λ (field-of-type)
+                 (or (ormap (λ (field-of-var) 
+                              (if (equal? (field-name field-of-type)
+                                          (fieldval-name field-of-var))
+                                  (let [(varfield-type (type-of-env (fieldval-val field-of-var) te ve))]
+                                    (if (assignable-to? (field-ty field-of-type) varfield-type)
+                                        #t
+                                        (error 
+                                         (format "type error: type mismatch; field ~a was given value of type ~a; expected ~a"
+                                                 (field-name field-of-type)
+                                                 varfield-type
+                                                 (field-ty field-of-type)))))
+                                  #f
+                                  ))
+                            var-fields
+                            )
+                     (error (format "type mismatch; no value specified for field ~a in ~a" field-of-type type))))
+               (t-record-fields decl-fields))
+              decl-fields]
+             [else (error "internal error: code 8726")]))]
+    [(record-access rec-id field-id)
+     (or (ormap (λ (field) (if (equal? (field-name field) field-id)
+                               (field-ty field)
+                               #f))
+                (t-record-fields (var-lookup rec-id ve)))
+         (error (format "semantic error: unknown field ~a of record ~a" rec-id field-id)))]
+                  ;; rec-id has a field-id
+     
     
     [(binary-op (op sym) arg1 arg2)
      (cond [(symbol=? sym '=) (if (equal? (type-of-env arg1 te ve) (type-of-env arg2 te ve))
@@ -132,6 +167,7 @@
             (t-void)
             explist)]
     
+    ; control flow operators
     [(if-statement c t (list))
      (cond [(not (t-int? (type-of-env c te ve))) (error "type error: condition of if statement must have boolean/int value")]
            [(not (t-void? (type-of-env t te ve))) (error "type error: then branch of an if statement must have no value")]
@@ -151,6 +187,8 @@
               (t-int? (type-of-env end te ve)))
          (type-of-env body te ve)
          (error "type error: for statement must increment an int from start to end int values"))]
+    
+    ;let statements
     ;let-vars
     [(let-vars decs exp)
      (local [(define (accumulate-var-declarations decl v-env)
@@ -164,8 +202,10 @@
                         (let [(declared-type (type-lookup type-id te))]
                           (if (assignable-to? declared-type expression-type)
                               (cons (var-binding id declared-type) v-env)
-                              (error (format "type error: type mismatch, found ~a; expected ~a"
-                                             declared-type expression-type))))))]))]
+                              (error (format "type error: type mismatch, found type ~a; expected ~a"
+                                             type-id (unpack-error-annotation expression-type val)))))))]))]
+                                                             
+                                                             ;(type-id-name (array-creation-type-id val))))))))]))]
        (type-of-env exp
                     te
                     (foldl accumulate-var-declarations
@@ -226,6 +266,11 @@
      
     ))
 
+(define (unpack-error-annotation type-expr ast-node)
+  (cond [(array-creation? ast-node) (type-id-name (array-creation-type-id ast-node))]
+        [(record-creation? ast-node) (type-id-name (record-creation-type-id ast-node))]
+        [else type-expr]))
+
 
 ;;TESTS
 (check-expect (type-of (parse-string "4"))
@@ -276,15 +321,28 @@
 (check-expect (type-of (parse-string "let type a = array of int var x : a := a[7] of 1 in x end"))
               (t-array (t-int)))
 
-(check-error (type-of (parse-string "let type a = array of int type b = array of int var x : a := b[10] of 0 in end")) "type error: type mismatch, found #(struct:t-array #(struct:t-int)); expected #(struct:t-array #(struct:t-int))") ; TODO: can this error message be improved?
+(check-error (type-of (parse-string "let type a = array of int type b = array of int var x : a := b[10] of 0 in end")) "type error: type mismatch, found type a; expected b") ;
+
+; record creation/access tests
+
+(check-expect (type-of (parse-string "let type foo = {} var x : foo := foo{} in x end")) (t-record empty))
+(check-expect (type-of (parse-string "let type wazza = {x : int} var w : wazza := wazza{x=5} in w end")) (t-record (list (field 'x (t-int)))))
+(check-expect (type-of (parse-string "let type pizza = {x : int, y : int} var z := pizza{x=3,y=-39} in z end")) (t-record (list (field 'x (t-int)) (field 'y (t-int)))))
+(check-error (type-of (parse-string "let type oatmeal = {x : int} var m : oatmeal := oatmeal{x=\"i hate oatmeal\"} in m end")) "type error: type mismatch; field x was given value of type #(struct:t-string); expected #(struct:t-int)")
+(check-error (type-of (parse-string "let type soda = {x : int} var y : soda := soda{p=3} in y end")) "type mismatch; no value specified for field #(struct:field x #(struct:t-int)) in soda")
+(check-error (type-of (parse-string "let type bagels = {x : int, y : blarg} in end")) "unbound type blarg")
+(check-error (type-of (parse-string "let type sandwich = {x : string} var turkey := sandwich{x = \"tomato\", y = \"pickles\"} in turkey end")) "type error: type mismatch; wrong number of fields (#(struct:fieldval x #(struct:string-literal tomato)) #(struct:fieldval y #(struct:string-literal pickles))) specified for creation of record #(struct:t-record (#(struct:field x #(struct:t-string))))")
+(check-error (type-of (parse-string "let type greem = {x : int} var z : greem := greem{x=12,m=22} in z end")) "type error: type mismatch; wrong number of fields (#(struct:fieldval x #(struct:int-literal 12)) #(struct:fieldval m #(struct:int-literal 22))) specified for creation of record #(struct:t-record (#(struct:field x #(struct:t-int))))")
+(check-expect (type-of (parse-string "let type pt = {x : int, y: int} in let type line = { a : pt, b : pt} in line{a=pt{x=1,y=44},b=pt{x=98,y=6000000}} end end")) (t-record (list (field 'a (t-record (list (field 'x (t-int)) (field 'y (t-int))))) (field 'b (t-record (list (field 'x (t-int)) (field 'y (t-int))))))))
+
 
 
 (check-expect (type-of (parse-string "(34; 27)")) (t-int))
 
 ; let-statement tests
 
-(check-error (type-of (parse-string "let var w : string := 22 in 1 end")) "type error: type mismatch, found #(struct:t-string); expected #(struct:t-int)")
-(check-error (type-of (parse-string "let type a = int in let var x : a := \"green\" in 37 end end")) "type error: type mismatch, found #(struct:t-int); expected #(struct:t-string)")
+(check-error (type-of (parse-string "let var w : string := 22 in 1 end")) "type error: type mismatch, found type string; expected #(struct:t-int)")
+(check-error (type-of (parse-string "let type a = int in let var x : a := \"green\" in 37 end end")) "type error: type mismatch, found type a; expected #(struct:t-string)")
 (check-expect (type-of (parse-string "let var m : int := 4+4 in m end"))
               (t-int))
 (check-expect (type-of (parse-string "let var n := 5*3+2-12*66-304440403 in \"waaaa\" end"))
@@ -305,6 +363,8 @@
 (check-expect (type-of (parse-string "let function f() : int = 25 in f end")) (t-fun empty (t-int)))
 (check-expect (type-of (parse-string "let function f(x : int) : int = 25 in f(12) end")) (t-int))
 (check-expect (type-of (parse-string "let function f(x : int) = (25;()) in f end")) (t-fun (list (t-int)) (t-void)))
+;(check-expect (type-of (parse-string "let type fun = int -> int function f(x : fun) : fun = let function g(x : int) : int = 7 in g end in f end")) "")
+;todo fix
 
 
 (test)
