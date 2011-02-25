@@ -57,7 +57,7 @@
 (define (same-type? a b)
   (cond [(or (t-int? a) (t-string? a) (t-void? a) (t-nil? a)) (equal? a b)]
         [(or (t-array? a) (t-record? a)) (eq? a b)]
-        [(t-fun? a) (and (same-type? (t-fun-args a) (t-fun-args b))
+        [(t-fun? a) (and (andmap same-type? (t-fun-args a) (t-fun-args b))
                          (same-type? (t-fun-result a) (t-fun-result b)))]
         [else (error "internal error: unknown types specified")]))
 
@@ -363,8 +363,15 @@
 (check-expect (type-of (parse-string "let function f() : int = 25 in f end")) (t-fun empty (t-int)))
 (check-expect (type-of (parse-string "let function f(x : int) : int = 25 in f(12) end")) (t-int))
 (check-expect (type-of (parse-string "let function f(x : int) = (25;()) in f end")) (t-fun (list (t-int)) (t-void)))
-;(check-expect (type-of (parse-string "let type fun = int -> int function f(x : fun) : fun = let function g(x : int) : int = 7 in g end in f end")) "")
-;todo fix
+
+(check-expect (type-of (parse-string "let function g(x : int) : int = 12 in g end")) (t-fun (list (t-int)) (t-int)))
+(check-expect (type-of (parse-string "let type fun = int -> int function f(x : fun) : fun = let function g(x : int) : int = 7 in g end in f end")) (t-fun (list (t-fun (list (t-int)) (t-int))) (t-fun (list (t-int)) (t-int))))
+(check-expect (type-of (parse-string "let type fun = int -> int function g(x : int) : int = 7 in let function f(x : fun) : fun = g in f end end")) (t-fun (list (t-fun (list (t-int)) (t-int))) (t-fun (list (t-int)) (t-int))))
+;(check-expect (type-of (parse-string "let type fun = int -> int function g(x : int) : int = 7 function f(x : fun ) : fun = g in f end")) "")
+
+; misc tests
+(check-expect (type-of (parse-string "if 1 then nil else nil")) (t-nil))
+(check-error (type-of (parse-string "let var x := if 1 then nil else nil in end")) "type error: variable x has value nil but no type")
 
 
 (test)
