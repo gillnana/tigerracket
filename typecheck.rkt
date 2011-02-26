@@ -220,33 +220,81 @@
                            decs)))]
     ;let-funs
     [(let-funs decs exp)
-     (local [(define (accumulate-fun-declarations decl v-env)
+     (local [
+;             (define (accumulate-fun-declarations decl v-env)
+;               (match decl
+;                 ; TODO: ensure that function argument names don't repeat
+;                 ; f(x, y) ok but f(x, x) bad
+;                 [(fundec id tyfields return-type body)
+;                  (let* [(body-type (type-of-env body te ve))
+;                         (new-v-env (cons (var-binding id  
+;                                                       (t-fun (map (λ (the-tyfield) 
+;                                                                     ;(print the-tyfield)
+;                                                                     (match the-tyfield
+;                                                                       [(tyfield fieldname (type-id name)) (type-lookup name te)]))
+;                                                                   tyfields)
+;                                                              body-type)) ; TODO: modify ve to contain self for recursion!
+;                                          v-env))]
+;                    (if (not return-type)
+;                        (if (t-void? body-type)
+;                            new-v-env
+;                            (error (format "type error: type mismatch, found ~a; expected (t-void)" body-type)))                             
+;                        (let [(declared-type (type-lookup return-type te))]
+;                          (if (assignable-to? declared-type body-type)
+;                              new-v-env
+;                              (error (format "type error: type mismatch, found ~a; expected ~a." declared-type body-type))))))]))
+             ; fundec ve -> new-ve
+             (define (accumulate-fun-declaration decl v-env)
                (match decl
                  ; TODO: ensure that function argument names don't repeat
                  ; f(x, y) ok but f(x, x) bad
                  [(fundec id tyfields return-type body)
-                  (let* [(body-type (type-of-env body te ve))
-                         (new-v-env (cons (var-binding id  
-                                                       (t-fun (map (λ (the-tyfield) 
-                                                                     ;(print the-tyfield)
-                                                                     (match the-tyfield
-                                                                       [(tyfield fieldname (type-id name)) (type-lookup name te)]))
-                                                                   tyfields)
-                                                              body-type)) ; TODO: modify ve to contain self for recursion!
-                                          v-env))]
-                    (if (not return-type)
-                        (if (t-void? body-type)
-                            new-v-env
-                            (error (format "type error: type mismatch, found ~a; expected (t-void)" body-type)))                             
-                        (let [(declared-type (type-lookup return-type te))]
-                          (if (assignable-to? declared-type body-type)
-                              new-v-env
-                              (error (format "type error: type mismatch, found ~a; expected ~a." declared-type body-type))))))]))]
-       (type-of-env exp
-                    te
-                    (foldl accumulate-fun-declarations
-                           ve
-                           decs)))]
+                  (cons (var-binding id (t-fun (map (lambda (tf)
+                                                      (match tf
+                                                        [(tyfield name (type-id type-sym))
+                                                         (type-lookup type-sym te)]))
+                                                    tyfields)
+                                               (if (not return-type)
+                                                   (t-void)
+                                                   (type-lookup return-type te))))
+                        v-env)]))
+             ; takes a fundec and a ve
+             ; the ve includes everything except the argument types
+             ; checks whether the body is valid in {that ve extended with the args}
+             ; throws an error if the body is invalid
+             ; otherwise returns some
+             (define (verify-fun-declaration decl v-env)
+               (match decl
+                 ; TODO: ensure that function argument names don't repeat
+                 ; f(x, y) ok but f(x, x) bad
+                 [(fundec id tyfields return-type body)
+                  (let [(v-env-plus-args (foldl (lambda (tf var-env)
+                                                  (match tf
+                                                    [(tyfield id (type-id type-sym))
+                                                     (cons (var-binding id (type-lookup type-sym te))
+                                                           var-env)]))
+                                                v-env
+                                                tyfields))]
+                    (or (same-type? (type-of-env body te v-env-plus-args)
+                                    (if (not return-type)
+                                        (t-void)
+                                        (type-lookup return-type te)))
+                        (error (format "type error: type mismatch, declaration of function ~a was declared as ~a but body returns type ~a"
+                                       id
+                                       (if (not return-type)
+                                           (t-void)
+                                           (type-lookup return-type te))
+                                       (type-of-env body te v-env-plus-args)))))
+                                       
+                        ]))
+             (define working-env (foldl accumulate-fun-declaration ve decs))]
+       (begin
+         ;(print working-env)
+         (map (lambda (fdecl) (verify-fun-declaration fdecl working-env)) decs) ; throw error if any function doesn't type
+         (type-of-env exp
+                      te
+                      working-env))
+       )]
     ;let-types
     [(let-types decs exp)
      (local [(define (accumulate-type-declarations decl ty-env)
@@ -375,8 +423,13 @@
 
 (check-expect (type-of (parse-string "let function g(x : int) : int = 12 in g end")) (t-fun (list (t-int)) (t-int)))
 (check-expect (type-of (parse-string "let type fun = int -> int function f(x : fun) : fun = let function g(x : int) : int = 7 in g end in f end")) (t-fun (list (t-fun (list (t-int)) (t-int))) (t-fun (list (t-int)) (t-int))))
+
 (check-expect (type-of (parse-string "let type fun = int -> int function g(x : int) : int = 7 in let function f(x : fun) : fun = g in f end end")) (t-fun (list (t-fun (list (t-int)) (t-int))) (t-fun (list (t-int)) (t-int))))
-;(check-expect (type-of (parse-string "let type fun = int -> int function g(x : int) : int = 7 function f(x : fun ) : fun = g in f end")) "")
+
+(check-expect (type-of (parse-string "let type fun = int -> int function g(x : int) : int = 7 function f(x : fun ) : fun = g in f end")) (t-fun (list (t-fun (list (t-int)) (t-int))) (t-fun (list (t-int)) (t-int))))
+
+(check-expect (type-of (parse-string "let function f(x:int):int = 1+f(x) in f end")) (t-fun (list (t-int)) (t-int)))
+(check-expect (type-of (parse-string "let function f(x:int):int = g(x)+3 function g(x:int):int = if g(x) then f(x)+4 else 26 in g(5) end")) (t-int))
 
 ; misc tests
 (check-expect (type-of (parse-string "if 1 then nil else nil")) (t-nil))
