@@ -20,7 +20,7 @@
 (struct t-fun (args result) #:transparent) ; args is list of types
 (struct t-array (elem-type) #:transparent)
 (struct t-record (fields) #:transparent)
-(struct field (name ty) #:transparent)
+(struct field (name ty) #:transparent #:mutable)
 
 ; type-lookup symbol listof-type-binding -> t-type
 (define (type-lookup type-symbol type-env) 
@@ -64,20 +64,41 @@
         [else (error "internal error: unknown types specified")]))
 
 
+; takes an ast representation of a type
+; produces a t-type
 (define (ast-node->t-type ast-node te)
   (match ast-node
     [(type-id name) (type-lookup name te)]
     [(array-of ast-sub-node) (t-array (ast-node->t-type ast-sub-node te))]
     [(record-of tyfields) (t-record (map (lambda (tyf) 
                                            (match tyf
-                                             [(tyfield id ast-sub-node)
-                                              (field id (ast-node->t-type ast-sub-node te))]))
+                                             [(tyfield id (type-id type-sym))
+                                              (field id 
+                                                     ; TODO
+                                                     ;(ast-node->t-type ast-sub-node te)
+                                                     type-sym
+                                                     )]))
                                          tyfields))]
     [(function-type arg-nodes val-node) (t-fun (map (λ (an) 
                                                       (ast-node->t-type an te)) 
                                                     arg-nodes)
                                                (ast-node->t-type val-node te))]
   ))
+
+; takes a t-record
+; if any of its fields has only a type name instead of a type,
+; mutates that field to refer to the actual t-type
+(define (fix-t-record-fields! t-rec te)
+  (match t-rec
+    [(t-record fields)
+     (map (lambda (tyf) 
+             (match tyf
+               [(field id type-sym) ; if the t-record is already fixed then type-sym is an ast-node
+                (when (symbol? type-sym) ; only fix the t-record if it hasn't already been fixed
+                  (displayln type-sym)
+                  (set-field-ty! tyf (type-lookup type-sym te)))]))
+          fields)])
+  (void))
 
 
 
@@ -301,11 +322,15 @@
                (match decl
                  ; TODO: mutual recursion
                  [(tydec name ast-type-node) (cons (type-binding name (ast-node->t-type ast-type-node ty-env))
-                                                   ty-env)]))]
+                                                   ty-env)]))
+             (define new-te (foldl accumulate-type-declarations
+                                   te
+                                   decs))]
+       ;(displayln new-te)
+       (map (match-lambda [(type-binding id t-rec) (when (t-record? t-rec) (fix-t-record-fields! t-rec new-te))]) new-te)
+       ;(displayln new-te)
        (type-of-env exp
-                    (foldl accumulate-type-declarations
-                           te
-                           decs)
+                    new-te
                     ve))]
               
     
@@ -437,6 +462,12 @@
 
 (check-expect (type-of (parse-string "let type a = {x:int} in if 1 then nil else a{x=1} end")) (t-record (list (field 'x (t-int)))))
 (check-expect (type-of (parse-string "let type a = {x:int} in if 1 then a{x=1} else nil end")) (t-record (list (field 'x (t-int)))))
+; TODO: prevent function declarations in the same let-funs from having the same name!
+;(check-error (type-of (parse-string "let function f() : int = 7 function f() = () in f end")) "")
+;(check-error (type-of (parse-string "let function f() : int = 7 function f() : int = 13 in f end")) "")
 
+
+(check-expect (type-of (parse-string "let type intlist = {hd:int, tl:intlist} var x := intlist{hd=1, tl=intlist{hd=2, tl=intlist{hd=3, tl=nil}}} in x end"))
+              (shared [(-a- (t-record (list (field 'hd (t-int)) (field 'tl -a-))))] -a-))
 
 (test)
