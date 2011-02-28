@@ -5,7 +5,7 @@
 
 ; type-binding represents creating a new type
 ; let type a = int in ... end
-(struct type-binding (id ty) #:transparent)
+(struct type-binding (id ty) #:transparent #:mutable)
 
 ; var-binding represents a variable that hold a value of a certain type
 ; let x = 3 in ... end
@@ -21,6 +21,8 @@
 (struct t-array (elem-type) #:transparent)
 (struct t-record (fields) #:transparent)
 (struct field (name ty) #:transparent #:mutable)
+
+(struct t-dummy () #:transparent) ; NOT TRANSPARENT, FUCK YOU RACKET
 
 ; type-lookup symbol listof-type-binding -> t-type
 (define (type-lookup type-symbol type-env) 
@@ -69,7 +71,7 @@
 (define (ast-node->t-type ast-node te)
   (match ast-node
     [(type-id name) (type-lookup name te)]
-    [(array-of ast-sub-node) (t-array (ast-node->t-type ast-sub-node te))]
+    [(array-of ast-sub-node) (t-array (type-lookup ast-sub-node te))]
     [(record-of tyfields) (t-record (map (lambda (tyf) 
                                            (match tyf
                                              [(tyfield id (type-id type-sym))
@@ -77,13 +79,14 @@
                                                      ; TODO
                                                      ;(ast-node->t-type ast-sub-node te)
                                                      type-sym
+                                                     ;(t-dummy)
                                                      )]))
                                          tyfields))]
     [(function-type arg-nodes val-node) (t-fun (map (λ (an) 
                                                       (ast-node->t-type an te)) 
                                                     arg-nodes)
                                                (ast-node->t-type val-node te))]
-  ))
+    ))
 
 
 
@@ -102,28 +105,28 @@
     ;arrays
     [(array-creation (type-id type) size initval)
      (let [(size-type (type-of-env size te ve))]
-            (if (not (t-int? size-type))
-                (error (format "type error: expected type of array size to be int, instead it was ~a" size-type))
-                (let [(declared-type (type-lookup type te))]
-                  (if (not (t-array? declared-type))
-                      (error (format "type error: type of array must be declared as an array, instead found ~a" declared-type))
-                      (let [(initval-type (type-of-env initval te ve))]
-                        (if (not (assignable-to? (t-array-elem-type declared-type) initval-type))
-                            (error (format "type error: type mismatch; initial value ~a must match array type ~a"
-                                           initval-type declared-type))
-                            declared-type))))))]
+       (if (not (t-int? size-type))
+           (error (format "type error: expected type of array size to be int, instead it was ~a" size-type))
+           (let [(declared-type (type-lookup type te))]
+             (if (not (t-array? declared-type))
+                 (error (format "type error: type of array must be declared as an array, instead found ~a" declared-type))
+                 (let [(initval-type (type-of-env initval te ve))]
+                   (if (not (assignable-to? (t-array-elem-type declared-type) initval-type))
+                       (error (format "type error: type mismatch; initial value ~a must match array type ~a"
+                                      initval-type declared-type))
+                       declared-type))))))]
     [(array-access (id name) index)
      (if (t-int? (type-of-env index te ve))
          (t-array-elem-type (var-lookup name ve))
          (error (format "type error: attempted to access array ~a with non-integer index" name)))]
-          
+    
     ;records      
     [(record-creation (type-id type) var-fields)
      (let [(decl-fields (type-lookup type te))]
        (cond [(not (= (length var-fields) (length (t-record-fields decl-fields))))
               ;TODO: improve this error message by telling you which fields you missed/overspecified
               (error (format "type error: type mismatch; wrong number of fields ~a specified for creation of record ~a"
-                          var-fields decl-fields))]
+                             var-fields decl-fields))]
              [(andmap
                (λ (field-of-type)
                  (or (ormap (λ (field-of-var) 
@@ -151,8 +154,8 @@
                                #f))
                 (t-record-fields (var-lookup rec-id ve)))
          (error (format "semantic error: unknown field ~a of record ~a" rec-id field-id)))]
-                  ;; rec-id has a field-id
-     
+    ;; rec-id has a field-id
+    
     
     [(binary-op (op sym) arg1 arg2)
      (let [(t1 (type-of-env arg1 te ve))
@@ -164,7 +167,7 @@
                    (t-int? (type-of-env arg2 te ve)))
               (t-int)]
              [else (error (format "type error: args for operator ~a must be integers" sym))]))]
-
+    
     [(unary-op (op '-) arg1)
      (if (not (t-int? (type-of-env arg1 te ve)))
          (error "type error: arg to unary minus must be int")
@@ -196,8 +199,8 @@
          (error "type error: while statement condition must have boolean/int value"))]
     [(for-statement var start end body)
      (if (and ;l-value-of var = int
-              (t-int? (type-of-env start te ve))
-              (t-int? (type-of-env end te ve)))
+          (t-int? (type-of-env start te ve))
+          (t-int? (type-of-env end te ve)))
          (type-of-env body te ve)
          (error "type error: for statement must increment an int from start to end int values"))]
     
@@ -217,8 +220,8 @@
                               (cons (var-binding id declared-type) v-env)
                               (error (format "type error: type mismatch, found type ~a; expected ~a"
                                              type-id (unpack-error-annotation expression-type val)))))))]))]
-                                                             
-                                                             ;(type-id-name (array-creation-type-id val))))))))]))]
+       
+       ;(type-id-name (array-creation-type-id val))))))))]))]
        (type-of-env exp
                     te
                     (foldl accumulate-var-declarations
@@ -227,28 +230,6 @@
     ;let-funs
     [(let-funs decs exp)
      (local [
-;             (define (accumulate-fun-declarations decl v-env)
-;               (match decl
-;                 ; TODO: ensure that function argument names don't repeat
-;                 ; f(x, y) ok but f(x, x) bad
-;                 [(fundec id tyfields return-type body)
-;                  (let* [(body-type (type-of-env body te ve))
-;                         (new-v-env (cons (var-binding id  
-;                                                       (t-fun (map (λ (the-tyfield) 
-;                                                                     ;(print the-tyfield)
-;                                                                     (match the-tyfield
-;                                                                       [(tyfield fieldname (type-id name)) (type-lookup name te)]))
-;                                                                   tyfields)
-;                                                              body-type)) ; TODO: modify ve to contain self for recursion!
-;                                          v-env))]
-;                    (if (not return-type)
-;                        (if (t-void? body-type)
-;                            new-v-env
-;                            (error (format "type error: type mismatch, found ~a; expected (t-void)" body-type)))                             
-;                        (let [(declared-type (type-lookup return-type te))]
-;                          (if (assignable-to? declared-type body-type)
-;                              new-v-env
-;                              (error (format "type error: type mismatch, found ~a; expected ~a." declared-type body-type))))))]))
              ; fundec ve -> new-ve
              (define (accumulate-fun-declaration decl v-env)
                (match decl
@@ -291,8 +272,8 @@
                                            (t-void)
                                            (type-lookup return-type te))
                                        (type-of-env body te v-env-plus-args)))))
-                                       
-                        ]))
+                  
+                  ]))
              (define working-env (foldl accumulate-fun-declaration ve decs))]
        (begin
          ;(print working-env)
@@ -303,36 +284,86 @@
        )]
     ;let-types
     [(let-types decs exp)
-     (local [(define (accumulate-type-declarations decl ty-env)
+     (local [
+             
+             (define (accumulate-type-declarations decl ty-env)
                (match decl
                  ; TODO: mutual recursion
-                 [(tydec name ast-type-node) (cons (type-binding name (ast-node->t-type ast-type-node ty-env))
+                 [(tydec name ast-type-node) (cons (type-binding name 
+                                                                 (t-dummy)
+                                                                 ;(ast-node->t-type ast-type-node ty-env)
+                                                                 )
                                                    ty-env)]))
-             (define new-te (foldl accumulate-type-declarations
-                                   te
-                                   decs))
+             (define new-bindings (foldl accumulate-type-declarations
+                                         empty
+                                         decs))
+             (define new-te (append new-bindings te))
+             (define (contains-dummy? t-env)
+               (ormap (match-lambda
+                        [(type-binding type-id type)
+                         (is-dummy? type)])
+                      t-env))
+             (define (is-dummy? t)
+               (match t
+                 [(t-dummy) #t]
+                 [(t-record fieldlist) #f]
+                 [(t-array elem) (is-dummy? elem)]
+                 [(t-fun args result) (print "HI ROAN") ; we proved this program has dummies as funargs
+                                      (or (ormap is-dummy? args) (is-dummy? result))]
+                 [else #f]))             
              
+             (define (fix-all-type-declarations! t-env new-t-env ty-decs num-tries-left)
+               (if (> num-tries-left 0)
+                   (begin
+                     (map (λ (tb tyd) 
+                            (fix-type-declaration! tyd tb t-env))
+                          t-env
+                          (reverse ty-decs))
+                     (if (contains-dummy? new-t-env)
+                         (fix-all-type-declarations! t-env new-t-env ty-decs (- num-tries-left 1))
+                         (void)))
+                   (error "type error: illegal cycle in type definitions")
+                   
+                   ))
+             ; tydec type-binding type-environment -> (void)
+             ; mutates the type-binding to be maybe fixed
+             (define (fix-type-declaration! tyd tb t-env)
+               ;(displayln (format "tyd=~a  tb=~a" tyd tb))
+               (set-type-binding-ty! tb
+                                     (match tyd
+                                       [(tydec name ast-node)
+                                        (with-handlers ([(λ (e) true)  ; catch all errors ; TODO: make better?
+                                                         (lambda (e)
+                                                           ; set it to what it already is
+                                                           (type-binding-ty tb))])
+                                          (ast-node->t-type ast-node t-env))]))
+               (void))
              ; takes a t-record
              ; if any of its fields has only a type name instead of a type,
              ; mutates that field to refer to the actual t-type
-             (define (fix-t-record-fields! t-rec te)
+             (define (fix-t-record-fields! t-rec type-env)
                (match t-rec
                  [(t-record fields)
                   (map (lambda (tyf) 
                          (match tyf
-                           [(field id type-sym) ; if the t-record is already fixed then type-sym is an ast-node
+                           [(field id type-sym) ; if the t-record is already fixed then type-sym is a t-type
                             (when (symbol? type-sym) ; only fix the t-record if it hasn't already been fixed
-                              (displayln type-sym)
-                              (set-field-ty! tyf (type-lookup type-sym te)))]))
+                              ;(displayln maybe-type)
+                              (set-field-ty! tyf (type-lookup type-sym type-env)))]))
                        fields)])
                (void))]
        ;(displayln new-te)
-       (map (match-lambda [(type-binding id t-rec) (when (t-record? t-rec) (fix-t-record-fields! t-rec new-te))]) new-te)
+       (fix-all-type-declarations! new-te new-bindings decs (length decs))
+       (map (match-lambda 
+              [(type-binding id t-rec) 
+               (when (t-record? t-rec) 
+                 (fix-t-record-fields! t-rec new-te))]) 
+            new-bindings)
        ;(displayln new-te)
        (type-of-env exp
                     new-te
                     ve))]
-              
+    
     
     [(funcall fun-id caller-args)
      (let* [(f (var-lookup (id-name fun-id) ve))
@@ -343,7 +374,7 @@
            (t-fun-result f)
            (error (format "type error: mismatched type applied to function argument, expected ~a, found ~a"
                           (t-fun-args f) caller-args))))]
-     
+    
     ))
 
 (define (unpack-error-annotation type-expr ast-node)
@@ -476,8 +507,8 @@
                 r))
 (check-expect (type-of (parse-string "let type tree = {key:int, children:treelist} type treelist = {hd:tree, tl:treelist} var x : tree := nil in x end"))
               #;(shared ([t (t-record (list (field 'key (t-int)) (field 'children tl)))]
-                       [tl (t-record (list (field 'hd t) (field 'tl tl)))])
-                t)
+                         [tl (t-record (list (field 'hd t) (field 'tl tl)))])
+                  t)
               (local [(define children (field 'children #f))
                       (define t (t-record (list (field 'key (t-int))
                                                 children)))
