@@ -68,24 +68,23 @@
 
 ; takes an ast representation of a type
 ; produces a t-type
-(define (ast-node->t-type ast-node te)
+(define (ast-node->t-type ast-node te record->dummy?)
+  ;(print ast-node)
   (match ast-node
     [(type-id name) (type-lookup name te)]
-    [(array-of ast-sub-node) (t-array (type-lookup ast-sub-node te))]
+    [(array-of ast-sub-node) (t-array (ast-node->t-type ast-sub-node te record->dummy?))]
     [(record-of tyfields) (t-record (map (lambda (tyf) 
                                            (match tyf
-                                             [(tyfield id (type-id type-sym))
-                                              (field id 
-                                                     ; TODO
-                                                     ;(ast-node->t-type ast-sub-node te)
-                                                     type-sym
-                                                     ;(t-dummy)
+                                             [(tyfield id ast-sub-node)
+                                              (field id (if record->dummy?
+                                                            (t-dummy)
+                                                            (ast-node->t-type ast-sub-node te #f))
                                                      )]))
                                          tyfields))]
     [(function-type arg-nodes val-node) (t-fun (map (λ (an) 
-                                                      (ast-node->t-type an te)) 
+                                                      (ast-node->t-type an te record->dummy?)) 
                                                     arg-nodes)
-                                               (ast-node->t-type val-node te))]
+                                               (ast-node->t-type val-node te record->dummy?))]
     ))
 
 
@@ -282,6 +281,8 @@
                       te
                       working-env))
        )]
+    
+    
     ;let-types
     [(let-types decs exp)
      (local [
@@ -298,6 +299,7 @@
                                          empty
                                          decs))
              (define new-te (append new-bindings te))
+             
              (define (contains-dummy? t-env)
                (ormap (match-lambda
                         [(type-binding type-id type)
@@ -313,6 +315,7 @@
                  [else #f]))             
              
              (define (fix-all-type-declarations! t-env new-t-env ty-decs num-tries-left)
+               ;(displayln new-t-env)
                (if (> num-tries-left 0)
                    (begin
                      (map (λ (tb tyd) 
@@ -320,9 +323,9 @@
                           t-env
                           (reverse ty-decs))
                      (if (contains-dummy? new-t-env)
-                         (fix-all-type-declarations! t-env new-t-env ty-decs (- num-tries-left 1))
+                         (fix-nonrecord-type-declarations! t-env new-t-env ty-decs (- num-tries-left 1))
                          (void)))
-                   (error "type error: illegal cycle in type definitions")
+                   (error (format "type error: illegal cycle in type definitions; environment was ~a" new-t-env))
                    
                    ))
              ; tydec type-binding type-environment -> (void)
@@ -336,30 +339,51 @@
                                                          (lambda (e)
                                                            ; set it to what it already is
                                                            (type-binding-ty tb))])
-                                          (ast-node->t-type ast-node t-env))]))
+                                          (ast-node->t-type ast-node t-env #t))]))
                (void))
              ; takes a t-record
              ; if any of its fields has only a type name instead of a type,
              ; mutates that field to refer to the actual t-type
-             (define (fix-t-record-fields! t-rec type-env)
+             (define (fix-t-record-fields! t-rec ast-decl type-env)
+               
+               (local [(define (replace-record tyf)
+                         (match tyf
+                           [(field field-id maybe-dummy) ; if the t-record is already fixed then type-sym is a t-type
+                            (when (t-dummy? maybe-dummy) ; only fix the t-record if it hasn't already been fixed
+                              ;(displayln maybe-type)
+                              (match ast-decl
+                                [(tydec decl-id decl-ast)
+                                 (set-field-ty! tyf (ast-node->t-type decl-ast type-env #f))]))]))]
+               ;(displayln (format "t-rec=~a, ast-decl=~a" t-rec ast-decl))
                (match t-rec
                  [(t-record fields)
-                  (map (lambda (tyf) 
-                         (match tyf
-                           [(field id type-sym) ; if the t-record is already fixed then type-sym is a t-type
-                            (when (symbol? type-sym) ; only fix the t-record if it hasn't already been fixed
-                              ;(displayln maybe-type)
-                              (set-field-ty! tyf (type-lookup type-sym type-env)))]))
-                       fields)])
-               (void))]
+                  (map replace-record fields)]
+                 [(t-array elem)
+                  (when (t-record? elem)
+                    (match elem
+                      [(t-record fields) (map replace-record fields)]))]
+                 [(t-fun args result)
+                  (map (λ (arg)  (when (t-record? arg)
+                                   (match arg
+                                     [(t-record fields) (map replace-record fields)])))
+                       args)
+                  (when (t-record? result)
+                    (match result
+                      [(t-record fields) (map replace-record result)]))]
+                 [else (void)]
+                 )
+               ;(displayln (format "t-rec=~a, ast-decl=~a" t-rec ast-decl))
+               (void)))]
        ;(displayln new-te)
-       (fix-all-type-declarations! new-te new-bindings decs (length decs))
-       (map (match-lambda 
-              [(type-binding id t-rec) 
-               (when (t-record? t-rec) 
-                 (fix-t-record-fields! t-rec new-te))]) 
-            new-bindings)
-       ;(displayln new-te)
+       (fix-nonrecord-type-declarations! new-te new-bindings decs (length decs))
+       (map (lambda (bind dec)
+              (match bind
+                [(type-binding id t-rec) 
+                 ;(when (t-record? t-rec) 
+                 (fix-t-record-fields! t-rec dec new-te)])) 
+              new-bindings
+              decs)
+       (displayln new-te)
        (type-of-env exp
                     new-te
                     ve))]
