@@ -85,21 +85,6 @@
                                                (ast-node->t-type val-node te))]
   ))
 
-; takes a t-record
-; if any of its fields has only a type name instead of a type,
-; mutates that field to refer to the actual t-type
-(define (fix-t-record-fields! t-rec te)
-  (match t-rec
-    [(t-record fields)
-     (map (lambda (tyf) 
-             (match tyf
-               [(field id type-sym) ; if the t-record is already fixed then type-sym is an ast-node
-                (when (symbol? type-sym) ; only fix the t-record if it hasn't already been fixed
-                  (displayln type-sym)
-                  (set-field-ty! tyf (type-lookup type-sym te)))]))
-          fields)])
-  (void))
-
 
 
 ; type-of expr -> t-type
@@ -325,7 +310,22 @@
                                                    ty-env)]))
              (define new-te (foldl accumulate-type-declarations
                                    te
-                                   decs))]
+                                   decs))
+             
+             ; takes a t-record
+             ; if any of its fields has only a type name instead of a type,
+             ; mutates that field to refer to the actual t-type
+             (define (fix-t-record-fields! t-rec te)
+               (match t-rec
+                 [(t-record fields)
+                  (map (lambda (tyf) 
+                         (match tyf
+                           [(field id type-sym) ; if the t-record is already fixed then type-sym is an ast-node
+                            (when (symbol? type-sym) ; only fix the t-record if it hasn't already been fixed
+                              (displayln type-sym)
+                              (set-field-ty! tyf (type-lookup type-sym te)))]))
+                       fields)])
+               (void))]
        ;(displayln new-te)
        (map (match-lambda [(type-binding id t-rec) (when (t-record? t-rec) (fix-t-record-fields! t-rec new-te))]) new-te)
        ;(displayln new-te)
@@ -468,6 +468,31 @@
 
 
 (check-expect (type-of (parse-string "let type intlist = {hd:int, tl:intlist} var x := intlist{hd=1, tl=intlist{hd=2, tl=intlist{hd=3, tl=nil}}} in x end"))
-              (shared [(-a- (t-record (list (field 'hd (t-int)) (field 'tl -a-))))] -a-))
+              ; shared is broken with (struct ...) structures. 
+              #;(shared [(-a- (t-record (list (field 'hd (t-int)) (field 'tl -a-))))] -a-)
+              (local [(define f (field 'tl 'something))
+                      (define r (t-record (list (field 'hd (t-int)) f)))]
+                (set-field-ty! f r)
+                r))
+(check-expect (type-of (parse-string "let type tree = {key:int, children:treelist} type treelist = {hd:tree, tl:treelist} var x : tree := nil in x end"))
+              #;(shared ([t (t-record (list (field 'key (t-int)) (field 'children tl)))]
+                       [tl (t-record (list (field 'hd t) (field 'tl tl)))])
+                t)
+              (local [(define children (field 'children #f))
+                      (define t (t-record (list (field 'key (t-int))
+                                                children)))
+                      (define tail (field 'tl #f))
+                      (define tl (t-record (list (field 'hd t)
+                                                 tail)))]
+                (set-field-ty! children tl)
+                (set-field-ty! tail tl)
+                t))
+(check-error (type-of (parse-string "let type a = b type b = a in end"))
+             "unbound type b") ; other errors are also ok
+(check-expect (type-of (parse-string "let type b = int type a = b var x:a := 7 in x end"))
+              (t-int))
+(check-expect (type-of (parse-string "let type a = b type b = int var x:a := 7 in x end"))
+              (t-int))
+
 
 (test)
