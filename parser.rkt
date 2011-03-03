@@ -395,7 +395,8 @@
     (expseq [() empty]
             [(exp) (cons $1 empty)]
             [(exp semicolon expseq) (cons $1 $3)]
-            ; TODO: LISTEN TO ROAN MORE OFTEN
+            ; TODO: ACTUALLY MEET THE SPEC AND DON'T LISTEN TO ROAN'S LIES
+;            [(repetition
             )
     (sequencing [(open-paren expseq close-paren) (sequence (expseq $2))])
     )
