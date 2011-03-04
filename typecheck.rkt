@@ -18,7 +18,7 @@
 (struct t-nil () #:transparent)
 
 (struct t-fun (args result) #:transparent) ; args is list of types
-(struct t-array (elem-type) #:transparent)
+(struct t-array (elem-type) #:transparent #:mutable)
 (struct t-record (fields) #:transparent)
 (struct field (name ty) #:transparent #:mutable)
 
@@ -309,68 +309,31 @@
              (define (fix-decs! new-t-env new-bindings tydecs num-tries-left)
                #;(displayln (format "~a tries left" num-tries-left))
                (cond [(not (contains-dummy? new-bindings)) (void)]
-                     [(<= num-tries-left 0) (error (format "illegal cycle in type declarations, environment was ~a" new-t-env))]
+                     [(<= num-tries-left 0) (displayln new-t-env)#;(error (format "there were no tries left, environment was ~a" new-t-env))]
                      [else
                       (begin 
                         (map (λ (bind dec)
-                                 (fix-dec! bind dec new-t-env))
+                                 (fix-dec! bind (tydec-ty dec) new-t-env))
                              new-bindings
                              tydecs)
                         ;(displayln new-t-env)
                         (fix-decs! new-t-env new-bindings tydecs (sub1 num-tries-left))
                         ;(displayln new-t-env)
                         )]))
-               
              
-             (define (fix-dec! bind dec new-t-env)            
-               ;(displayln new-t-env)
-               (match dec 
-                 [(tydec dec-name (and node (record-of tyfields)))
-                  (if (t-dummy? (type-binding-ty bind))
-                      (set-type-binding-ty! bind (ast-node->t-type node new-t-env))
-                      (fix-record! bind dec new-t-env))]
-                 [(tydec dec-name ty)
-                  (match bind
-                    [(type-binding bound-name (t-dummy))
-                     (set-type-binding-ty! bind (ast-node->t-type ty new-t-env))]
-                    [else (void)])]))
-
-                      
-;                  (when (is-dummy? (type-binding-ty bind) empty)
-;                    (begin
-;                        (displayln (format "found dummy! ~a" (type-binding-id bind)))
-;                        (set-type-binding-ty! bind (ast-node->t-type dec-ast-node new-t-env))
-;                        (when (record-of? dec-ast-node)
-;                          (fix-record! bind dec new-t-env))))
+             (define (fix-dec! bind dec new-t-env)
+               (match (type-binding-ty bind)
+                 [(or (t-dummy) (t-array (t-dummy)))
+                  (set-type-binding-ty! bind (ast-node->t-type dec new-t-env))]
+                 [(t-record fields)
+                  (map (lambda (record-tyfield bound-field)
+                         (when (t-dummy? (field-ty bound-field))
+                           (set-field-ty! bound-field (ast-node->t-type (tyfield-type-id record-tyfield) new-t-env))))
+                       (record-of-tyfields dec)
+                       fields)]
+                 [else (void)]))]
              
-                    
-             (define (fix-records! new-te new-bindings decs num-tries-left)
-               
-               (map (λ (bind dec)
-                      (when (record-of? (tydec-ty dec))
-                        (fix-record! bind dec new-te)))
-                    new-bindings
-                    decs))
-
-             (define (fix-record! bind dec new-te)
-                (match dec
-                    [(tydec tydec-name (record-of record-tyfields))
-                     (match bind
-                       ;[(type-binding bound-name (t-dummy))
-                        ;(set-type-binding-ty! bind (ast-node->t-type (tydec-ty dec) new-te))
-                        ;(fix-record! bind dec new-te)]
-                       [(type-binding bound-name (t-record bound-fields))
-                        
-                        (map (λ (record-tyfield bound-field)
-                               (set-field-ty! bound-field (ast-node->t-type (tyfield-type-id record-tyfield) new-te)))
-                             record-tyfields
-                             bound-fields)])]))
-             
-             ]
-       
-       ;(fix-records! new-te new-bindings decs 0)
-       (fix-decs! new-te new-bindings decs (sqr (* 2 (length decs)))) ;; TODO: what's the right cap on the number of allowable tries?
-       ;(displayln new-te)
+       (fix-decs! new-te new-bindings decs 10)
              
        (type-of-env exp new-te ve))]
               
@@ -534,15 +497,10 @@
                 (set-field-ty! tail tl)
                 t))
 
-(check-error (type-of (parse-string "let type a = b type b = a in end")) "illegal cycle in type declarations, environment was (#(struct:type-binding a #(struct:t-dummy)) #(struct:type-binding b #(struct:t-dummy)))")
-
-;(check-error (type-of (parse-string "let type b = int -> intfun type intfun = b -> int in end")) "wossar")
-(check-expect (type-of (parse-string "let type a = array of int type alist = {x:a,y:alist} in alist{x=a[10] of 3, y=nil} end"))
-              (local [(define x (field 'x (t-array (t-int))))            
-                      (define y (field 'y (t-dummy)))
-                      (define alist (t-record (list x y)))]
-                (set-field-ty! y alist)
-                alist))
-(check-expect (type-of (parse-string "let type a = int -> int type arec = {x:a,y:arec} type fun = arec -> a in end")) (t-void)) 
+(check-expect (type-of (parse-string "let type a = b type b = c type c = d type d = int var x : a := 6 in x end")) (t-int))
+(check-expect (type-of (parse-string "let type a = array of b type b = c type c = int var x := a[6] of 0 in x end"))
+              (t-array (t-int)))
+              
 
 (test)
+; TODO more test cases
