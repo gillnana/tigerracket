@@ -25,7 +25,7 @@
 (struct t-dummy () #:transparent)
 
 ; type-lookup symbol listof-type-binding -> t-type
-(define (type-lookup type-symbol type-env) 
+(define (type-lookup type-symbol type-env)
   (cond 
     [(equal? type-symbol 'int) (t-int)]
     [(equal? type-symbol 'string) (t-string)]
@@ -67,14 +67,18 @@
 
 
 (define (ast-node->t-type ast-node te)
+  ;(displayln (format "made a call to ast-node with node ~a" ast-node))
   (match ast-node
-    [(type-id name) (type-lookup name te)]
+    [(type-id name) (begin #;(displayln (format "~a is of type ~a" name (type-lookup name te))) (type-lookup name te))]
     [(array-of ast-sub-node) (t-array (ast-node->t-type ast-sub-node te))]
-    [(record-of tyfields) (t-record (map (lambda (tyf) 
+    [(record-of tyfields) (begin
+                            
+                            (displayln "calling ast func. on record-of node")
+                            (t-record (map (lambda (tyf) 
                                            (match tyf
                                              [(tyfield id ast-sub-node)
                                               (field id (ast-node->t-type ast-sub-node te))]))
-                                         tyfields))]
+                                         tyfields)))]
     [(function-type arg-nodes val-node) (t-fun (map (λ (an) 
                                                       (ast-node->t-type an te)) 
                                                     arg-nodes)
@@ -286,20 +290,93 @@
              (define new-bindings (foldr accumulate-type-declarations empty decs))
              (define new-te (append new-bindings te))
              
-             (define (fix-decs! new-t-env new-bindings tydecs)
-               (map (λ (bind dec)
-                      (fix-dec! bind dec new-t-env))
-                    new-bindings
-                    tydecs))
+             (define (contains-dummy? t-env)
+               ;(displayln t-env)
+               (ormap (match-lambda
+                        [(type-binding type-id type)
+                         (is-dummy? type empty)])
+                      t-env))
              
-             (define (fix-dec! bind dec new-t-env)
+             (define (is-dummy? t visited)
+               (and (not (ormap (λ (node) (eq? node t)) visited))
+                    (let [(new-visited (cons t visited))]
+                    (match t
+                      [(t-dummy) #t]
+                      [(t-record fieldlist) (ormap (λ (fld) (is-dummy? (field-ty fld) new-visited)) fieldlist)]
+                      [(t-array elem) (is-dummy? elem new-visited)]
+                      [(t-fun args result) (or (ormap (λ (arg) (is-dummy? arg new-visited)) args) (is-dummy? result new-visited))]
+                      [else #f]))))
+             
+             (define (fix-decs! new-t-env new-bindings tydecs num-tries-left)
+               (displayln (format "~a tries left" num-tries-left))
+               (cond [(not (contains-dummy? new-bindings)) (void)]
+                     [(<= num-tries-left 0) (error (format "there were no tries left, environment was ~a" new-t-env))]
+                     [else
+                      (begin 
+                        (map (λ (bind dec)
+                                 (fix-dec! bind dec new-t-env))
+                             new-bindings
+                             tydecs)
+                        ;(displayln new-t-env)
+                        (fix-decs! new-t-env new-bindings tydecs (sub1 num-tries-left))
+                        ;(displayln new-t-env)
+                        )]))
+               
+             
+             (define (fix-dec! bind dec new-t-env)            
+               ;(displayln new-t-env)
                (match dec 
-                 [(tydec dec-name dec-ast-node)
-                  (set-type-binding-ty! bind (ast-node->t-type dec-ast-node new-t-env))]))
+                 [(tydec dec-name (and node (record-of tyfields)))
+                  (if (t-dummy? (type-binding-ty bind))
+                      (set-type-binding-ty! bind (ast-node->t-type node new-t-env))
+                      (fix-record! bind dec new-t-env))]
+                 [(tydec dec-name ty)
+                  (match bind
+                    [(type-binding bound-name (t-dummy))
+                     (set-type-binding-ty! bind (ast-node->t-type ty new-t-env))]
+                    [else (void) #;(error "huge error")])]))
+                     
+                     
+                      
+                      
+;                  (when (is-dummy? (type-binding-ty bind) empty)
+;                    (begin
+;                        (displayln (format "found dummy! ~a" (type-binding-id bind)))
+;                        (set-type-binding-ty! bind (ast-node->t-type dec-ast-node new-t-env))
+;                        (when (record-of? dec-ast-node)
+;                          (fix-record! bind dec new-t-env))))
+                    
+                    
+
+                         
+                    
+             (define (fix-records! new-te new-bindings decs num-tries-left)
+               
+               (map (λ (bind dec)
+                      (when (record-of? (tydec-ty dec))
+                        (fix-record! bind dec new-te)))
+                    new-bindings
+                    decs))
+
+             (define (fix-record! bind dec new-te)
+                (match dec
+                    [(tydec tydec-name (record-of record-tyfields))
+                     (match bind
+                       ;[(type-binding bound-name (t-dummy))
+                        ;(set-type-binding-ty! bind (ast-node->t-type (tydec-ty dec) new-te))
+                        ;(fix-record! bind dec new-te)]
+                       [(type-binding bound-name (t-record bound-fields))
+                        
+                        (map (λ (record-tyfield bound-field)
+                               (set-field-ty! bound-field (ast-node->t-type (tyfield-type-id record-tyfield) new-te)))
+                             record-tyfields
+                             bound-fields)])]))
+             
              ]
        
-       
-       (fix-decs! new-te new-bindings decs)      
+       ;(fix-records! new-te new-bindings decs 0)
+       (fix-decs! new-te new-bindings decs 3)
+       ;(displayln new-te)
              
        (type-of-env exp new-te ve))]
               
@@ -433,5 +510,37 @@
 (check-expect (type-of (parse-string "let type a = {x:int} in if 1 then nil else a{x=1} end")) (t-record (list (field 'x (t-int)))))
 (check-expect (type-of (parse-string "let type a = {x:int} in if 1 then a{x=1} else nil end")) (t-record (list (field 'x (t-int)))))
 
+
+; recursive types tests
+(check-expect (type-of (parse-string "let type intlist = {hd:int, tl:intlist} var x := intlist{hd=1, tl=intlist{hd=2, tl=intlist{hd=3, tl=nil}}} in x end"))
+              ; shared is broken with (struct ...) structures. 
+              #;(shared [(-a- (t-record (list (field 'hd (t-int)) (field 'tl -a-))))] -a-)
+              (local [(define f (field 'tl 'something))
+                      (define r (t-record (list (field 'hd (t-int)) f)))]
+                (set-field-ty! f r)
+                r))
+(check-expect (type-of (parse-string "let type intlist = {hd:int, tl:intlist} var x := intlist{hd=1, tl=intlist{hd=2, tl=intlist{hd=3, tl=nil}}} in x end"))
+              ; shared is broken with (struct ...) structures. 
+              #;(shared [(-a- (t-record (list (field 'hd (t-int)) (field 'tl -a-))))] -a-)
+              (local [(define f (field 'tl 'something))
+                      (define r (t-record (list (field 'hd (t-int)) f)))]
+                (set-field-ty! f r)
+                r))
+(check-expect (type-of (parse-string "let type tree = {key:int, children:treelist} type treelist = {hd:tree, tl:treelist} var x : tree := nil in x end"))
+              #;(shared ([t (t-record (list (field 'key (t-int)) (field 'children tl)))]
+                         [tl (t-record (list (field 'hd t) (field 'tl tl)))])
+                  t)
+              (local [(define children (field 'children #f))
+                      (define t (t-record (list (field 'key (t-int))
+                                                children)))
+                      (define tail (field 'tl #f))
+                      (define tl (t-record (list (field 'hd t)
+                                                 tail)))]
+                (set-field-ty! children tl)
+                (set-field-ty! tail tl)
+                t))
+
+
+; TODO more test cases
 
 (test)
