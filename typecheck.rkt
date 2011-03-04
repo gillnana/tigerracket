@@ -324,7 +324,7 @@
              
              (define (fix-dec! bind dec new-t-env)
                (match (type-binding-ty bind)
-                 [(t-dummy)
+                 [(or (t-dummy) (t-array (t-dummy)))
                   (set-type-binding-ty! bind (ast-node->t-type dec new-t-env))]
                  [(t-record fields)
                   (map (lambda (record-tyfield bound-field)
@@ -332,11 +332,7 @@
                            (set-field-ty! bound-field (ast-node->t-type (tyfield-type-id record-tyfield) new-t-env))))
                        (record-of-tyfields dec)
                        fields)]
-                 [(t-array (t-dummy))
-                  (displayln (format "here ~a ~a" bind dec))
-                  (set-t-array-elem-type! (type-binding-ty bind)
-                                          (ast-node->t-type (array-of-type dec) new-t-env))]
-                 [else (void)]))
+                 [else (void)]))]
              
        (fix-decs! new-te new-bindings decs 10)
              
