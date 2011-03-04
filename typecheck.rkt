@@ -100,7 +100,7 @@
     [(nil) (t-nil)]
     
     [(id a) (var-lookup a ve)]
-    
+    [(break) (t-void)]
     ;arrays
     [(array-creation (type-id type) size initval)
      (let [(size-type (type-of-env size te ve))]
@@ -522,7 +522,7 @@
                 (set-field-ty! y alist)
                 alist))
 (check-expect (type-of (parse-string "let type a = int -> int type arec = {x:a,y:arec} type fun = arec -> a in end")) (t-void)) 
-
+(check-expect (type-of (parse-string "break")) (t-void))
               
 
 (test)
