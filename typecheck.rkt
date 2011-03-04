@@ -5,7 +5,7 @@
 
 ; type-binding represents creating a new type
 ; let type a = int in ... end
-(struct type-binding (id ty) #:transparent)
+(struct type-binding (id ty) #:transparent #:mutable)
 
 ; var-binding represents a variable that hold a value of a certain type
 ; let x = 3 in ... end
@@ -20,7 +20,9 @@
 (struct t-fun (args result) #:transparent) ; args is list of types
 (struct t-array (elem-type) #:transparent)
 (struct t-record (fields) #:transparent)
-(struct field (name ty) #:transparent)
+(struct field (name ty) #:transparent #:mutable)
+
+(struct t-dummy () #:transparent)
 
 ; type-lookup symbol listof-type-binding -> t-type
 (define (type-lookup type-symbol type-env) 
@@ -220,30 +222,7 @@
                            decs)))]
     ;let-funs
     [(let-funs decs exp)
-     (local [
-;             (define (accumulate-fun-declarations decl v-env)
-;               (match decl
-;                 ; TODO: ensure that function argument names don't repeat
-;                 ; f(x, y) ok but f(x, x) bad
-;                 [(fundec id tyfields return-type body)
-;                  (let* [(body-type (type-of-env body te ve))
-;                         (new-v-env (cons (var-binding id  
-;                                                       (t-fun (map (λ (the-tyfield) 
-;                                                                     ;(print the-tyfield)
-;                                                                     (match the-tyfield
-;                                                                       [(tyfield fieldname (type-id name)) (type-lookup name te)]))
-;                                                                   tyfields)
-;                                                              body-type)) ; TODO: modify ve to contain self for recursion!
-;                                          v-env))]
-;                    (if (not return-type)
-;                        (if (t-void? body-type)
-;                            new-v-env
-;                            (error (format "type error: type mismatch, found ~a; expected (t-void)" body-type)))                             
-;                        (let [(declared-type (type-lookup return-type te))]
-;                          (if (assignable-to? declared-type body-type)
-;                              new-v-env
-;                              (error (format "type error: type mismatch, found ~a; expected ~a." declared-type body-type))))))]))
-             ; fundec ve -> new-ve
+     (local [; fundec ve -> new-ve
              (define (accumulate-fun-declaration decl v-env)
                (match decl
                  ; TODO: ensure that function argument names don't repeat
@@ -296,17 +275,33 @@
                       working-env))
        )]
     ;let-types
+    ;
+    
     [(let-types decs exp)
      (local [(define (accumulate-type-declarations decl ty-env)
                (match decl
-                 ; TODO: mutual recursion
-                 [(tydec name ast-type-node) (cons (type-binding name (ast-node->t-type ast-type-node ty-env))
-                                                   ty-env)]))]
-       (type-of-env exp
-                    (foldl accumulate-type-declarations
-                           te
-                           decs)
-                    ve))]
+                 [(tydec name ast-type-node) (cons (type-binding name (t-dummy)) ty-env)]))
+                                              ;(type-binding name (ast-node->t-type ast-type-node ty-env))
+
+             (define new-bindings (foldr accumulate-type-declarations empty decs))
+             (define new-te (append new-bindings te))
+             
+             (define (fix-decs! new-t-env new-bindings tydecs)
+               (map (λ (bind dec)
+                      (fix-dec! bind dec new-t-env))
+                    new-bindings
+                    tydecs))
+             
+             (define (fix-dec! bind dec new-t-env)
+               (match dec 
+                 [(tydec dec-name dec-ast-node)
+                  (set-type-binding-ty! bind (ast-node->t-type dec-ast-node new-t-env))]))
+             ]
+       
+       
+       (fix-decs! new-te new-bindings decs)      
+             
+       (type-of-env exp new-te ve))]
               
     
     [(funcall fun-id caller-args)
