@@ -360,7 +360,7 @@
              [(sequencing) $1])
     
     (if-nonterminal [(if exp then exp else exp) (if-statement $2 $4 $6)]
-                    [(if exp then exp) (if-statement $2 $4 empty)]
+                    [(if exp then exp) (if-statement $2 $4 (expseq empty))]
                     
                     )
     
@@ -462,15 +462,15 @@
 
 ;;dangling else testing
 (check-expect (parse-string "if 4 then 4")
-              (if-statement (int-literal 4) (int-literal 4) empty))
+              (if-statement (int-literal 4) (int-literal 4) (expseq empty)))
 (check-expect (parse-string "if 5 then 5 else 5")
               (if-statement (int-literal 5) (int-literal 5) (int-literal 5)))
 (check-expect (parse-string "if if 1 then 1 then if 2 then 2 else if 3 then 3")
-              (if-statement (if-statement (int-literal 1) (int-literal 1) empty) (if-statement (int-literal 2) (int-literal 2) (if-statement (int-literal 3) (int-literal 3) empty)) empty))
+              (if-statement (if-statement (int-literal 1) (int-literal 1) (expseq empty)) (if-statement (int-literal 2) (int-literal 2) (if-statement (int-literal 3) (int-literal 3) (expseq empty))) (expseq empty) ))
 (check-expect (parse-string "if 4 then if 5 then 5 else 5")
-              (if-statement (int-literal 4) (if-statement (int-literal 5) (int-literal 5) (int-literal 5)) empty))
+              (if-statement (int-literal 4) (if-statement (int-literal 5) (int-literal 5) (int-literal 5)) (expseq empty)))
 (check-expect (parse-string "if 4 then (if 5 then 5) else 4")
-              (if-statement (int-literal 4) (sequence (expseq (list (if-statement (int-literal 5) (int-literal 5) empty)))) (int-literal 4)))
+              (if-statement (int-literal 4) (sequence (expseq (list (if-statement (int-literal 5) (int-literal 5) (expseq empty))))) (int-literal 4)))
 
 ;dangling do testing
 (check-expect (parse-string "while 4 do 4")

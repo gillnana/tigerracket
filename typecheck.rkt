@@ -252,6 +252,8 @@
                (match decl
                  ; TODO: ensure that function argument names don't repeat
                  ; f(x, y) ok but f(x, x) bad
+                 ; f(x) and f(x) should never be declared, independent of scope!
+                 ; also ensure that no two of f() f(x) f(a) f(a, b) etc are declared at once
                  [(fundec id tyfields return-type body)
                   (let [(v-env-plus-args (foldl (lambda (tf var-env)
                                                   (match tf
@@ -283,6 +285,7 @@
     ;let-types
     ;
     
+    ;TODO: let-types should not allow multiple types of the same name
     [(let-types decs exp)
      (local [(define (accumulate-type-declarations decl ty-env)
                (match decl
