@@ -254,8 +254,10 @@
                  ; f(x) and f(x) should never be declared, independent of scope!
                  ; also ensure that no two of f() f(x) f(a) f(a, b) etc are declared at once
                  [(fundec id tyfields return-type body)
-                  (if (contains-identical-args tyfields)
-                      (error (format "definition of function ~a contains multiple instances of the same argument in ~a" id tyfields))
+                  (if (contains-dupes? (map tyfield-id tyfields))
+                      (error 
+                       (format "semantic error: definition of function ~a contains multiple arguments with the same identifier ~a" 
+                               id (contains-dupes? (map tyfield-id tyfields))))
                   
                       (let [(v-env-plus-args (foldl (lambda (tf var-env)
                                                       (match tf
@@ -347,8 +349,27 @@
                        args)
                   (when (t-dummy? result)
                     (set-t-fun-result! (type-binding-ty bind) (ast-node->t-type (function-type-rng dec) new-t-env)))]
-                 [else (void)]))]
+                 [else (void)]))
              
+             (define (check-repeat-args decs)
+               (map (match-lambda
+                        [(tydec ty-id (record-of tyfields))
+                         (when (contains-dupes? (map tyfield-id tyfields))
+                           (error 
+                            (format "semantic error: record declaration ~a contains multiple fields with the same identifier ~a"
+                                    ty-id (contains-dupes? (map tyfield-id tyfields)))))]
+                        [else #f]
+                        )
+                        decs))
+             
+             (define (check-repeat-type-decs decs)
+               (when (contains-dupes? (map tydec-type-id decs))
+                 (error (format "semantic error: multiple type declarations for same identifier ~a in same block"
+                                (contains-dupes? (map tydec-type-id decs))))))
+             ]
+             
+       (check-repeat-args decs)
+       (check-repeat-type-decs decs)
        (fix-decs! new-te new-bindings decs 10)
              
        (type-of-env exp new-te ve))]
@@ -366,16 +387,15 @@
                           (t-fun-args f) caller-args))))]
      
     ))
+                               
 
-(define (contains-identical-args tyfields)
-  (foldl (λ (tyf arg-table)
-           (match tyf
-             [(tyfield ty-name ty-id) (cond [(false? arg-table) #f]
-                                            [(hash-ref arg-table ty-id #f) (hash-set! arg-table ty-id ty-id)]
-                                            [else #f])]))
-         (make-hash)
-         tyfields))
-                                          
+(define (contains-dupes? a-list (arg-table (make-immutable-hash empty)))
+  (if (empty? a-list)
+      #f
+      (let [(hd (first a-list)) (tl (rest a-list))]
+        (if (hash-ref arg-table hd #f)
+            hd
+            (contains-dupes? tl (hash-set arg-table hd #t))))))
 
 (define (unpack-error-annotation type-expr ast-node)
   (cond [(array-creation? ast-node) (type-id-name (array-creation-type-id ast-node))]
@@ -496,8 +516,10 @@
 (check-expect (type-of (parse-string "let type a = {x:int} in if 1 then nil else a{x=1} end")) (t-record (list (field 'x (t-int)))))
 (check-expect (type-of (parse-string "let type a = {x:int} in if 1 then a{x=1} else nil end")) (t-record (list (field 'x (t-int)))))
 
-(check-error (parse-string "let type a = {x:int, x:int} in end") "")
-(check-error (parse-string "let function f(x:int,x:int):int = x in end") "")
+(check-error (type-of (parse-string "let type a = {x:int, x:int} in end")) "semantic error: record declaration a contains multiple fields with the same identifier x")
+(check-error (type-of (parse-string "let function f(x:int,x:int):int = x in end")) "semantic error: definition of function f contains multiple arguments with the same identifier x")
+
+(check-error (type-of (parse-string "let type a = int type a = string in end")) "semantic error: multiple type declarations for same identifier a in same block")
 
 
 ; recursive types tests
@@ -535,7 +557,7 @@
 
 (check-error (type-of (parse-string "let type a = b type b = a in end")) "illegal cycle in type declarations, environment was (#(struct:type-binding a #(struct:t-dummy)) #(struct:type-binding b #(struct:t-dummy)))")
 
-;(check-error (type-of (parse-string "let type b = int -> intfun type intfun = b -> int in end")) "wossar")
+(check-error (type-of (parse-string "let type b = int -> intfun type intfun = b -> int in end")) "wossar")
 (check-expect (type-of (parse-string "let type a = array of int type alist = {x:a,y:alist} in alist{x=a[10] of 3, y=nil} end"))
               (local [(define x (field 'x (t-array (t-int))))            
                       (define y (field 'y (t-dummy)))
