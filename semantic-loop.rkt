@@ -105,7 +105,12 @@
   (void))   
     
 
-;IT'S ALL BROKEN
      
 (check-expect (verify-loop-semantics (parse-file "./tests/queens.tig")) (void))
+(check-expect (verify-loop-semantics (parse-string "while i<4 do (26; 55; x := 17; if x = 17 then break else ())")) (void))
+
+(check-error (verify-loop-semantics (parse-string "break")) "semantic error: found a break statement not inside a loop")
+(check-error (verify-loop-semantics (parse-string "if 45 then break else break")) "semantic error: found a break statement not inside a loop")
+(check-expect (verify-loop-semantics (parse-string "for i := 1 to 10 do (while i < 50 do if i=30 then break else (); break)")) (void))
+ 
 (test)
