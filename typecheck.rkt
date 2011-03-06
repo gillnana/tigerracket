@@ -278,9 +278,17 @@
                                            (type-of-env body te v-env-plus-args))))))
                   
                   ]))
-             (define working-env (foldl accumulate-fun-declaration ve decs))]
+             (define working-env (foldl accumulate-fun-declaration ve decs))
+             
+             (define (check-repeat-fundecs decs)
+               (when (contains-dupes? (map fundec-id decs))
+                 (error (format "semantic error: multiple function declarations for same identifier ~a in same block"
+                                (contains-dupes? (map fundec-id decs))))))]
+       
+       
        (begin
          ;(print working-env)
+         (check-repeat-fundecs decs)
          (map (lambda (fdecl) (verify-fun-declaration fdecl working-env)) decs) ; throw error if any function doesn't type
          (type-of-env exp
                       te
@@ -520,6 +528,7 @@
 (check-error (type-of (parse-string "let function f(x:int,x:int):int = x in end")) "semantic error: definition of function f contains multiple arguments with the same identifier x")
 
 (check-error (type-of (parse-string "let type a = int type a = string in end")) "semantic error: multiple type declarations for same identifier a in same block")
+(check-error (type-of (parse-string "let function f():int=4 function f():int=7 in end")) "semantic error: multiple function declarations for same identifier f in same block")
 
 
 ; recursive types tests
