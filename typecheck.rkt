@@ -172,7 +172,6 @@
          (error "type error: arg to unary minus must be int")
          (t-int))]
     
-    [(sequence expseq) (type-of-env expseq te ve)]
     [(expseq explist) ; foldl is sexy
      (foldl (λ (exp type)
               (type-of-env exp te ve))
@@ -255,25 +254,28 @@
                  ; f(x) and f(x) should never be declared, independent of scope!
                  ; also ensure that no two of f() f(x) f(a) f(a, b) etc are declared at once
                  [(fundec id tyfields return-type body)
-                  (let [(v-env-plus-args (foldl (lambda (tf var-env)
-                                                  (match tf
-                                                    [(tyfield id (type-id type-sym))
-                                                     (cons (var-binding id (type-lookup type-sym te))
-                                                           var-env)]))
+                  (if (contains-identical-args tyfields)
+                      (error (format "definition of function ~a contains multiple instances of the same argument in ~a" id tyfields))
+                  
+                      (let [(v-env-plus-args (foldl (lambda (tf var-env)
+                                                      (match tf
+                                                        [(tyfield id (type-id type-sym))
+                                                         (cons (var-binding id (type-lookup type-sym te))
+                                                               var-env)]))
                                                 v-env
                                                 tyfields))]
-                    (or (same-type? (type-of-env body te v-env-plus-args)
-                                    (if (not return-type)
-                                        (t-void)
-                                        (type-lookup return-type te)))
-                        (error (format "type error: type mismatch, declaration of function ~a was declared as ~a but body returns type ~a"
-                                       id
-                                       (if (not return-type)
-                                           (t-void)
-                                           (type-lookup return-type te))
-                                       (type-of-env body te v-env-plus-args)))))
-                                       
-                        ]))
+                        (or (same-type? (type-of-env body te v-env-plus-args)
+                                        (if (not return-type)
+                                            (t-void)
+                                            (type-lookup return-type te)))
+                            (error (format "type error: type mismatch, declaration of function ~a was declared as ~a but body returns type ~a"
+                                           id
+                                           (if (not return-type)
+                                               (t-void)
+                                               (type-lookup return-type te))
+                                           (type-of-env body te v-env-plus-args))))))
+                  
+                  ]))
              (define working-env (foldl accumulate-fun-declaration ve decs))]
        (begin
          ;(print working-env)
@@ -344,7 +346,7 @@
                        (function-type-dom dec)
                        args)
                   (when (t-dummy? result)
-                    (set-t-fun-result! (type-binding-ty) (ast-node->t-type (function-type-rng dec) new-t-env)))]
+                    (set-t-fun-result! (type-binding-ty bind) (ast-node->t-type (function-type-rng dec) new-t-env)))]
                  [else (void)]))]
              
        (fix-decs! new-te new-bindings decs 10)
@@ -355,6 +357,7 @@
     [(funcall fun-id caller-args)
      (let* [(f (var-lookup (id-name fun-id) ve))
             (fundef-args (t-fun-args f))]
+       ;TODO make sure the funcall and the fundef have the same number of arguments
        (if (andmap (λ (fundef-arg caller-arg) (assignable-to? (fun-arg-type fundef-arg) (type-of-env caller-arg te ve)))
                    (t-fun-args f)
                    caller-args)
@@ -363,6 +366,16 @@
                           (t-fun-args f) caller-args))))]
      
     ))
+
+(define (contains-identical-args tyfields)
+  (foldl (λ (tyf arg-table)
+           (match tyf
+             [(tyfield ty-name ty-id) (cond [(false? arg-table) #f]
+                                            [(hash-ref arg-table ty-id #f) (hash-set! arg-table ty-id ty-id)]
+                                            [else #f])]))
+         (make-hash)
+         tyfields))
+                                          
 
 (define (unpack-error-annotation type-expr ast-node)
   (cond [(array-creation? ast-node) (type-id-name (array-creation-type-id ast-node))]
@@ -482,6 +495,9 @@
 
 (check-expect (type-of (parse-string "let type a = {x:int} in if 1 then nil else a{x=1} end")) (t-record (list (field 'x (t-int)))))
 (check-expect (type-of (parse-string "let type a = {x:int} in if 1 then a{x=1} else nil end")) (t-record (list (field 'x (t-int)))))
+
+(check-error (parse-string "let type a = {x:int, x:int} in end") "")
+(check-error (parse-string "let function f(x:int,x:int):int = x in end") "")
 
 
 ; recursive types tests
