@@ -180,7 +180,7 @@
             explist)]
     
     ; control flow operators
-    [(if-statement c t (list))
+    #;[(if-statement c t (list))
      (cond [(not (t-int? (type-of-env c te ve))) (error "type error: condition of if statement must have boolean/int value")]
            [(not (t-void? (type-of-env t te ve))) (error "type error: then branch of an if statement must have no value")]
            [else (t-void)])]
@@ -389,6 +389,8 @@
               (t-int))
 (check-expect (type-of (parse-string "(4>7)=(5<6)"))
               (t-int))
+(check-error (type-of (parse-string "if 115 then 6")) "type error: then and else branches of if statement must have same type")
+(check-expect (type-of (parse-string "if 44 then ()")) (t-void))
 (check-expect (type-of (parse-string "if 4 then 7 else 6"))
               (t-int))
 (check-error (type-of (parse-string "if 4 then \"hamburger\" else 12")) "type error: then and else branches of if statement must have same type")
