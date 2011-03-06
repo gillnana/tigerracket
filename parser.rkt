@@ -328,7 +328,7 @@
                   [(exp comma funcall-args) (cons $1 $3)])
     
     (arithmetic [(exp plus exp) (binary-op (op '+) $1 $3)]
-                [(exp minus exp) (prec plus) (binary-op (op '-) $1 $3)]
+                [(exp minus exp) #;(prec plus) (binary-op (op '-) $1 $3)]
                 [(exp times exp) (binary-op (op '*) $1 $3)]
                 [(exp divide exp) (binary-op (op '/) $1 $3)]
                 [(exp equals exp) (binary-op (op '=) $1 $3)]
@@ -339,7 +339,7 @@
                 [(exp greater-or-equal exp) (binary-op (op '>=) $1 $3)]
                 [(exp and exp) (binary-op (op '&) $1 $3)]
                 [(exp or exp) (binary-op (op '\|) $1 $3)]
-                [(minus exp) (unary-op (op '-) $2)]
+                [(minus exp) (prec open-paren) (unary-op (op '-) $2)]
                 )
     
     (structures [(record-creation) $1]
@@ -410,9 +410,9 @@
           (left or)
           (left and)
           (nonassoc equals not-equals greater-or-equal less-or-equal greater-than less-than)
-          (left plus)
+          (left plus minus)
           (left divide times)
-          (left minus)
+          #;(left minus)
           ; parens correspond to function application 
           (nonassoc open-paren open-bracket close-paren close-bracket open-brace close-brace)
            ;   (nonassoc comma semicolon colon dot)
