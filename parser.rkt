@@ -338,7 +338,7 @@
                 [(exp greater-than exp) (binary-op (op '>) $1 $3)]
                 [(exp greater-or-equal exp) (binary-op (op '>=) $1 $3)]
                 [(exp and exp) (binary-op (op '&) $1 $3)]
-                [(exp or exp) (binary-op (op '\|) $1 $3)]
+                [(exp or exp) (binary-op (op 'or) $1 $3)]
                 [(minus exp) (prec open-paren) (unary-op (op '-) $2)]
                 )
     

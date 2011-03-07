@@ -107,6 +107,7 @@
      (map (λ (exp) (vls exp in-loop? env)) seq)]
     
     [(break) (unless in-loop? (error "semantic error: found a break statement not inside a loop"))]
+    [(nil) (nil)]
     )
   (void))   
     
