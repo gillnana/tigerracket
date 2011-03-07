@@ -339,23 +339,24 @@
                         ;(displayln new-t-env)
                         )]))
              
-             (define (fix-dec! bind dec new-t-env)
+             (define (fix-dec! bind dec new-t-env) ; TODO: return whether the thing changed
                (match (type-binding-ty bind)
-                 [(or (t-dummy) (t-array (t-dummy)))
+                 [(or (t-dummy) (t-array (t-dummy))) ; TODO: go deeper?
+                  ; TODO: get the thing that's in there, compare against new thing to check if it changed
                   (set-type-binding-ty! bind (ast-node->t-type dec new-t-env))]
                  [(t-record fields)
                   (map (λ (record-tyfield bound-field)
-                         (when (t-dummy? (field-ty bound-field))
+                         (when (t-dummy? (field-ty bound-field)) ; TODO: go deeper??
                            (set-field-ty! bound-field (ast-node->t-type (tyfield-type-id record-tyfield) new-t-env))))
                        (record-of-tyfields dec)
                        fields)]
                  [(t-fun args result)
                   (map (λ (decl-arg bound-arg)
-                         (when (t-dummy? (fun-arg-type bound-arg))
+                         (when (t-dummy? (fun-arg-type bound-arg)) ; TODO: go deeper???
                            (set-fun-arg-type! bound-arg (ast-node->t-type decl-arg new-t-env))))
                        (function-type-dom dec)
                        args)
-                  (when (t-dummy? result)
+                  (when (t-dummy? result) ; TODO: go deeper????
                     (set-t-fun-result! (type-binding-ty bind) (ast-node->t-type (function-type-rng dec) new-t-env)))]
                  [else (void)]))
              
@@ -378,7 +379,7 @@
              
        (check-repeat-args decs)
        (check-repeat-type-decs decs)
-       (fix-decs! new-te new-bindings decs 10)
+       (fix-decs! new-te new-bindings decs 10) ; TODO: FIX THIS; THIS IS COMPLETELY WRONG WTF
              
        (type-of-env exp new-te ve))]
               
@@ -493,8 +494,8 @@
 (check-error (type-of (parse-string "let var z := nil in end")) "type error: variable z has value nil but no type")
 (check-error (type-of (parse-string "let var z := nil in zz end")) "type error: variable z has value nil but no type")
 (check-error (type-of (parse-string "let var zz : int := nil in end")) "type error: type mismatch, found type int; expected #(struct:t-nil)")
-(check-expect (type-of (parse-string "let type a = int var x : a := 2 in 154 end")) (t-int)) ; TODO: let*
-(check-expect (type-of (parse-string "let type a = int type b = a in let var nobbish : b := 48 in 23 end end")) (t-int)) ; TODO: let = letrec*
+(check-expect (type-of (parse-string "let type a = int var x : a := 2 in 154 end")) (t-int))
+(check-expect (type-of (parse-string "let type a = int type b = a in let var nobbish : b := 48 in 23 end end")) (t-int))
 (check-expect (type-of (parse-string "let var x := 7   var y := x in y  end"))
               (t-int))
 (check-expect (type-of (parse-string "let var x := 7 in let var y := x in y end end"))
@@ -559,6 +560,23 @@
                 (set-field-ty! children tl)
                 (set-field-ty! tail tl)
                 t))
+
+(check-expect (type-of (parse-string "
+let
+  type tree = {val:int, body:treearr}
+  type treearr = array of tree
+  var x : tree := nil
+in
+  x
+end
+"))
+              (let* [(f (field 'body #t))
+                     (tree (t-record (list (field 'val (t-int)) f)))
+                     (treearr (t-array tree))]
+                (set-field-ty! f treearr)
+                tree))
+
+                
 
 (check-expect (type-of (parse-string "let type a = b type b = c type c = d type d = int var x : a := 6 in x end")) (t-int))
 (check-expect (type-of (parse-string "let type a = array of b type b = c type c = int var x := a[6] of 0 in x end"))
