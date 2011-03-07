@@ -63,22 +63,20 @@
 
 
 (define (ast-node->t-type ast-node te)
-  ;(displayln (format "made a call to ast-node with node ~a" ast-node))
   (match ast-node
     [(tydec _ a) (ast-node->t-type a te)]
-    [(type-id name) (begin #;(displayln (format "~a is of type ~a" name (type-lookup name te))) (type-lookup name te))]
+    [(type-id name) (type-lookup name te)]
     [(array-of ast-sub-node) (box (t-array (ast-node->t-type ast-sub-node te)))]
-    [(record-of tyfields) (begin
-                            #;(displayln "calling ast func. on record-of node")
-                            (t-record (map (lambda (tyf) 
-                                           (match tyf
-                                             [(tyfield id ast-sub-node)
-                                              (field id (ast-node->t-type ast-sub-node te))]))
-                                         tyfields)))]
-    [(function-type arg-nodes val-node) (t-fun (map (λ (an) 
+    [(record-of tyfields)
+     (box (t-record (map (lambda (tyf) 
+                           (match tyf
+                             [(tyfield id ast-sub-node)
+                              (field id (ast-node->t-type ast-sub-node te))]))
+                         tyfields)))]
+    [(function-type arg-nodes val-node) (box (t-fun (map (λ (an) 
                                                       (ast-node->t-type an te)) 
                                                     arg-nodes)
-                                               (ast-node->t-type val-node te))]))
+                                               (ast-node->t-type val-node te)))]))
 
 
 
@@ -289,58 +287,48 @@
     
     ;TODO: let-types should not allow multiple types of the same name
     [(let-types decs exp)
-     (local [(define (accumulate-type-declarations decl ty-env)
-               (match decl
-                 [(tydec name ast-type-node) (cons (type-binding name (box #f)) ty-env)]))
-                                              ;(type-binding name (ast-node->t-type ast-type-node ty-env))
-
-             (define new-bindings (foldr accumulate-type-declarations empty decs))
-             (define new-te (append new-bindings te))
-             
-             (define (fix-decs! new-t-env new-bindings tydecs)
-               (if (ormap values
-                          (map (λ (bind dec)
-                                 (fix-dec! (type-binding-ty bind)
-                                           dec
-                                           new-t-env))
-                               new-bindings
-                               tydecs))
-                   (fix-decs! new-t-env new-bindings tydecs)
-                   (unless (andmap (λ (binding) (unbox (type-binding-ty binding)))
-                                   new-bindings)
-                     (error (format "illegal cycle in type declarations, environment was ~a" new-t-env)))))
-             
-             (define (fix-dec! t-type dec new-t-env)
-               (match t-type
-                 [(and (box content) current-box)
-                  (and (false? content) ; false if not dummy
-                       (let* [(result (ast-node->t-type dec new-t-env))
-                              (thing (if (box? result) (unbox result) result))]
-                         (and thing
-                              (set-box! current-box thing)))
-                       #t)]))
-             
-             (define (check-repeat-args decs)
-               (map (match-lambda
-                        [(tydec ty-id (record-of tyfields))
-                         (when (contains-dupes? (map tyfield-id tyfields))
-                           (error 
-                            (format "semantic error: record declaration ~a contains multiple fields with the same identifier ~a"
-                                    ty-id (contains-dupes? (map tyfield-id tyfields)))))]
-                        [else #f])
-                        decs))
-             
-             (define (check-repeat-type-decs decs)
-               (when (contains-dupes? (map tydec-type-id decs))
-                 (error (format "semantic error: multiple type declarations for same identifier ~a in same block"
-                                (contains-dupes? (map tydec-type-id decs))))))]
-             
+     (local 
+       [(define (accumulate-type-declarations decl ty-env)
+          (match decl
+            [(tydec name ast-type-node) (cons (type-binding name (box #f)) ty-env)]))
+        
+        (define new-bindings (foldr accumulate-type-declarations empty decs))
+        (define new-te (append new-bindings te))
+        
+        (define (fix-decs! new-t-env new-bindings tydecs)
+          (if (ormap (λ (t-box dec)
+                       (and (false? (unbox t-box)) ; break and return false if it's not an empty box
+                            (let [(result (unbox (ast-node->t-type dec new-t-env)))]
+                              ; if the lookup returns an empty box, break and return false
+                              ; else, set the formerly empty box to the result of the lookup
+                              (and result (set-box! t-box result)))))
+                     new-bindings
+                     tydecs)
+              (fix-decs! new-t-env new-bindings tydecs) ; keep going if something changed
+              (unless (andmap unbox new-bindings) ; here we have reached fixed point of fix-decs! if there are empty boxes, we have a cycle
+                (error (format "illegal cycle in type declarations, environment was ~a" new-t-env)))))
+        
+        (define (check-repeat-args decs)
+          (map (match-lambda
+                 [(tydec ty-id (record-of tyfields))
+                  (when (contains-dupes? (map tyfield-id tyfields))
+                    (error 
+                     (format "semantic error: record declaration ~a contains multiple fields with the same identifier ~a"
+                             ty-id (contains-dupes? (map tyfield-id tyfields)))))]
+                 [else #f])
+               decs))
+        
+        (define (check-repeat-type-decs decs)
+          (when (contains-dupes? (map tydec-type-id decs))
+            (error (format "semantic error: multiple type declarations for same identifier ~a in same block"
+                           (contains-dupes? (map tydec-type-id decs))))))]
+       
        (check-repeat-args decs)
        (check-repeat-type-decs decs)
-       (fix-decs! new-te new-bindings decs)
-             
+       (fix-decs! new-te (map type-binding-ty new-bindings) decs)
+       
        (type-of-env exp new-te ve))]
-              
+    
     
     [(funcall fun-id caller-args)
      (let* [(f (var-lookup (id-name fun-id) ve))
