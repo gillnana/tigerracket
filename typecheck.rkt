@@ -5,7 +5,7 @@
 
 ; type-binding represents creating a new type
 ; let type a = int in ... end
-(struct type-binding (id ty) #:transparent #:mutable)
+(struct type-binding (id ty) #:transparent)
 
 ; var-binding represents a variable that hold a value of a certain type
 ; let x = 3 in ... end
@@ -17,20 +17,16 @@
 (struct t-void () #:transparent) ; NOT TRANSPARENT, FUCK YOU RACKET
 (struct t-nil () #:transparent)
 
-(struct fun-arg (type) #:transparent #:mutable)
-
-(struct t-fun (args result) #:transparent #:mutable) ; args is list of types
-(struct t-array (elem-type) #:transparent #:mutable)
+(struct t-fun (args result) #:transparent) ; args is list of types
+(struct t-array (elem-type) #:transparent)
 (struct t-record (fields) #:transparent)
-(struct field (name ty) #:transparent #:mutable)
-
-(struct t-dummy () #:transparent)
+(struct field (name ty) #:transparent)
 
 ; type-lookup symbol listof-type-binding -> t-type
 (define (type-lookup type-symbol type-env)
   (cond 
-    [(equal? type-symbol 'int) (t-int)]
-    [(equal? type-symbol 'string) (t-string)]
+    [(equal? type-symbol 'int) (box (t-int))]
+    [(equal? type-symbol 'string) (box (t-string))]
     ;[(type-id? type-symbol) (type-lookup (type-id-name type-symbol) type-env)]
     [else (or (ormap (lambda (binding) (if (equal? (type-binding-id binding) type-symbol)
                                            (type-binding-ty binding)
@@ -40,7 +36,6 @@
 
 ; var-lookup symbol listof-var-binding -> t-type
 (define (var-lookup var-symbol var-env)
-  ;(print var-env)
   (or (ormap (lambda (binding) (if (equal? (var-binding-id binding) var-symbol)
                                    (var-binding-ty binding)
                                    false))
@@ -51,8 +46,6 @@
 ; takes the type of an identifier or function argument, and the type of a thing you want to put in it
 ; tells you if that's ok
 (define (assignable-to? variable value)
-  ;(print variable)
-  ;(print value)
   (when (symbol? variable) (error "internal error: assignable-to received a symbol"))
   (and (not (t-void? value))
        (or (and (equal? value (t-nil)) (t-record? variable))
@@ -65,15 +58,16 @@
         [(or (t-array? a) (t-record? a)) (eq? a b)]
         [(t-fun? a) (and (andmap same-type? (t-fun-args a) (t-fun-args b))
                          (same-type? (t-fun-result a) (t-fun-result b)))]
-        [(fun-arg a) (same-type? (fun-arg-type a) (fun-arg-type b))]
+        [(box? a) (same-type? (unbox a) (unbox b))]
         [else (error "internal error: unknown types specified")]))
 
 
 (define (ast-node->t-type ast-node te)
   ;(displayln (format "made a call to ast-node with node ~a" ast-node))
   (match ast-node
+    [(tydec _ a) (ast-node->t-type a te)]
     [(type-id name) (begin #;(displayln (format "~a is of type ~a" name (type-lookup name te))) (type-lookup name te))]
-    [(array-of ast-sub-node) (t-array (ast-node->t-type ast-sub-node te))]
+    [(array-of ast-sub-node) (box (t-array (ast-node->t-type ast-sub-node te)))]
     [(record-of tyfields) (begin
                             #;(displayln "calling ast func. on record-of node")
                             (t-record (map (lambda (tyf) 
@@ -82,10 +76,9 @@
                                               (field id (ast-node->t-type ast-sub-node te))]))
                                          tyfields)))]
     [(function-type arg-nodes val-node) (t-fun (map (λ (an) 
-                                                      (fun-arg (ast-node->t-type an te))) 
+                                                      (ast-node->t-type an te)) 
                                                     arg-nodes)
-                                               (ast-node->t-type val-node te))]
-  ))
+                                               (ast-node->t-type val-node te))]))
 
 
 
@@ -99,29 +92,35 @@
     [(string-literal a) (t-string)]
     [(nil) (t-nil)]
     
+    #;[(id a) 
+     (let [(lookup-val (var-lookup a ve))] ;TODO: is this ok? should it be a box ever?
+       (if (box? lookup-val)
+           (unbox lookup-val)
+           lookup-val))]
     [(id a) (var-lookup a ve)]
+                ;(error (format "~a ~a was in a box" (var-lookup a ve) expr))
     [(break) (t-void)]
     ;arrays
     [(array-creation (type-id type) size initval)
      (let [(size-type (type-of-env size te ve))]
             (if (not (t-int? size-type))
                 (error (format "type error: expected type of array size to be int, instead it was ~a" size-type))
-                (let [(declared-type (type-lookup type te))]
+                (let [(declared-type (unbox (type-lookup type te)))]
                   (if (not (t-array? declared-type))
                       (error (format "type error: type of array must be declared as an array, instead found ~a" declared-type))
                       (let [(initval-type (type-of-env initval te ve))]
-                        (if (not (assignable-to? (t-array-elem-type declared-type) initval-type))
+                        (if (not (assignable-to? (unbox (t-array-elem-type declared-type)) initval-type))
                             (error (format "type error: type mismatch; initial value ~a must match array type ~a"
                                            initval-type declared-type))
                             declared-type))))))]
     [(array-access (id name) index)
      (if (t-int? (type-of-env index te ve))
-         (t-array-elem-type (var-lookup name ve))
+         (unbox (t-array-elem-type (var-lookup name ve)))
          (error (format "type error: attempted to access array ~a with non-integer index" name)))]
           
     ;records      
     [(record-creation (type-id type) var-fields)
-     (let [(decl-fields (type-lookup type te))]
+     (let [(decl-fields (unbox (type-lookup type te)))]
        (cond [(not (= (length var-fields) (length (t-record-fields decl-fields))))
               ;TODO: improve this error message by telling you which fields you missed/overspecified
               (error (format "type error: type mismatch; wrong number of fields ~a specified for creation of record ~a"
@@ -132,7 +131,7 @@
                               (if (equal? (field-name field-of-type)
                                           (fieldval-name field-of-var))
                                   (let [(varfield-type (type-of-env (fieldval-val field-of-var) te ve))]
-                                    (if (assignable-to? (field-ty field-of-type) varfield-type)
+                                    (if (assignable-to? (unbox (field-ty field-of-type)) varfield-type)
                                         #t
                                         (error 
                                          (format "type error: type mismatch; field ~a was given value of type ~a; expected ~a"
@@ -149,7 +148,7 @@
              [else (error "internal error: code 8726")]))]
     [(record-access rec-id field-id)
      (or (ormap (λ (field) (if (equal? (field-name field) field-id)
-                               (field-ty field)
+                               (unbox (field-ty field))
                                #f))
                 (t-record-fields (var-lookup rec-id ve)))
          (error (format "semantic error: unknown field ~a of record ~a" rec-id field-id)))]
@@ -165,7 +164,9 @@
              [(and (t-int? (type-of-env arg1 te ve))
                    (t-int? (type-of-env arg2 te ve)))
               (t-int)]
-             [else (error (format "type error: args for operator ~a must be integers" sym))]))]
+             [else (error (format "type error: args for operator ~a must be integers. found ~a and ~a" sym
+                                  (type-of-env arg1 te ve)
+                                  (type-of-env arg2 te ve)))]))]
 
     [(unary-op (op '-) arg1)
      (if (not (t-int? (type-of-env arg1 te ve)))
@@ -179,10 +180,6 @@
             explist)]
     
     ; control flow operators
-    #;[(if-statement c t (list))
-     (cond [(not (t-int? (type-of-env c te ve))) (error "type error: condition of if statement must have boolean/int value")]
-           [(not (t-void? (type-of-env t te ve))) (error "type error: then branch of an if statement must have no value")]
-           [else (t-void)])]
     [(if-statement c t e)
      (let ([type-of-t (type-of-env t te ve)]
            [type-of-e (type-of-env e te ve)] )
@@ -213,7 +210,7 @@
                         (if (equal? (t-nil) expression-type)
                             (error (format "type error: variable ~a has value nil but no type" id))
                             (cons (var-binding id expression-type) v-env))
-                        (let [(declared-type (type-lookup type-id te))]
+                        (let [(declared-type (unbox (type-lookup type-id te)))]
                           (if (assignable-to? declared-type expression-type)
                               (cons (var-binding id declared-type) v-env)
                               (error (format "type error: type mismatch, found type ~a; expected ~a"
@@ -234,9 +231,9 @@
                  ; f(x, y) ok but f(x, x) bad
                  [(fundec id tyfields return-type body)
                   (cons (var-binding id (t-fun (map (lambda (tf)
-                                                      (fun-arg (match tf
-                                                                 [(tyfield name (type-id type-sym))
-                                                         (type-lookup type-sym te)])))
+                                                      (match tf
+                                                        [(tyfield name (type-id type-sym))
+                                                         (type-lookup type-sym te)]))
                                                     tyfields)
                                                (if (not return-type)
                                                    (t-void)
@@ -262,19 +259,19 @@
                       (let [(v-env-plus-args (foldl (lambda (tf var-env)
                                                       (match tf
                                                         [(tyfield id (type-id type-sym))
-                                                         (cons (var-binding id (type-lookup type-sym te))
+                                                         (cons (var-binding id (unbox (type-lookup type-sym te)))
                                                                var-env)]))
                                                 v-env
                                                 tyfields))]
-                        (or (same-type? (type-of-env body te v-env-plus-args)
+                        (or (same-type? (type-of-env body te v-env-plus-args); TODO (should be assignable-to?)?
                                         (if (not return-type)
                                             (t-void)
-                                            (type-lookup return-type te)))
+                                            (unbox (type-lookup return-type te))))
                             (error (format "type error: type mismatch, declaration of function ~a was declared as ~a but body returns type ~a"
                                            id
                                            (if (not return-type)
                                                (t-void)
-                                               (type-lookup return-type te))
+                                               (unbox (type-lookup return-type te)))
                                            (type-of-env body te v-env-plus-args))))))
                   
                   ]))
@@ -301,64 +298,34 @@
     [(let-types decs exp)
      (local [(define (accumulate-type-declarations decl ty-env)
                (match decl
-                 [(tydec name ast-type-node) (cons (type-binding name (t-dummy)) ty-env)]))
+                 [(tydec name ast-type-node) (cons (type-binding name (box #f)) ty-env)]))
                                               ;(type-binding name (ast-node->t-type ast-type-node ty-env))
 
              (define new-bindings (foldr accumulate-type-declarations empty decs))
              (define new-te (append new-bindings te))
              
-             (define (contains-dummy? t-env)
-               ;(displayln t-env)
-               (ormap (match-lambda
-                        [(type-binding type-id type)
-                         (is-dummy? type empty)])
-                      t-env))
+             (define (fix-decs! new-t-env new-bindings tydecs)
+               (if (ormap values
+                          (map (λ (bind dec)
+                                 (fix-dec! (type-binding-ty bind)
+                                           dec
+                                           new-t-env))
+                               new-bindings
+                               tydecs))
+                   (fix-decs! new-t-env new-bindings tydecs)
+                   (unless (andmap (λ (binding) (unbox (type-binding-ty binding)))
+                                   new-bindings)
+                     (error (format "illegal cycle in type declarations, environment was ~a" new-t-env)))))
              
-             (define (is-dummy? t visited)
-               (and (not (ormap (λ (node) (eq? node t)) visited))
-                    (let [(new-visited (cons t visited))]
-                    (match t
-                      [(t-dummy) #t]
-                      [(t-record fieldlist) (ormap (λ (fld) (is-dummy? (field-ty fld) new-visited)) fieldlist)]
-                      [(t-array elem) (is-dummy? elem new-visited)]
-                      [(t-fun args result) (or (ormap (λ (arg) (is-dummy? arg new-visited)) args) (is-dummy? result new-visited))]
-                      [else #f]))))
-             
-             (define (fix-decs! new-t-env new-bindings tydecs num-tries-left)
-               #;(displayln (format "~a tries left" num-tries-left))
-               (cond [(not (contains-dummy? new-bindings)) (void)]
-                     [(<= num-tries-left 0) (error (format "illegal cycle in type declarations, environment was ~a" new-t-env))]
-                     [else
-                      (begin 
-                        (map (λ (bind dec)
-                                 (fix-dec! bind (tydec-ty dec) new-t-env))
-                             new-bindings
-                             tydecs)
-                        ;(displayln new-t-env)
-                        (fix-decs! new-t-env new-bindings tydecs (sub1 num-tries-left))
-                        ;(displayln new-t-env)
-                        )]))
-             
-             (define (fix-dec! bind dec new-t-env) ; TODO: return whether the thing changed
-               (match (type-binding-ty bind)
-                 [(or (t-dummy) (t-array (t-dummy))) ; TODO: go deeper?
-                  ; TODO: get the thing that's in there, compare against new thing to check if it changed
-                  (set-type-binding-ty! bind (ast-node->t-type dec new-t-env))]
-                 [(t-record fields)
-                  (map (λ (record-tyfield bound-field)
-                         (when (t-dummy? (field-ty bound-field)) ; TODO: go deeper??
-                           (set-field-ty! bound-field (ast-node->t-type (tyfield-type-id record-tyfield) new-t-env))))
-                       (record-of-tyfields dec)
-                       fields)]
-                 [(t-fun args result)
-                  (map (λ (decl-arg bound-arg)
-                         (when (t-dummy? (fun-arg-type bound-arg)) ; TODO: go deeper???
-                           (set-fun-arg-type! bound-arg (ast-node->t-type decl-arg new-t-env))))
-                       (function-type-dom dec)
-                       args)
-                  (when (t-dummy? result) ; TODO: go deeper????
-                    (set-t-fun-result! (type-binding-ty bind) (ast-node->t-type (function-type-rng dec) new-t-env)))]
-                 [else (void)]))
+             (define (fix-dec! t-type dec new-t-env)
+               (match t-type
+                 [(and (box content) current-box)
+                  (and (false? content) ; false if not dummy
+                       (let* [(result (ast-node->t-type dec new-t-env))
+                              (thing (if (box? result) (unbox result) result))]
+                         (and thing
+                              (set-box! current-box thing)))
+                       #t)]))
              
              (define (check-repeat-args decs)
                (map (match-lambda
@@ -367,19 +334,17 @@
                            (error 
                             (format "semantic error: record declaration ~a contains multiple fields with the same identifier ~a"
                                     ty-id (contains-dupes? (map tyfield-id tyfields)))))]
-                        [else #f]
-                        )
+                        [else #f])
                         decs))
              
              (define (check-repeat-type-decs decs)
                (when (contains-dupes? (map tydec-type-id decs))
                  (error (format "semantic error: multiple type declarations for same identifier ~a in same block"
-                                (contains-dupes? (map tydec-type-id decs))))))
-             ]
+                                (contains-dupes? (map tydec-type-id decs))))))]
              
        (check-repeat-args decs)
        (check-repeat-type-decs decs)
-       (fix-decs! new-te new-bindings decs 10) ; TODO: FIX THIS; THIS IS COMPLETELY WRONG WTF
+       (fix-decs! new-te new-bindings decs)
              
        (type-of-env exp new-te ve))]
               
@@ -388,10 +353,10 @@
      (let* [(f (var-lookup (id-name fun-id) ve))
             (fundef-args (t-fun-args f))]
        ;TODO make sure the funcall and the fundef have the same number of arguments
-       (if (andmap (λ (fundef-arg caller-arg) (assignable-to? (fun-arg-type fundef-arg) (type-of-env caller-arg te ve)))
+       (if (andmap (λ (fundef-arg caller-arg) (assignable-to? (unbox fundef-arg) (type-of-env caller-arg te ve)))
                    (t-fun-args f)
                    caller-args)
-           (t-fun-result f)
+           (unbox (t-fun-result f))
            (error (format "type error: mismatched type applied to function argument, expected ~a, found ~a"
                           (t-fun-args f) caller-args))))]
      
@@ -399,12 +364,11 @@
                                
 
 (define (contains-dupes? a-list (arg-table (make-immutable-hash empty)))
-  (if (empty? a-list)
-      #f
-      (let [(hd (first a-list)) (tl (rest a-list))]
-        (if (hash-ref arg-table hd #f)
-            hd
-            (contains-dupes? tl (hash-set arg-table hd #t))))))
+  (match a-list
+    [(list) #f]
+    [(cons hd tl) (if (hash-has-key? arg-table hd)
+                      hd
+                      (contains-dupes? tl (hash-set arg-table hd #t)))]))
 
 (define (unpack-error-annotation type-expr ast-node)
   (cond [(array-creation? ast-node) (type-id-name (array-creation-type-id ast-node))]
@@ -450,12 +414,12 @@
 
 ; array creation/access tests
 (check-error (type-of (parse-string "a[\"zoomba\"]")) "type error: attempted to access array a with non-integer index")
-(check-error (type-of (parse-string "let type intarray = array of int var x := intarray[4] of \"pizza\" in end")) "type error: type mismatch; initial value #(struct:t-string) must match array type #(struct:t-array #(struct:t-int))")
+(check-error (type-of (parse-string "let type intarray = array of int var x := intarray[4] of \"pizza\" in end")) "type error: type mismatch; initial value #(struct:t-string) must match array type #(struct:t-array #&#(struct:t-int))")
 (check-error (type-of (parse-string "let var x := int[10] of 338 in end")) "type error: type of array must be declared as an array, instead found #(struct:t-int)")
-(check-expect (type-of (parse-string "let type intarray = array of int var y := intarray[26] of 0 in y end")) (t-array (t-int)))
+(check-expect (type-of (parse-string "let type intarray = array of int var y := intarray[26] of 0 in y end")) (t-array (box (t-int))))
 (check-expect (type-of (parse-string "let type intarray = array of int var y := intarray[26] of 0 in y[3] end")) (t-int))
 
-(check-expect (type-of (parse-string "let type point = {x : int, y:int} type pointarray = array of point var y := pointarray[50] of nil in y end")) (t-array (t-record (list (field 'x (t-int)) (field 'y (t-int))))))
+(check-expect (type-of (parse-string "let type point = {x : int, y:int} type pointarray = array of point var y := pointarray[50] of nil in y end")) (t-array (box (t-record (list (field 'x (box (t-int))) (field 'y (box (t-int))))))))
 
 (check-error (type-of (parse-string "a[4]")) "unbound identifier a in environment ()")
 
@@ -463,21 +427,21 @@
 (check-error (type-of (parse-string "let type intarray = array of int var z := intarray[10] of 5 in z[\"pizza\"] end")) "type error: attempted to access array z with non-integer index")
 (check-error (type-of (parse-string "let type intarray = array of int var aa := intarray[10] of 5 in aa[nil] end")) "type error: attempted to access array aa with non-integer index")
 (check-expect (type-of (parse-string "let type a = array of int var x : a := a[7] of 1 in x end"))
-              (t-array (t-int)))
+              (t-array (box (t-int))))
 
 (check-error (type-of (parse-string "let type a = array of int type b = array of int var x : a := b[10] of 0 in end")) "type error: type mismatch, found type a; expected b") ;
 
 ; record creation/access tests
 
 (check-expect (type-of (parse-string "let type foo = {} var x : foo := foo{} in x end")) (t-record empty))
-(check-expect (type-of (parse-string "let type wazza = {x : int} var w : wazza := wazza{x=5} in w end")) (t-record (list (field 'x (t-int)))))
-(check-expect (type-of (parse-string "let type pizza = {x : int, y : int} var z := pizza{x=3,y=-39} in z end")) (t-record (list (field 'x (t-int)) (field 'y (t-int)))))
-(check-error (type-of (parse-string "let type oatmeal = {x : int} var m : oatmeal := oatmeal{x=\"i hate oatmeal\"} in m end")) "type error: type mismatch; field x was given value of type #(struct:t-string); expected #(struct:t-int)")
-(check-error (type-of (parse-string "let type soda = {x : int} var y : soda := soda{p=3} in y end")) "type mismatch; no value specified for field #(struct:field x #(struct:t-int)) in soda")
+(check-expect (type-of (parse-string "let type wazza = {x : int} var w : wazza := wazza{x=5} in w end")) (t-record (list (field 'x (box (t-int))))))
+(check-expect (type-of (parse-string "let type pizza = {x : int, y : int} var z := pizza{x=3,y=-39} in z end")) (t-record (list (field 'x (box (t-int))) (field 'y (box (t-int))))))
+(check-error (type-of (parse-string "let type oatmeal = {x : int} var m : oatmeal := oatmeal{x=\"i hate oatmeal\"} in m end")) "type error: type mismatch; field x was given value of type #(struct:t-string); expected #&#(struct:t-int)")
+(check-error (type-of (parse-string "let type soda = {x : int} var y : soda := soda{p=3} in y end")) "type mismatch; no value specified for field #(struct:field x #&#(struct:t-int)) in soda")
 (check-error (type-of (parse-string "let type bagels = {x : int, y : blarg} in end")) "unbound type blarg")
-(check-error (type-of (parse-string "let type sandwich = {x : string} var turkey := sandwich{x = \"tomato\", y = \"pickles\"} in turkey end")) "type error: type mismatch; wrong number of fields (#(struct:fieldval x #(struct:string-literal tomato)) #(struct:fieldval y #(struct:string-literal pickles))) specified for creation of record #(struct:t-record (#(struct:field x #(struct:t-string))))")
-(check-error (type-of (parse-string "let type greem = {x : int} var z : greem := greem{x=12,m=22} in z end")) "type error: type mismatch; wrong number of fields (#(struct:fieldval x #(struct:int-literal 12)) #(struct:fieldval m #(struct:int-literal 22))) specified for creation of record #(struct:t-record (#(struct:field x #(struct:t-int))))")
-(check-expect (type-of (parse-string "let type pt = {x : int, y: int} in let type line = { a : pt, b : pt} in line{a=pt{x=1,y=44},b=pt{x=98,y=6000000}} end end")) (t-record (list (field 'a (t-record (list (field 'x (t-int)) (field 'y (t-int))))) (field 'b (t-record (list (field 'x (t-int)) (field 'y (t-int))))))))
+(check-error (type-of (parse-string "let type sandwich = {x : string} var turkey := sandwich{x = \"tomato\", y = \"pickles\"} in turkey end")) "type error: type mismatch; wrong number of fields (#(struct:fieldval x #(struct:string-literal tomato)) #(struct:fieldval y #(struct:string-literal pickles))) specified for creation of record #(struct:t-record (#(struct:field x #&#(struct:t-string))))")
+(check-error (type-of (parse-string "let type greem = {x : int} var z : greem := greem{x=12,m=22} in z end")) "type error: type mismatch; wrong number of fields (#(struct:fieldval x #(struct:int-literal 12)) #(struct:fieldval m #(struct:int-literal 22))) specified for creation of record #(struct:t-record (#(struct:field x #&#(struct:t-int))))")
+(check-expect (type-of (parse-string "let type pt = {x : int, y: int} in let type line = { a : pt, b : pt} in line{a=pt{x=1,y=44},b=pt{x=98,y=6000000}} end end")) (t-record (list (field 'a (box (t-record (list (field 'x (box (t-int))) (field 'y (box (t-int))))))) (field 'b (box (t-record (list (field 'x (box (t-int))) (field 'y (box (t-int))))))))))
 
 
 
@@ -504,26 +468,29 @@
 
 
 ; fundec/funcall tests
-(check-expect (type-of (parse-string "let function f() : int = 25 in f end")) (t-fun empty (t-int)))
+(check-expect (type-of (parse-string "let function f() : int = 25 in f end")) (t-fun empty (box (t-int))))
 (check-expect (type-of (parse-string "let function f(x : int) : int = 25 in f(12) end")) (t-int))
-(check-expect (type-of (parse-string "let function f(x : int) = (25;()) in f end")) (t-fun (list (fun-arg (t-int))) (t-void)))
+(check-expect (type-of (parse-string "let function f(x : int) = (25;()) in f end")) (t-fun (list (box (t-int))) (t-void)))
 
-(check-expect (type-of (parse-string "let function g(x : int) : int = 12 in g end")) (t-fun (list (fun-arg (t-int))) (t-int)))
-(check-expect (type-of (parse-string "let type fun = int -> int function f(x : fun) : fun = let function g(x : int) : int = 7 in g end in f end")) (t-fun (list (fun-arg (t-fun (list (fun-arg (t-int))) (t-int)))) (t-fun (list (fun-arg (t-int))) (t-int))))
+(check-expect (type-of (parse-string "let function g(x : int) : int = 12 in g end")) (t-fun (list (box (t-int))) (box (t-int))))
+(check-expect (type-of (parse-string "let type fun = int -> int function f(x : fun) : fun = let function g(x : int) : int = 7 in g end in f end")) (t-fun (list (box (t-fun (list (box (t-int))) (box (t-int))))) (box (t-fun (list (box (t-int))) (box (t-int))))))
 
-(check-expect (type-of (parse-string "let type fun = int -> int function g(x : int) : int = 7 in let function f(x : fun) : fun = g in f end end")) (t-fun (list (fun-arg (t-fun (list (fun-arg (t-int))) (t-int)))) (t-fun (list (fun-arg (t-int))) (t-int))))
+(check-expect (type-of (parse-string "let type fun = int -> int function g(x : int) : int = 7 in let function f(x : fun) : fun = g in f end end")) (t-fun (list (box (t-fun (list (box (t-int))) (box (t-int))))) (box (t-fun (list (box (t-int))) (box (t-int))))))
 
-(check-expect (type-of (parse-string "let type fun = int -> int function g(x : int) : int = 7 function f(x : fun ) : fun = g in f end")) (t-fun (list (fun-arg (t-fun (list (fun-arg (t-int))) (t-int)))) (t-fun (list (fun-arg (t-int))) (t-int))))
+(check-expect (type-of (parse-string "let type fun = int -> int function g(x : int) : int = 7 function f(x : fun ) : fun = g in f end")) (t-fun (list (box (t-fun (list (box (t-int))) (box (t-int))))) (box (t-fun (list (box (t-int))) (box (t-int))))))
 
-(check-expect (type-of (parse-string "let function f(x:int):int = 1+f(x) in f end")) (t-fun (list (fun-arg (t-int))) (t-int)))
+(check-expect (type-of (parse-string "let function f(x:int):int = 1+f(x) in f end"))
+              (t-fun (list (box (t-int))) (box (t-int))))
 (check-expect (type-of (parse-string "let function f(x:int):int = g(x)+3 function g(x:int):int = if g(x) then f(x)+4 else 26 in g(5) end")) (t-int))
 
 ; misc tests
 (check-expect (type-of (parse-string "if 1 then nil else nil")) (t-nil))
 (check-error (type-of (parse-string "let var x := if 1 then nil else nil in end")) "type error: variable x has value nil but no type")
 
-(check-expect (type-of (parse-string "let type a = {x:int} in if 1 then nil else a{x=1} end")) (t-record (list (field 'x (t-int)))))
-(check-expect (type-of (parse-string "let type a = {x:int} in if 1 then a{x=1} else nil end")) (t-record (list (field 'x (t-int)))))
+(check-expect (type-of (parse-string "let type a = {x:int} in if 1 then nil else a{x=1} end"))
+              (t-record (list (field 'x (box (t-int))))))
+(check-expect (type-of (parse-string "let type a = {x:int} in if 1 then a{x=1} else nil end"))
+              (t-record (list (field 'x (box (t-int))))))
 
 (check-error (type-of (parse-string "let type a = {x:int, x:int} in end")) "semantic error: record declaration a contains multiple fields with the same identifier x")
 (check-error (type-of (parse-string "let function f(x:int,x:int):int = x in end")) "semantic error: definition of function f contains multiple arguments with the same identifier x")
@@ -534,31 +501,24 @@
 
 ; recursive types tests
 (check-expect (type-of (parse-string "let type intlist = {hd:int, tl:intlist} var x := intlist{hd=1, tl=intlist{hd=2, tl=intlist{hd=3, tl=nil}}} in x end"))
-              ; shared is broken with (struct ...) structures. 
-              #;(shared [(-a- (t-record (list (field 'hd (t-int)) (field 'tl -a-))))] -a-)
-              (local [(define f (field 'tl 'something))
-                      (define r (t-record (list (field 'hd (t-int)) f)))]
-                (set-field-ty! f r)
+              (local [(define b (box #f))
+                      (define r (t-record (list (field 'hd (box (t-int))) (field 'tl b))))]
+                (set-box! b r)
                 r))
 (check-expect (type-of (parse-string "let type intlist = {hd:int, tl:intlist} var x := intlist{hd=1, tl=intlist{hd=2, tl=intlist{hd=3, tl=nil}}} in x end"))
-              ; shared is broken with (struct ...) structures. 
-              #;(shared [(-a- (t-record (list (field 'hd (t-int)) (field 'tl -a-))))] -a-)
-              (local [(define f (field 'tl 'something))
-                      (define r (t-record (list (field 'hd (t-int)) f)))]
-                (set-field-ty! f r)
+              (local [(define b (box #f))
+                      (define r (t-record (list (field 'hd (box (t-int))) (field 'tl b))))]
+                (set-box! b r)
                 r))
 (check-expect (type-of (parse-string "let type tree = {key:int, children:treelist} type treelist = {hd:tree, tl:treelist} var x : tree := nil in x end"))
-              #;(shared ([t (t-record (list (field 'key (t-int)) (field 'children tl)))]
-                         [tl (t-record (list (field 'hd t) (field 'tl tl)))])
-                  t)
-              (local [(define children (field 'children #f))
-                      (define t (t-record (list (field 'key (t-int))
-                                                children)))
-                      (define tail (field 'tl #f))
-                      (define tl (t-record (list (field 'hd t)
-                                                 tail)))]
-                (set-field-ty! children tl)
-                (set-field-ty! tail tl)
+              (local [(define b1 (box #f))
+                      (define t (t-record (list (field 'key (box (t-int)))
+                                                (field 'children b1))))
+                      (define b2 (box #f))
+                      (define tl (t-record (list (field 'hd (box t))
+                                                 (field 'tl b2))))]
+                (set-box! b1 tl)
+                (set-box! b2 tl)
                 t))
 
 (check-expect (type-of (parse-string "
@@ -570,26 +530,24 @@ in
   x
 end
 "))
-              (let* [(f (field 'body #t))
-                     (tree (t-record (list (field 'val (t-int)) f)))
-                     (treearr (t-array tree))]
-                (set-field-ty! f treearr)
+              (let* [(b (box #f))
+                     (tree (t-record (list (field 'val (box (t-int))) (field 'body b))))
+                     (treearr (t-array (box tree)))]
+                (set-box! b treearr)
                 tree))
-
-                
 
 (check-expect (type-of (parse-string "let type a = b type b = c type c = d type d = int var x : a := 6 in x end")) (t-int))
 (check-expect (type-of (parse-string "let type a = array of b type b = c type c = int var x := a[6] of 0 in x end"))
-              (t-array (t-int)))
+              (t-array (box (t-int))))
 
-(check-error (type-of (parse-string "let type a = b type b = a in end")) "illegal cycle in type declarations, environment was (#(struct:type-binding a #(struct:t-dummy)) #(struct:type-binding b #(struct:t-dummy)))")
+(check-error (type-of (parse-string "let type a = b type b = a in end")) "illegal cycle in type declarations, environment was (#(struct:type-binding a #&#f) #(struct:type-binding b #&#f))")
 
-(check-error (type-of (parse-string "let type b = int -> intfun type intfun = b -> int in end")) "wossar")
+(check-expect (type-of (parse-string "let type b = int -> intfun type intfun = b -> int in end")) (t-void))
 (check-expect (type-of (parse-string "let type a = array of int type alist = {x:a,y:alist} in alist{x=a[10] of 3, y=nil} end"))
-              (local [(define x (field 'x (t-array (t-int))))            
-                      (define y (field 'y (t-dummy)))
-                      (define alist (t-record (list x y)))]
-                (set-field-ty! y alist)
+              (local [(define x (field 'x (box (t-array (box (t-int))))))            
+                      (define b (box #f))
+                      (define alist (t-record (list x (field 'y b))))]
+                (set-box! b alist)
                 alist))
 (check-expect (type-of (parse-string "let type a = int -> int type arec = {x:a,y:arec} type fun = arec -> a in end")) (t-void)) 
 (check-expect (type-of (parse-string "break")) (t-void))
