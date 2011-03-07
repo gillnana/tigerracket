@@ -92,14 +92,9 @@
     [(string-literal a) (t-string)]
     [(nil) (t-nil)]
     
-    #;[(id a) 
-     (let [(lookup-val (var-lookup a ve))] ;TODO: is this ok? should it be a box ever?
-       (if (box? lookup-val)
-           (unbox lookup-val)
-           lookup-val))]
     [(id a) (var-lookup a ve)]
-                ;(error (format "~a ~a was in a box" (var-lookup a ve) expr))
     [(break) (t-void)]
+    
     ;arrays
     [(array-creation (type-id type) size initval)
      (let [(size-type (type-of-env size te ve))]
@@ -113,10 +108,13 @@
                             (error (format "type error: type mismatch; initial value ~a must match array type ~a"
                                            initval-type declared-type))
                             declared-type))))))]
+    
     [(array-access (id name) index)
-     (if (t-int? (type-of-env index te ve))
-         (unbox (t-array-elem-type (var-lookup name ve)))
-         (error (format "type error: attempted to access array ~a with non-integer index" name)))]
+     (match (var-lookup name ve)
+       [(t-array (box type)) (if (t-int? (type-of-env index te ve))
+                                 type
+                                 (error (format "type error: attempted to access array ~a with non-integer index" name)))]
+       [else (error (format "type error: illegal access of non-array variable ~a" name))])]
           
     ;records      
     [(record-creation (type-id type) var-fields)
@@ -124,7 +122,7 @@
        (cond [(not (= (length var-fields) (length (t-record-fields decl-fields))))
               ;TODO: improve this error message by telling you which fields you missed/overspecified
               (error (format "type error: type mismatch; wrong number of fields ~a specified for creation of record ~a"
-                          var-fields decl-fields))]
+                             var-fields decl-fields))]
              [(andmap
                (λ (field-of-type)
                  (or (ormap (λ (field-of-var) 
@@ -133,15 +131,12 @@
                                   (let [(varfield-type (type-of-env (fieldval-val field-of-var) te ve))]
                                     (if (assignable-to? (unbox (field-ty field-of-type)) varfield-type)
                                         #t
-                                        (error 
-                                         (format "type error: type mismatch; field ~a was given value of type ~a; expected ~a"
-                                                 (field-name field-of-type)
-                                                 varfield-type
-                                                 (field-ty field-of-type)))))
-                                  #f
-                                  ))
-                            var-fields
-                            )
+                                        (error (format "type error: type mismatch; field ~a was given value of type ~a; expected ~a"
+                                                       (field-name field-of-type)
+                                                       varfield-type
+                                                       (field-ty field-of-type)))))
+                                  #f))
+                            var-fields)
                      (error (format "type mismatch; no value specified for field ~a in ~a" field-of-type type))))
                (t-record-fields decl-fields))
               decl-fields]
@@ -158,12 +153,10 @@
     [(binary-op (op sym) arg1 arg2)
      (let [(t1 (type-of-env arg1 te ve))
            (t2 (type-of-env arg2 te ve))]
-       (cond [(symbol=? sym '=) (cond [(and (t-nil? t1) (t-nil? t2)) (error "type error: found illegal expression \"nil == nil\"")]
-                                      [(same-type? (type-of-env arg1 te ve) (type-of-env arg2 te ve)) (t-int)]
-                                      [else (error "type error: arguments for equality comparison must be of same type")])]
-             [(and (t-int? (type-of-env arg1 te ve))
-                   (t-int? (type-of-env arg2 te ve)))
-              (t-int)]
+       (cond [(eq? sym '=) (cond [(and (t-nil? t1) (t-nil? t2)) (error "type error: found illegal expression \"nil == nil\"")]
+                                 [(same-type? (type-of-env arg1 te ve) (type-of-env arg2 te ve)) (t-int)]
+                                 [else (error "type error: arguments for equality comparison must be of same type")])]
+             [(and (t-int? t1) (t-int? t2)) (t-int)]
              [else (error (format "type error: args for operator ~a must be integers. found ~a and ~a" sym
                                   (type-of-env arg1 te ve)
                                   (type-of-env arg2 te ve)))]))]
@@ -412,7 +405,7 @@
               (t-int))
 
 ; array creation/access tests
-(check-error (type-of (parse-string "a[\"zoomba\"]")) "type error: attempted to access array a with non-integer index")
+(check-error (type-of (parse-string "let type sa = array of int var a := sa[10] of 0 in a[\"zoomba\"] end")) "type error: attempted to access array a with non-integer index")
 (check-error (type-of (parse-string "let type intarray = array of int var x := intarray[4] of \"pizza\" in end")) "type error: type mismatch; initial value #(struct:t-string) must match array type #(struct:t-array #&#(struct:t-int))")
 (check-error (type-of (parse-string "let var x := int[10] of 338 in end")) "type error: type of array must be declared as an array, instead found #(struct:t-int)")
 (check-expect (type-of (parse-string "let type intarray = array of int var y := intarray[26] of 0 in y end")) (t-array (box (t-int))))
@@ -429,6 +422,7 @@
               (t-array (box (t-int))))
 
 (check-error (type-of (parse-string "let type a = array of int type b = array of int var x : a := b[10] of 0 in end")) "type error: type mismatch, found type a; expected b") ;
+(check-error (type-of (parse-string "let type a = array of int var a : int := 0 in a[10] end")) "type error: illegal access of non-array variable a")
 
 ; record creation/access tests
 
