@@ -181,13 +181,15 @@
              [else (if (not (t-nil? type-of-t))
                        type-of-t
                        type-of-e)]))]
+    
     [(while-statement c body)
      (cond [(not (t-int? (type-of-env c te ve))) (error "type error: while statement condition must have boolean/int value")]
            [(not (t-void? (type-of-env body te ve))) (error "type error: while statement body must return no value")]
            [else (t-void)])]
+    
     [(for-statement var start end body)
      (cond [(not (and (t-int? (type-of-env start te ve))
-                       (t-int? (type-of-env end te ve))))
+                      (t-int? (type-of-env end te ve))))
             (error "type error: for statement must increment an int from start to end int values")]
            [(not (t-void? (type-of-env body te ve))) (error "type error: body of for statement must return no value")]
            [else (t-void)])]
@@ -220,8 +222,6 @@
      (local [; fundec ve -> new-ve
              (define (accumulate-fun-declaration decl v-env)
                (match decl
-                 ; TODO: ensure that function argument names don't repeat
-                 ; f(x, y) ok but f(x, x) bad
                  [(fundec id tyfields return-type body)
                   (cons (var-binding id (t-fun (map (lambda (tf)
                                                       (match tf
