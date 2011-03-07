@@ -189,15 +189,15 @@
                        type-of-t
                        type-of-e)]))]
     [(while-statement c body)
-     (if (t-int? (type-of-env c te ve))
-         (type-of-env body te ve)
-         (error "type error: while statement condition must have boolean/int value"))]
+     (cond [(not (t-int? (type-of-env c te ve))) (error "type error: while statement condition must have boolean/int value")]
+           [(not (t-void? (type-of-env body te ve))) (error "type error: while statement body must return no value")]
+           [else (t-void)])]
     [(for-statement var start end body)
-     (if (and ;l-value-of var = int
-              (t-int? (type-of-env start te ve))
-              (t-int? (type-of-env end te ve)))
-         (type-of-env body te ve)
-         (error "type error: for statement must increment an int from start to end int values"))]
+     (cond [(not (and (t-int? (type-of-env start te ve))
+                       (t-int? (type-of-env end te ve))))
+            (error "type error: for statement must increment an int from start to end int values")]
+           [(not (t-void? (type-of-env body te ve))) (error "type error: body of for statement must return no value")]
+           [else (t-void)])]
     
     ;let statements
     ;let-vars
@@ -400,8 +400,7 @@
 (check-expect (type-of (parse-string "if 4 then 7 else 6"))
               (t-int))
 (check-error (type-of (parse-string "if 4 then \"hamburger\" else 12")) "type error: then and else branches of if statement must have same type")
-(check-expect (type-of (parse-string "while 1 do (27; \"spain\")"))
-              (t-string))
+(check-error (type-of (parse-string "while 1 do (27; \"spain\")")) "type error: while statement body must return no value")
 
 (check-expect (type-of (parse-string "let type a = int in 4 end"))
               (t-int))
