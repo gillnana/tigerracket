@@ -22,7 +22,7 @@
 (struct t-record (fields) #:transparent)
 (struct field (name ty) #:transparent)
 
-; type-lookup symbol listof-type-binding -> t-type
+; type-lookup symbol listof-type-binding -> (box t-type) ; TODO: actually returns a box. change this?
 (define (type-lookup type-symbol type-env)
   (cond 
     [(equal? type-symbol 'int) (box (t-int))]
@@ -61,8 +61,8 @@
         [(box? a) (same-type? (unbox a) (unbox b))]
         [else (error "internal error: unknown types specified")]))
 
-
-(define (ast-node->t-type ast-node te)
+; ast type-env -> (box t-type)
+(define (ast-node->t-type ast-node te) ; TODO: actually returns a box. change this?
   (match ast-node
     [(tydec _ a) (ast-node->t-type a te)]
     [(type-id name) (type-lookup name te)]
@@ -301,7 +301,7 @@
                             (let [(result (unbox (ast-node->t-type dec new-t-env)))]
                               ; if the lookup returns an empty box, break and return false
                               ; else, set the formerly empty box to the result of the lookup
-                              (and result (set-box! t-box result)))))
+                              (and result (set-box! t-box result) #t))))
                      new-bindings
                      tydecs)
               (fix-decs! new-t-env new-bindings tydecs) ; keep going if something changed
@@ -532,7 +532,26 @@ end
                 alist))
 (check-expect (type-of (parse-string "let type a = int -> int type arec = {x:a,y:arec} type fun = arec -> a in end")) (t-void)) 
 (check-expect (type-of (parse-string "break")) (t-void))
-              
+(check-expect (type-of (parse-string "let type a = {x:b,y:c} type b = {x:a,y:c} type c = {x:a,y:b} var z := c{x=nil,y=nil} in z end"))
+              (let* [(a->x (box #f))
+                    (a->y (box #f))               
+                    (b->x (box #f))
+                    (b->y (box #f))
+                    (c->x (box #f))
+                    (c->y (box #f))
+                    (ta (t-record (list (field 'x a->x)
+                                        (field 'y a->y))))
+                    (tb (t-record (list (field 'x b->x)
+                                        (field 'y b->y))))
+                    (tc (t-record (list (field 'x c->x)
+                                        (field 'y c->y))))]
+                (set-box! a->x tb)
+                (set-box! a->y tc)
+                (set-box! b->x ta)
+                (set-box! b->y tc)
+                (set-box! c->x ta)
+                (set-box! c->y tb)
+                tc))
 
 (test)
 ; TODO more test cases
