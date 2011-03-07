@@ -3,6 +3,8 @@
 (require test-engine/racket-tests)
 
 (define (canonicalize ast)
+  
+  ; TODO make sure that fields are specified in the same order as declared for record creation
   (match ast
     
     [(for-statement index start end body)
@@ -61,3 +63,6 @@
     
     [else else]))
    
+(check-expect (begin (canonicalize (parse-file "./tests/queens.tig")) (call/cc (λ (k) {k (k "pizza")}))) "pizza")
+
+(test)
