@@ -22,17 +22,17 @@
 (struct t-record (fields) #:transparent)
 (struct field (name ty) #:transparent)
 
+(define top-level-te
+  (list (type-binding 'int (box (t-int)))
+        (type-binding 'string (box (t-string)))))
+
 ; type-lookup symbol listof-type-binding -> (box t-type) ; TODO: actually returns a box. change this?
 (define (type-lookup type-symbol type-env)
-  (cond 
-    [(equal? type-symbol 'int) (box (t-int))]
-    [(equal? type-symbol 'string) (box (t-string))]
-    ;[(type-id? type-symbol) (type-lookup (type-id-name type-symbol) type-env)]
-    [else (or (ormap (lambda (binding) (if (equal? (type-binding-id binding) type-symbol)
-                                           (type-binding-ty binding)
-                                           false))
-                     type-env)
-              (error (format "unbound type ~a" type-symbol)))]))
+  (or (ormap (lambda (binding) (if (equal? (type-binding-id binding) type-symbol)
+                                   (type-binding-ty binding)
+                                   false))
+             (append type-env top-level-te)) ; user types plus predefined types. the predefined ones can be shadowed.
+      (error (format "unbound type ~a" type-symbol))))
 
 ; var-lookup symbol listof-var-binding -> t-type
 (define (var-lookup var-symbol var-env)
@@ -305,7 +305,8 @@
                      new-bindings
                      tydecs)
               (fix-decs! new-t-env new-bindings tydecs) ; keep going if something changed
-              (unless (andmap unbox new-bindings) ; here we have reached fixed point of fix-decs! if there are empty boxes, we have a cycle
+              (unless (andmap unbox new-bindings)
+                ; here we have reached fixed point of fix-decs! if there are empty boxes, we have a cycle
                 (error (format "illegal cycle in type declarations, environment was ~a" new-t-env)))))
         
         (define (check-repeat-args decs)
@@ -478,6 +479,8 @@
 
 (check-error (type-of (parse-string "let type a = int type a = string in end")) "semantic error: multiple type declarations for same identifier a in same block")
 (check-error (type-of (parse-string "let function f():int=4 function f():int=7 in end")) "semantic error: multiple function declarations for same identifier f in same block")
+(check-expect (type-of (parse-string "let type int = string var a:int := \"test\" in a end"))
+              (t-string)) ; shadowing original types!
 
 
 ; recursive types tests
@@ -521,6 +524,7 @@ end
 (check-expect (type-of (parse-string "let type a = array of b type b = c type c = int var x := a[6] of 0 in x end"))
               (t-array (box (t-int))))
 
+
 (check-error (type-of (parse-string "let type a = b type b = a in end")) "illegal cycle in type declarations, environment was (#(struct:type-binding a #&#f) #(struct:type-binding b #&#f))")
 
 (check-expect (type-of (parse-string "let type b = int -> intfun type intfun = b -> int in end")) (t-void))
@@ -554,4 +558,5 @@ end
                 tc))
 
 (test)
+
 ; TODO more test cases
