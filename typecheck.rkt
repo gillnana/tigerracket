@@ -61,25 +61,6 @@
         [(box? a) (same-type? (unbox a) (unbox b))]
         [else (error "internal error: unknown types specified")]))
 
-; ast type-env -> (box t-type)
-(define (ast-node->t-type ast-node te) ; TODO: actually returns a box. change this?
-  (match ast-node
-    [(tydec _ a) (ast-node->t-type a te)]
-    [(type-id name) (type-lookup name te)]
-    [(array-of ast-sub-node) (box (t-array (ast-node->t-type ast-sub-node te)))]
-    [(record-of tyfields)
-     (box (t-record (map (lambda (tyf) 
-                           (match tyf
-                             [(tyfield id ast-sub-node)
-                              (field id (ast-node->t-type ast-sub-node te))]))
-                         tyfields)))]
-    [(function-type arg-nodes val-node) (box (t-fun (map (λ (an) 
-                                                      (ast-node->t-type an te)) 
-                                                    arg-nodes)
-                                               (ast-node->t-type val-node te)))]))
-
-
-
 ; type-of expr -> t-type
 (define (type-of expr)
   (type-of-env expr empty empty))
@@ -295,13 +276,33 @@
         (define new-bindings (foldr accumulate-type-declarations empty decs))
         (define new-te (append new-bindings te))
         
+        ; ast-node -> t-type
+        (define (instantiate-t-type ast-node te)
+            (match ast-node
+              [(array-of (type-id name)) (t-array (type-lookup name te))]
+              [(record-of tyfields)
+                (t-record
+                 (map (match-lambda
+                        [(tyfield id (type-id name))
+                         (field id (type-lookup name te))])
+                      tyfields))]
+              [(function-type arg-nodes val-node)
+                (t-fun 
+                 (map (match-lambda
+                        [(type-id name)
+                         (type-lookup name te)])
+                      arg-nodes)
+                 (type-lookup (type-id-name val-node) te))]))
+        
         (define (fix-decs! new-t-env new-bindings tydecs)
           (if (ormap (λ (t-box dec)
                        (and (false? (unbox t-box)) ; break and return false if it's not an empty box
-                            (let [(result (unbox (ast-node->t-type dec new-t-env)))]
-                              ; if the lookup returns an empty box, break and return false
-                              ; else, set the formerly empty box to the result of the lookup
-                              (and result (set-box! t-box result) #t))))
+                            (let [(new-t (match dec
+                                           [(type-id name) (type-lookup name new-t-env)]
+                                           [else (box (instantiate-t-type dec new-t-env))]))]
+                              (and (unbox new-t)
+                                   (set-box! t-box (unbox new-t))
+                                   #t))))                         
                      new-bindings
                      tydecs)
               (fix-decs! new-t-env new-bindings tydecs) ; keep going if something changed
@@ -326,7 +327,7 @@
        
        (check-repeat-args decs)
        (check-repeat-type-decs decs)
-       (fix-decs! new-te (map type-binding-ty new-bindings) decs)
+       (fix-decs! new-te (map type-binding-ty new-bindings) (map tydec-ty decs))
        
        (type-of-env exp new-te ve))]
     
