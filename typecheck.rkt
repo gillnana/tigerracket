@@ -187,9 +187,11 @@
                  [(vardec id type-id val) ; type-id is symbol or false, NOT an ast-node ex: 'int or 'string or 'zoomba or 'whatever or false or #f
                   (let [(expression-type (type-of-env val te v-env))]
                     (if (not type-id)
-                        (if (equal? (t-nil) expression-type)
-                            (error (format "type error: variable ~a has value nil but no type" id))
-                            (cons (var-binding id expression-type) v-env))
+                        (cond [(t-nil? expression-type)
+                               (error (format "type error: variable ~a has value nil but no type" id))]
+                              [(t-void? expression-type)
+                               (error (format "type error: cannot assign void type to variable ~a" id))]
+                              [else (cons (var-binding id expression-type) v-env)])
                         (let [(declared-type (unbox (type-lookup type-id te)))]
                           (if (assignable-to? declared-type expression-type)
                               (cons (var-binding id declared-type) v-env)
@@ -455,6 +457,7 @@
 
 ; let-statement tests
 
+(check-error (type-of (parse-string "let var w := () in end")) "type error: cannot assign void type to variable w")
 (check-error (type-of (parse-string "let var w : string := 22 in 1 end")) "type error: type mismatch, found type string; expected #(struct:t-int)")
 (check-error (type-of (parse-string "let type a = int in let var x : a := \"green\" in 37 end end")) "type error: type mismatch, found type a; expected #(struct:t-string)")
 (check-expect (type-of (parse-string "let var m : int := 4+4 in m end"))
