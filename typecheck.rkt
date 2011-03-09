@@ -120,12 +120,12 @@
                (t-record-fields decl-fields))
               decl-fields]
              [else (error "internal error: code 8726")]))]
-    [(record-access rec-id field-id)
+    [(record-access rec field-id)
      (or (ormap (λ (field) (if (equal? (field-name field) field-id)
                                (unbox (field-ty field))
                                #f))
-                (t-record-fields (var-lookup rec-id ve)))
-         (error (format "semantic error: unknown field ~a of record ~a" rec-id field-id)))]
+                (t-record-fields (type-of-env rec te ve)))
+         (error (format "semantic error: unknown field ~a of record ~a" field-id rec)))]
                   ;; rec-id has a field-id
      
     
@@ -278,7 +278,7 @@
         ; so we don't need to pass it around anymore
         (define new-te (append new-bindings te))
         
-        ; ast-node type-env -> t-type
+        ; ast-node -> t-type
         (define (instantiate-t-type ast-node)
             (match ast-node
               [(array-of (type-id name)) (t-array (type-lookup name new-te))]
@@ -302,23 +302,25 @@
                (let [(new-t (match dec
                               ; if the dec is just binding it to another type,
                               ; look it up
-                              [(type-id name) (type-lookup name new-te)]
+                              [(type-id name) (unbox (type-lookup name new-te))]
                               ; if it's creating a complex type,
                               ; instantiate it and look up the fields of the type
-                              [complex-type (box (instantiate-t-type complex-type))]))]
-                 (and (unbox new-t)                  ; if it did not remain an empty box
-                      (set-box! t-box (unbox new-t)) ; make the change
+                              [complex-type (instantiate-t-type complex-type)]))]
+                 (and new-t                  ; if it did not remain an empty box
+                      (set-box! t-box new-t) ; make the change
                       #t))))                         ; return true so we know to keep going
         
         ; (listof box t-type) (listof ast-node) -> void
         (define (fix-decs! new-bindings tydecs)
-          (if (ormap resolve-dec?       
-                     new-bindings
-                     tydecs)
+          (if (ormap resolve-dec? new-bindings tydecs)
               (fix-decs! new-bindings tydecs) ; keep going if something changed
               (unless (andmap unbox new-bindings)
                 ; here we have reached fixed point of fix-decs! if there are empty boxes, we have a cycle
-                (error (format "illegal cycle in type declarations, environment was ~a" new-te)))))
+                (error (format "illegal cycle in type declarations, unresolved types were: ~a"
+                               (map type-binding-id 
+                                    (filter (lambda (binding)
+                                              (false? (unbox (type-binding-ty binding))))
+                                            new-te)))))))
         
         (define (check-repeat-args decs)
           (map (match-lambda
@@ -355,13 +357,12 @@
      
     ))
                                
-
-(define (contains-dupes? a-list (arg-table (make-immutable-hash empty)))
+(define (contains-dupes? a-list (accum-set (set)))
   (match a-list
     [(list) #f]
-    [(cons hd tl) (if (hash-has-key? arg-table hd)
+    [(cons hd tl) (if (set-member? accum-set hd)
                       hd
-                      (contains-dupes? tl (hash-set arg-table hd #t)))]))
+                      (contains-dupes? tl (set-add accum-set hd)))]))
 
 (define (unpack-error-annotation type-expr ast-node)
   (cond [(array-creation? ast-node) (type-id-name (array-creation-type-id ast-node))]
@@ -435,6 +436,8 @@
 (check-error (type-of (parse-string "let type sandwich = {x : string} var turkey := sandwich{x = \"tomato\", y = \"pickles\"} in turkey end")) "type error: type mismatch; wrong number of fields (#(struct:fieldval x #(struct:string-literal tomato)) #(struct:fieldval y #(struct:string-literal pickles))) specified for creation of record #(struct:t-record (#(struct:field x #&#(struct:t-string))))")
 (check-error (type-of (parse-string "let type greem = {x : int} var z : greem := greem{x=12,m=22} in z end")) "type error: type mismatch; wrong number of fields (#(struct:fieldval x #(struct:int-literal 12)) #(struct:fieldval m #(struct:int-literal 22))) specified for creation of record #(struct:t-record (#(struct:field x #&#(struct:t-int))))")
 (check-expect (type-of (parse-string "let type pt = {x : int, y: int} in let type line = { a : pt, b : pt} in line{a=pt{x=1,y=44},b=pt{x=98,y=6000000}} end end")) (t-record (list (field 'a (box (t-record (list (field 'x (box (t-int))) (field 'y (box (t-int))))))) (field 'b (box (t-record (list (field 'x (box (t-int))) (field 'y (box (t-int))))))))))
+(check-expect (type-of (parse-string "let type a = {x:a,z:int} var y := a{x=a{x=a{x=nil,z=3},z=3}, z=3} in y.x.x.z end"))
+              (t-int))
 
 
 
@@ -492,6 +495,9 @@
 (check-error (type-of (parse-string "let function f():int=4 function f():int=7 in end")) "semantic error: multiple function declarations for same identifier f in same block")
 (check-expect (type-of (parse-string "let type int = string var a:int := \"test\" in a end"))
               (t-string)) ; shadowing original types!
+(check-expect (type-of (parse-string "let type a = int in let type int = {x:a,y:a} in int{x=1,y=2} end end"))
+              (t-record (list (field 'x (box (t-int)))
+                              (field 'y (box (t-int))))))
 
 
 ; recursive types tests
@@ -536,7 +542,7 @@ end
               (t-array (box (t-int))))
 
 
-(check-error (type-of (parse-string "let type a = b type b = a in end")) "illegal cycle in type declarations, environment was (#(struct:type-binding a #&#f) #(struct:type-binding b #&#f))")
+(check-error (type-of (parse-string "let type a = b type b = a in end")) "illegal cycle in type declarations, unresolved types were: (a b)")
 
 (check-expect (type-of (parse-string "let type b = int -> intfun type intfun = b -> int in end")) (t-void))
 (check-expect (type-of (parse-string "let type a = array of int type alist = {x:a,y:alist} in alist{x=a[10] of 3, y=nil} end"))
