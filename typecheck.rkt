@@ -413,6 +413,14 @@
 (check-expect (type-of (parse-string "let var u : int := 13 in 100 end"))
               (t-int))
 
+; assignment tests
+(check-expect (type-of (parse-string "let var x := 3 in x := 4 end"))
+              (t-void))
+(check-error (type-of (parse-string "let var x := 3 in x := \"oxtail\" end"))
+             "type error: illegal assignment of type #(struct:t-int) to type #(struct:t-string)")
+(check-expect (type-of (parse-string "let type a = array of int type b = array of a var x := b[10] of a[10] of 9 in x[3][3] := 10 end"))
+              (t-void))
+
 ; array creation/access tests
 (check-error (type-of (parse-string "let type sa = array of int var a := sa[10] of 0 in a[\"zoomba\"] end")) "type error: attempted to access array #(struct:id a) with non-integer index")
 (check-error (type-of (parse-string "let type intarray = array of int var x := intarray[4] of \"pizza\" in end")) "type error: type mismatch; initial value #(struct:t-string) must match array type #(struct:t-array #&#(struct:t-int))")
