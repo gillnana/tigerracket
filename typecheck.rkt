@@ -74,6 +74,12 @@
     [(id a) (var-lookup a ve)]
     [(break) (t-void)]
     
+    [(assignment lvalue exp)
+     (if (assignable-to? (type-of-env lvalue te ve) (type-of-env exp te ve))
+         (t-void)
+         (error (format "type error: illegal assignment of type ~a to type ~a"
+                        (type-of-env lvalue te ve)
+                        (type-of-env exp te ve))))]
     ;arrays
     [(array-creation (type-id type) size initval)
      (let [(size-type (type-of-env size te ve))]
@@ -288,13 +294,13 @@
                         [(tyfield id (type-id name))
                          (field id (type-lookup name new-te))])
                       tyfields))]
-              [(function-type arg-nodes val-node)
+              [(function-type arg-nodes (type-id name))
                 (t-fun 
                  (map (match-lambda
                         [(type-id name)
                          (type-lookup name new-te)])
                       arg-nodes)
-                 (type-lookup (type-id-name val-node) new-te))]))
+                 (type-lookup name new-te))]))
         
         ; t-type ast-node -> bool       
         (define (resolve-dec? t-box dec)
