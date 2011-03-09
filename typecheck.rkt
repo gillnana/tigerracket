@@ -422,38 +422,54 @@
               (t-void))
 
 ; array creation/access tests
-(check-error (type-of (parse-string "let type sa = array of int var a := sa[10] of 0 in a[\"zoomba\"] end")) "type error: attempted to access array #(struct:id a) with non-integer index")
-(check-error (type-of (parse-string "let type intarray = array of int var x := intarray[4] of \"pizza\" in end")) "type error: type mismatch; initial value #(struct:t-string) must match array type #(struct:t-array #&#(struct:t-int))")
-(check-error (type-of (parse-string "let var x := int[10] of 338 in end")) "type error: type of array must be declared as an array, instead found #(struct:t-int)")
+(check-error (type-of (parse-string "let type sa = array of int var a := sa[10] of 0 in a[\"zoomba\"] end"))
+             "type error: attempted to access array #(struct:id a) with non-integer index")
+(check-error (type-of (parse-string "let type intarray = array of int var x := intarray[4] of \"pizza\" in end"))
+             "type error: type mismatch; initial value #(struct:t-string) must match array type #(struct:t-array #&#(struct:t-int))")
+(check-error (type-of (parse-string "let var x := int[10] of 338 in end"))
+             "type error: type of array must be declared as an array, instead found #(struct:t-int)")
 (check-expect (type-of (parse-string "let type intarray = array of int var y := intarray[26] of 0 in y end")) (t-array (box (t-int))))
 (check-expect (type-of (parse-string "let type intarray = array of int var y := intarray[26] of 0 in y[3] end")) (t-int))
 
-(check-expect (type-of (parse-string "let type point = {x : int, y:int} type pointarray = array of point var y := pointarray[50] of nil in y end")) (t-array (box (t-record (list (field 'x (box (t-int))) (field 'y (box (t-int))))))))
+(check-expect (type-of (parse-string "let type point = {x : int, y:int} type pointarray = array of point var y := pointarray[50] of nil in y end")) 
+              (t-array (box (t-record (list (field 'x (box (t-int))) (field 'y (box (t-int))))))))
 
 (check-error (type-of (parse-string "a[4]")) "unbound identifier a in environment ()")
 
 (check-expect (type-of (parse-string "let type intarray = array of int var ab := intarray[10] of 5 in ab[24] end")) (t-int))
-(check-error (type-of (parse-string "let type intarray = array of int var z := intarray[10] of 5 in z[\"pizza\"] end")) "type error: attempted to access array #(struct:id z) with non-integer index")
-(check-error (type-of (parse-string "let type intarray = array of int var aa := intarray[10] of 5 in aa[nil] end")) "type error: attempted to access array #(struct:id aa) with non-integer index")
+(check-error (type-of (parse-string "let type intarray = array of int var z := intarray[10] of 5 in z[\"pizza\"] end"))
+             "type error: attempted to access array #(struct:id z) with non-integer index")
+(check-error (type-of (parse-string "let type intarray = array of int var aa := intarray[10] of 5 in aa[nil] end"))
+             "type error: attempted to access array #(struct:id aa) with non-integer index")
 (check-expect (type-of (parse-string "let type a = array of int var x : a := a[7] of 1 in x end"))
               (t-array (box (t-int))))
 
-(check-error (type-of (parse-string "let type a = array of int type b = array of int var x : a := b[10] of 0 in end")) "type error: type mismatch, found type a; expected b") ;
-(check-error (type-of (parse-string "let type a = array of int var a : int := 0 in a[10] end")) "type error: illegal access of non-array variable #(struct:id a)")
+(check-error (type-of (parse-string "let type a = array of int type b = array of int var x : a := b[10] of 0 in end"))
+             "type error: type mismatch, found type a; expected b") ;
+(check-error (type-of (parse-string "let type a = array of int var a : int := 0 in a[10] end"))
+             "type error: illegal access of non-array variable #(struct:id a)")
 (check-expect (type-of (parse-string "let type a = array of int type b = array of a var x := b[10] of a[10] of 9 in x[3][3] end"))
               (t-int))
 
 ; record creation/access tests
 
 (check-expect (type-of (parse-string "let type foo = {} var x : foo := foo{} in x end")) (t-record empty))
-(check-expect (type-of (parse-string "let type wazza = {x : int} var w : wazza := wazza{x=5} in w end")) (t-record (list (field 'x (box (t-int))))))
-(check-expect (type-of (parse-string "let type pizza = {x : int, y : int} var z := pizza{x=3,y=-39} in z end")) (t-record (list (field 'x (box (t-int))) (field 'y (box (t-int))))))
-(check-error (type-of (parse-string "let type oatmeal = {x : int} var m : oatmeal := oatmeal{x=\"i hate oatmeal\"} in m end")) "type error: type mismatch; field x was given value of type #(struct:t-string); expected #&#(struct:t-int)")
-(check-error (type-of (parse-string "let type soda = {x : int} var y : soda := soda{p=3} in y end")) "type mismatch; no value specified for field #(struct:field x #&#(struct:t-int)) in soda")
-(check-error (type-of (parse-string "let type bagels = {x : int, y : blarg} in end")) "unbound type blarg")
-(check-error (type-of (parse-string "let type sandwich = {x : string} var turkey := sandwich{x = \"tomato\", y = \"pickles\"} in turkey end")) "type error: type mismatch; wrong number of fields (#(struct:fieldval x #(struct:string-literal tomato)) #(struct:fieldval y #(struct:string-literal pickles))) specified for creation of record #(struct:t-record (#(struct:field x #&#(struct:t-string))))")
-(check-error (type-of (parse-string "let type greem = {x : int} var z : greem := greem{x=12,m=22} in z end")) "type error: type mismatch; wrong number of fields (#(struct:fieldval x #(struct:int-literal 12)) #(struct:fieldval m #(struct:int-literal 22))) specified for creation of record #(struct:t-record (#(struct:field x #&#(struct:t-int))))")
-(check-expect (type-of (parse-string "let type pt = {x : int, y: int} in let type line = { a : pt, b : pt} in line{a=pt{x=1,y=44},b=pt{x=98,y=6000000}} end end")) (t-record (list (field 'a (box (t-record (list (field 'x (box (t-int))) (field 'y (box (t-int))))))) (field 'b (box (t-record (list (field 'x (box (t-int))) (field 'y (box (t-int))))))))))
+(check-expect (type-of (parse-string "let type wazza = {x : int} var w : wazza := wazza{x=5} in w end"))
+              (t-record (list (field 'x (box (t-int))))))
+(check-expect (type-of (parse-string "let type pizza = {x : int, y : int} var z := pizza{x=3,y=-39} in z end"))
+              (t-record (list (field 'x (box (t-int))) (field 'y (box (t-int))))))
+(check-error (type-of (parse-string "let type oatmeal = {x : int} var m : oatmeal := oatmeal{x=\"i hate oatmeal\"} in m end"))
+             "type error: type mismatch; field x was given value of type #(struct:t-string); expected #&#(struct:t-int)")
+(check-error (type-of (parse-string "let type soda = {x : int} var y : soda := soda{p=3} in y end"))
+             "type mismatch; no value specified for field #(struct:field x #&#(struct:t-int)) in soda")
+(check-error (type-of (parse-string "let type bagels = {x : int, y : blarg} in end"))
+             "unbound type blarg")
+(check-error (type-of (parse-string "let type sandwich = {x : string} var turkey := sandwich{x = \"tomato\", y = \"pickles\"} in turkey end"))
+             "type error: type mismatch; wrong number of fields (#(struct:fieldval x #(struct:string-literal tomato)) #(struct:fieldval y #(struct:string-literal pickles))) specified for creation of record #(struct:t-record (#(struct:field x #&#(struct:t-string))))")
+(check-error (type-of (parse-string "let type greem = {x : int} var z : greem := greem{x=12,m=22} in z end"))
+             "type error: type mismatch; wrong number of fields (#(struct:fieldval x #(struct:int-literal 12)) #(struct:fieldval m #(struct:int-literal 22))) specified for creation of record #(struct:t-record (#(struct:field x #&#(struct:t-int))))")
+(check-expect (type-of (parse-string "let type pt = {x : int, y: int} in let type line = { a : pt, b : pt} in line{a=pt{x=1,y=44},b=pt{x=98,y=6000000}} end end"))
+              (t-record (list (field 'a (box (t-record (list (field 'x (box (t-int))) (field 'y (box (t-int))))))) (field 'b (box (t-record (list (field 'x (box (t-int))) (field 'y (box (t-int))))))))))
 (check-expect (type-of (parse-string "let type a = {x:a,z:int} var y := a{x=a{x=a{x=nil,z=3},z=3}, z=3} in y.x.x.z end"))
               (t-int))
 
@@ -467,7 +483,8 @@
 
 (check-error (type-of (parse-string "let var w := () in end")) "type error: cannot assign void type to variable w")
 (check-error (type-of (parse-string "let var w : string := 22 in 1 end")) "type error: type mismatch, found type string; expected #(struct:t-int)")
-(check-error (type-of (parse-string "let type a = int in let var x : a := \"green\" in 37 end end")) "type error: type mismatch, found type a; expected #(struct:t-string)")
+(check-error (type-of (parse-string "let type a = int in let var x : a := \"green\" in 37 end end"))
+             "type error: type mismatch, found type a; expected #(struct:t-string)")
 (check-expect (type-of (parse-string "let var m : int := 4+4 in m end"))
               (t-int))
 (check-expect (type-of (parse-string "let var n := 5*3+2-12*66-304440403 in \"waaaa\" end"))
@@ -490,11 +507,14 @@
 (check-expect (type-of (parse-string "let function f(x : int) = (25;()) in f end")) (t-fun (list (box (t-int))) (t-void)))
 
 (check-expect (type-of (parse-string "let function g(x : int) : int = 12 in g end")) (t-fun (list (box (t-int))) (box (t-int))))
-(check-expect (type-of (parse-string "let type fun = int -> int function f(x : fun) : fun = let function g(x : int) : int = 7 in g end in f end")) (t-fun (list (box (t-fun (list (box (t-int))) (box (t-int))))) (box (t-fun (list (box (t-int))) (box (t-int))))))
+(check-expect (type-of (parse-string "let type fun = int -> int function f(x : fun) : fun = let function g(x : int) : int = 7 in g end in f end"))
+              (t-fun (list (box (t-fun (list (box (t-int))) (box (t-int))))) (box (t-fun (list (box (t-int))) (box (t-int))))))
 
-(check-expect (type-of (parse-string "let type fun = int -> int function g(x : int) : int = 7 in let function f(x : fun) : fun = g in f end end")) (t-fun (list (box (t-fun (list (box (t-int))) (box (t-int))))) (box (t-fun (list (box (t-int))) (box (t-int))))))
+(check-expect (type-of (parse-string "let type fun = int -> int function g(x : int) : int = 7 in let function f(x : fun) : fun = g in f end end"))
+              (t-fun (list (box (t-fun (list (box (t-int))) (box (t-int))))) (box (t-fun (list (box (t-int))) (box (t-int))))))
 
-(check-expect (type-of (parse-string "let type fun = int -> int function g(x : int) : int = 7 function f(x : fun ) : fun = g in f end")) (t-fun (list (box (t-fun (list (box (t-int))) (box (t-int))))) (box (t-fun (list (box (t-int))) (box (t-int))))))
+(check-expect (type-of (parse-string "let type fun = int -> int function g(x : int) : int = 7 function f(x : fun ) : fun = g in f end"))
+              (t-fun (list (box (t-fun (list (box (t-int))) (box (t-int))))) (box (t-fun (list (box (t-int))) (box (t-int))))))
 
 (check-expect (type-of (parse-string "let function f(x:int):int = 1+f(x) in f end"))
               (t-fun (list (box (t-int))) (box (t-int))))
@@ -509,11 +529,15 @@
 (check-expect (type-of (parse-string "let type a = {x:int} in if 1 then a{x=1} else nil end"))
               (t-record (list (field 'x (box (t-int))))))
 
-(check-error (type-of (parse-string "let type a = {x:int, x:int} in end")) "semantic error: record declaration a contains multiple fields with the same identifier x")
-(check-error (type-of (parse-string "let function f(x:int,x:int):int = x in end")) "semantic error: definition of function f contains multiple arguments with the same identifier x")
+(check-error (type-of (parse-string "let type a = {x:int, x:int} in end"))
+             "semantic error: record declaration a contains multiple fields with the same identifier x")
+(check-error (type-of (parse-string "let function f(x:int,x:int):int = x in end"))
+             "semantic error: definition of function f contains multiple arguments with the same identifier x")
 
-(check-error (type-of (parse-string "let type a = int type a = string in end")) "semantic error: multiple type declarations for same identifier a in same block")
-(check-error (type-of (parse-string "let function f():int=4 function f():int=7 in end")) "semantic error: multiple function declarations for same identifier f in same block")
+(check-error (type-of (parse-string "let type a = int type a = string in end"))
+             "semantic error: multiple type declarations for same identifier a in same block")
+(check-error (type-of (parse-string "let function f():int=4 function f():int=7 in end"))
+             "semantic error: multiple function declarations for same identifier f in same block")
 (check-expect (type-of (parse-string "let type int = string var a:int := \"test\" in a end"))
               (t-string)) ; shadowing original types!
 (check-expect (type-of (parse-string "let type a = int in let type int = {x:a,y:a} in int{x=1,y=2} end end"))
