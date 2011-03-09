@@ -88,12 +88,12 @@
                                            initval-type declared-type))
                             declared-type))))))]
     
-    [(array-access (id name) index)
-     (match (var-lookup name ve)
+    [(array-access sub-node index)
+     (match (type-of-env sub-node te ve)
        [(t-array (box type)) (if (t-int? (type-of-env index te ve))
                                  type
-                                 (error (format "type error: attempted to access array ~a with non-integer index" name)))]
-       [else (error (format "type error: illegal access of non-array variable ~a" name))])]
+                                 (error (format "type error: attempted to access array ~a with non-integer index" sub-node)))]
+       [else (error (format "type error: illegal access of non-array variable ~a" sub-node))])]
           
     ;records      
     [(record-creation (type-id type) var-fields)
@@ -406,7 +406,7 @@
               (t-int))
 
 ; array creation/access tests
-(check-error (type-of (parse-string "let type sa = array of int var a := sa[10] of 0 in a[\"zoomba\"] end")) "type error: attempted to access array a with non-integer index")
+(check-error (type-of (parse-string "let type sa = array of int var a := sa[10] of 0 in a[\"zoomba\"] end")) "type error: attempted to access array #(struct:id a) with non-integer index")
 (check-error (type-of (parse-string "let type intarray = array of int var x := intarray[4] of \"pizza\" in end")) "type error: type mismatch; initial value #(struct:t-string) must match array type #(struct:t-array #&#(struct:t-int))")
 (check-error (type-of (parse-string "let var x := int[10] of 338 in end")) "type error: type of array must be declared as an array, instead found #(struct:t-int)")
 (check-expect (type-of (parse-string "let type intarray = array of int var y := intarray[26] of 0 in y end")) (t-array (box (t-int))))
@@ -417,13 +417,15 @@
 (check-error (type-of (parse-string "a[4]")) "unbound identifier a in environment ()")
 
 (check-expect (type-of (parse-string "let type intarray = array of int var ab := intarray[10] of 5 in ab[24] end")) (t-int))
-(check-error (type-of (parse-string "let type intarray = array of int var z := intarray[10] of 5 in z[\"pizza\"] end")) "type error: attempted to access array z with non-integer index")
-(check-error (type-of (parse-string "let type intarray = array of int var aa := intarray[10] of 5 in aa[nil] end")) "type error: attempted to access array aa with non-integer index")
+(check-error (type-of (parse-string "let type intarray = array of int var z := intarray[10] of 5 in z[\"pizza\"] end")) "type error: attempted to access array #(struct:id z) with non-integer index")
+(check-error (type-of (parse-string "let type intarray = array of int var aa := intarray[10] of 5 in aa[nil] end")) "type error: attempted to access array #(struct:id aa) with non-integer index")
 (check-expect (type-of (parse-string "let type a = array of int var x : a := a[7] of 1 in x end"))
               (t-array (box (t-int))))
 
 (check-error (type-of (parse-string "let type a = array of int type b = array of int var x : a := b[10] of 0 in end")) "type error: type mismatch, found type a; expected b") ;
-(check-error (type-of (parse-string "let type a = array of int var a : int := 0 in a[10] end")) "type error: illegal access of non-array variable a")
+(check-error (type-of (parse-string "let type a = array of int var a : int := 0 in a[10] end")) "type error: illegal access of non-array variable #(struct:id a)")
+(check-expect (type-of (parse-string "let type a = array of int type b = array of a var x := b[10] of a[10] of 9 in x[3][3] end"))
+              (t-int))
 
 ; record creation/access tests
 
@@ -439,7 +441,9 @@
 (check-expect (type-of (parse-string "let type a = {x:a,z:int} var y := a{x=a{x=a{x=nil,z=3},z=3}, z=3} in y.x.x.z end"))
               (t-int))
 
-
+; combo array/record access tests
+(check-expect (type-of (parse-string "let type a = array of b type b = {x:a,y:int} var z := a[10] of b{x=a[15] of nil,y=3} in z[4].x[6].y end"))
+              (t-int))
 
 (check-expect (type-of (parse-string "(34; 27)")) (t-int))
 
