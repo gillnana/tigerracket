@@ -2,6 +2,11 @@
 (require "parser.rkt")
 (require test-engine/racket-tests)
 
+(define-syntax-rule (check-match exp pat)
+  (check-expect
+   (match exp
+     [pat #t])
+   #t))
 
 (struct move-ins (src dest) #:transparent)
 (struct lim-ins (imm dest) #:transparent) ; constant value imm is put into dest
@@ -114,38 +119,32 @@
   )
 
 
-(check-expect (match (gen-prog (parse-string "let var x := 0 in x := 3; x end")) 
-                [(list 
-                  (move-ins 0 loc1)
-                  (move-ins 3 loc1)
-                  (move-ins loc1 'ans)) #t]
-                [else else])
-              #t)
+(check-match (gen-prog (parse-string "let var x := 0 in x := 3; x end")) 
+             (list 
+              (move-ins 0 loc1)
+              (move-ins 3 loc1)
+              (move-ins loc1 'ans)))
 
-(check-expect (match (gen-prog (parse-string "let var x := 0 in x := x+2; x end"))
-                [(list
-                  (move-ins 0 loc1)
-                  (move-ins loc1 loc2)
-                  (move-ins 2 loc3)
-                  (binary-ins '+ loc2 loc3 loc1)
-                  (move-ins loc1 'ans)) #t]
-                [else else])
-              #t)
+(check-match (gen-prog (parse-string "let var x := 0 in x := x+2; x end"))
+             (list
+              (move-ins 0 loc1)
+              (move-ins loc1 loc2)
+              (move-ins 2 loc3)
+              (binary-ins '+ loc2 loc3 loc1)
+              (move-ins loc1 'ans)))
 
-(check-expect (match (gen-prog (parse-string "let var x := 0 in x := x+2; x; () end"))
-                [(list
-                  (move-ins 0 loc1)
-                  (move-ins loc1 loc2)
-                  (move-ins 2 loc3)
-                  (binary-ins '+ loc2 loc3 loc1)
-                  (move-ins loc1 'ans)) #t]
-                [else else])
-              #t)
-(check-expect (match (gen-prog (parse-string "let var y := 0 in let var x := (y := 2; 7) in y end end"))
-                [(list (move-ins 0 loc1)
-                       (move-ins 2 loc1)
-                       (move-ins 7 loc2)
-                       (move-ins loc1 'ans)) #t]
-                [else else])
-              #t)
+(check-match (gen-prog (parse-string "let var x := 0 in x := x+2; x; () end"))  
+             (list
+              (move-ins 0 loc1)
+              (move-ins loc1 loc2)
+              (move-ins 2 loc3)
+              (binary-ins '+ loc2 loc3 loc1)
+              (move-ins loc1 'ans)))
+
+(check-match (gen-prog (parse-string "let var y := 0 in let var x := (y := 2; 7) in y end end"))
+             (list
+              (move-ins 0 loc1)
+              (move-ins 2 loc1)
+              (move-ins 7 loc2)
+              (move-ins loc1 'ans)))
 (test)
