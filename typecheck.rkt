@@ -197,8 +197,6 @@
                               (cons (var-binding id declared-type) v-env)
                               (error (format "type error: type mismatch, found type ~a; expected ~a"
                                              type-id (unpack-error-annotation expression-type val)))))))]))]
-                                                             
-                                                             ;(type-id-name (array-creation-type-id val))))))))]))]
        (type-of-env exp
                     te
                     (foldl accumulate-var-declarations
@@ -598,7 +596,7 @@ end
                 alist))
 (check-expect (type-of (parse-string "let type a = int -> int type arec = {x:a,y:arec} type fun = arec -> a in end")) (t-void)) 
 (check-expect (type-of (parse-string "break")) (t-void))
-#;(check-expect (type-of (parse-string "let type a = {x:b,y:c} type b = {x:a,y:c} type c = {x:a,y:b} var z := c{x=nil,y=nil} in z end"))
+(check-expect (type-of (parse-string "let type a = {x:b,y:c} type b = {x:a,y:c} type c = {x:a,y:b} var z := c{x=nil,y=nil} in z end"))
               (let* [(a->x (box #f))
                     (a->y (box #f))               
                     (b->x (box #f))
@@ -620,5 +618,3 @@ end
                 tc))
 
 (test)
-
-; TODO more test cases
