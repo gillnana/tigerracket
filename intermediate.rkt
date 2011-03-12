@@ -1,5 +1,6 @@
 #lang racket
 (require "parser.rkt")
+;(require "canonicalize.rkt")
 (require test-engine/racket-tests)
 
 (define-syntax-rule (check-match exp pat)
@@ -23,7 +24,8 @@
 
 (struct array-allocate-ins (src1 dest) #:transparent) ;this instruction allocates an array to some initial value, which most backends will do for free. src1 is the address of the expression to be inserted into the array.  dest is the mem-block struct which is the location of the array.
 
-(struct deref-ins (op src1 src2 dest) #:transparent) ; this instruction corresponds to x=*y, putting the r-value of y into the r-value of x
+(struct pointer-set-ins (src1 src2) #:transparent) ; this instruction corresponds to x=*y, putting the r-value of y into the r-value of x
+(struct deref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=&y, putting the l-value of y into the r-value of x
 
 
 ; LOCATIONS
@@ -31,7 +33,7 @@
 (struct location-binding (var loc) #:transparent)
 (struct temp-loc (t) #:transparent) ; each location can either represent a location in memory, or a register
 (struct mem-block (m size) #:transparent) ; the size is the location of the register or temporary holding the size of this block, which is itself an expression that must be computed at runtime
-(struct mem-loc (block offset) #:transparent) ; the offset of a mem-loc is the location within the block, indexed from 0
+(struct mem-loc (block offset) #:transparent) ; the offset of a mem-loc is the location within the block, indexed from 0.  the block is represented by a location holding the address of that block.
 
 
 (struct label (l) #:transparent)
@@ -87,7 +89,9 @@
             (initval-register (gen-temp))
             (initval-gen-code (gen initval initval-register loc-env))]
        (append size-gen-code initval-gen-code
-               (list (array-allocate-ins initval-register block)))
+               (list
+                (deref-ins result-sym block)
+                (array-allocate-ins initval-register block)))
        )]
       
     [(record-creation type-id fieldvals)
@@ -100,26 +104,31 @@
                (map (λ (field offset)
                       (match field
                         [(fieldval name val)
-                         (gen val (mem-loc block offset) loc-env)])) ; this is a completely illogical way of doing this.  blocks should have locations inside them, not vice versa.  that way we can reference our table to find the right offset.  TODO fix this later
+                         (gen val (mem-loc block offset) loc-env)]))
                     fieldvals
                     (build-list (length fieldvals) values))))]
     
-    ; assignment doesn't overwrite ans. this is probably ok.
+    ; assignment doesn't overwrite ans. this is ok.
     [(assignment (id name) expr)
      (let [(dest-loc (lookup name loc-env))]
        (if (temp-loc? dest-loc)
            (gen expr dest-loc loc-env)
            (error (format "internal error: identifier ~a or bound to wrong location type" name)))
        )]
+    
 ;    [(assignment (record-access rec-id field-id) val) ; TODO: but depends on record declarations
 ;     ...]
-    ; TODO: this doesn't work yet because mem-locs don't work the right way.  this needs to expect a mem-block and get the offset within that mem-block. do this later.
+    
     [(assignment (and ast-node (array-access (id array-id) index)) val)
-     (displayln ast-node)
-     (displayln loc-env)
-     (let [(dest-loc (lookup array-id loc-env))]
-       (if (mem-loc? dest-loc)
-           (gen val dest-loc loc-env)
+     ;(displayln ast-node)
+     ;(displayln loc-env)
+     (let [(dest-loc (lookup array-id loc-env))
+           (val-temp (gen-temp))
+           ]
+       (if (temp-loc? dest-loc)
+           (append
+             (gen val val-temp loc-env)
+             (list (pointer-set-ins (mem-loc dest-loc index) val-temp)))
            (error (format "internal error: array ~a bound to wrong location type" array-id))))]
     
     
@@ -164,9 +173,8 @@
                           (list (cond-jump-ins cond-register else-label))))]))]
        (append cond-gen-code
                then-gen-code
+               (list else-label)
                else-gen-code))]
-        
-    
     )
   )
 
@@ -206,7 +214,31 @@
               (move-ins 15 (temp-loc t3))
               (move-ins 3 (temp-loc t4))
               (binary-ins '+ (temp-loc t3) (temp-loc t4) (temp-loc t2))
-              (array-allocate-ins (temp-loc t2) (mem-block m1 (temp-loc t0)))))
+              (deref-ins 'ans (mem-block m1 (temp-loc t0)))
+              (array-allocate-ins (temp-loc t2) (mem-block m1 _))))
+
+(check-match (gen-prog (parse-string "if 3 then ()"))
+             (list
+              (move-ins 3 (temp-loc t5))
+              (cond-jump-ins (temp-loc t5) (label l4))
+              (label l4)))
+
+(check-match (gen-prog (parse-string "if 3 then 4 else 5"))
+             (list
+              (move-ins 3 (temp-loc t5))
+              (cond-jump-ins (temp-loc t5) (label l4))
+              (move-ins 4 (temp-loc t2))
+              (label l4)
+              (move-ins 5 (temp-loc t3))))
+
+(check-match (gen-prog (parse-string "let var a := int[10] of 1 in a[5] := 6 end"))
+             (list
+              (move-ins 10 (temp-loc t0))
+              (move-ins 1 (temp-loc t2))
+              (deref-ins (temp-loc t9) (mem-block m1 (temp-loc t0)))
+              (array-allocate-ins (temp-loc t2) (mem-block m1 _))
+              (move-ins 6 (temp-loc t3))
+              (pointer-set-ins (mem-loc (temp-loc t9) (int-literal 5)) (temp-loc t3))))
 
 
 (test)
