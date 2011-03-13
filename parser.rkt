@@ -447,14 +447,15 @@
   (match ast
     
     [(for-statement index start end body)
-     (expseq
-      (list
-       (assignment index start)
-       (while-statement (binary-op (op '<=) index end) 
-                        (expseq
-                         (list
-                          (canonicalize body)
-                          (binary-op (op '+) index (int-literal 1)))))))]
+     (let-vars
+      (list (vardec index #f start))
+      (expseq
+       (list
+        (while-statement (binary-op (op '<=) (id index) end) 
+                         (expseq
+                          (list
+                           (canonicalize body)
+                           (binary-op (op '+) (id index) (int-literal 1))))))))]
     
     [(while-statement cond body) (while-statement (canonicalize cond) (canonicalize body))]
     
