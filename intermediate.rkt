@@ -26,15 +26,26 @@
 (struct deref-ins (op src1 src2 dest) #:transparent) ; this instruction corresponds to x=*y, putting the r-value of y into the r-value of x
 
 
+; a label is not technically an instruction, but a program is a list of labels or instructions
+(struct label (l) #:transparent)
+
+
+
 ; LOCATIONS
 
 (struct location-binding (var loc) #:transparent)
-(struct temp-loc (t) #:transparent) ; each location can either represent a location in memory, or a register
+
+; a word-sized loc is either:
+;   - a temp-loc, which may be either a register or a word in memory
+(struct temp-loc (t) #:transparent)
+;   - a mem-loc, which is a word at a certain offset in a malloc'd block of memory
+(struct mem-loc (block offset) #:transparent)
+
+; a malloc'd block of memory is:
+;   m is a gensym to uniquely identify the block
+;   size is a location that (at runtime) holds the size of the block to be allocated
 (struct mem-block (m size) #:transparent) ; the size is the location of the register or temporary holding the size of this block, which is itself an expression that must be computed at runtime
-(struct mem-loc (block offset) #:transparent) ; the offset of a mem-loc is the location within the block, indexed from 0
 
-
-(struct label (l) #:transparent)
 
 ; GENSYM PROCEDURES
 
@@ -86,7 +97,8 @@
             (block (gen-mem size-register))
             (initval-register (gen-temp))
             (initval-gen-code (gen initval initval-register loc-env))]
-       (append size-gen-code initval-gen-code
+       (append size-gen-code 
+               initval-gen-code
                (list (array-allocate-ins initval-register block)))
        )]
       
