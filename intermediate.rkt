@@ -81,7 +81,7 @@
      (let [(sym (gen-temp))]
        (append (gen arg sym loc-env) (list (unary-ins op sym result-sym))))]
     [(int-literal val)
-     (list (move-ins val result-sym))]
+     (list (lim-ins val result-sym))]
     [(id name)
      (let [(sym (lookup name loc-env))]
        (if (temp-loc? sym)
@@ -102,18 +102,25 @@
       
     [(record-creation type-id fieldvals)
      (let* [(size-register (gen-temp))
-            (size-gen-code (lim-ins (length fieldvals) size-register))
-            (block (gen-mem size-register))]
+            (size-gen-code (list (lim-ins (length fieldvals) size-register)))
+            (block (gen-mem size-register))
+            
+            ]
        ;TODO should there be an malloc instruction that basically generates the code to do this first?
        ;TODO gen-mem is sort of malloc.  we need to make sure that it gets rid of the register it's using when we do register allocation
-       (append (list size-gen-code)
-               (map (λ (field offset)
-                      (match field
-                        [(fieldval name val)
-                         (gen val (mem-loc block offset) loc-env)]))
-                    fieldvals
-                    (build-list (length fieldvals) values))))]
-    
+       (apply append size-gen-code
+              (list (deref-ins result-sym block))
+              (map (λ (field offset)
+                     (match field
+                       [(fieldval name val)
+                        (gen val (mem-loc block offset) loc-env record-table)]))
+                   fieldvals
+                   (build-list (length fieldvals) values))))]
+;    
+;    [(record-creation type-id fieldvals)
+;     (let* [(size-register (gen-temp))
+;            (size-gen-code (lim-ins (length fieldvals) size-register)
+;    
     ; assignment doesn't overwrite ans. this is ok.
     [(assignment (id name) expr)
      (let [(dest-loc (lookup name loc-env))]
@@ -208,7 +215,16 @@
                else-gen-code
                (list (move-ins else-register result-sym) end-label)))]
     
-    [(nil) 
+    [(while-statement cond body)
+     (let* [(start-label (gen-label))
+            (end-label (gen-label))
+            (cond-gen-code (create-conditional-jump cond end-label loc-env record-table))
+            (dummy-location (gen-temp))
+            (body-gen-code (gen body dummy-location loc-env record-table))]
+       (append (list start-label) cond-gen-code body-gen-code
+               (list (uncond-jump-ins start-label) end-label)))]
+    
+    [(nil) (list (lim-ins 0 result-sym))]
     )
   )
 
@@ -228,98 +244,113 @@
 
 (check-match (gen-prog "let var x := 0 in x := 3; x end") 
              (list 
-              (move-ins 0 loc1)
-              (move-ins 3 loc1)
+              (lim-ins 0 loc1)
+              (lim-ins 3 loc1)
               (move-ins loc1 'ans)))
 
 (check-match (gen-prog "let var x := 0 in x := x+2; x end")
              (list
-              (move-ins 0 loc1)
+              (lim-ins 0 loc1)
               (move-ins loc1 loc2)
-              (move-ins 2 loc3)
+              (lim-ins 2 loc3)
               (binary-ins '+ loc2 loc3 loc1)
               (move-ins loc1 'ans)))
 
 (check-match (gen-prog "let var x := 0 in x := x+2; x; () end")  
              (list
-              (move-ins 0 loc1)
+              (lim-ins 0 loc1)
               (move-ins loc1 loc2)
-              (move-ins 2 loc3)
+              (lim-ins 2 loc3)
               (binary-ins '+ loc2 loc3 loc1)
               (move-ins loc1 'ans)))
 
 (check-match (gen-prog "let var y := 0 in let var x := (y := 2; 7) in y end end")
              (list
-              (move-ins 0 loc1)
-              (move-ins 2 loc1)
-              (move-ins 7 loc2)
+              (lim-ins 0 loc1)
+              (lim-ins 2 loc1)
+              (lim-ins 7 loc2)
               (move-ins loc1 'ans)))
 
 (check-match (gen-prog "int[10] of 15+3") ;note that this fails to type check but we don't care
              (list
-              (move-ins 10 (temp-loc t0))
-              (move-ins 15 (temp-loc t3))
-              (move-ins 3 (temp-loc t4))
+              (lim-ins 10 (temp-loc t0))
+              (lim-ins 15 (temp-loc t3))
+              (lim-ins 3 (temp-loc t4))
               (binary-ins '+ (temp-loc t3) (temp-loc t4) (temp-loc t2))
               (deref-ins 'ans (mem-block m1 (temp-loc t0)))
               (array-allocate-ins (temp-loc t2) (mem-block m1 _))))
 
 (check-match (gen-prog "if 3 then ()")
              (list
-              (move-ins 3 (temp-loc t5))
+              (lim-ins 3 (temp-loc t5))
               (cond-jump-ins (temp-loc t5) (label l4))
               (label l4)))
 
 (check-match (gen-prog "if 3 then (5;())")
              (list
-              (move-ins 3 (temp-loc t5))
+              (lim-ins 3 (temp-loc t5))
               (cond-jump-ins (temp-loc t5) (label l4))
-              (move-ins 5 (temp-loc t6))
+              (lim-ins 5 (temp-loc t6))
               (label l4)))
 
 
 (check-match (gen-prog "let var x : int := 26 in if 3 then x := 7 end")
              (list
-              (move-ins 26 (temp-loc t3))
-              (move-ins 3 (temp-loc t5))
+              (lim-ins 26 (temp-loc t3))
+              (lim-ins 3 (temp-loc t5))
               (cond-jump-ins (temp-loc t5) (label l4))
-              (move-ins 7 (temp-loc t3))
+              (lim-ins 7 (temp-loc t3))
               (label l4)))
 
 (check-match (gen-prog "if 3 then 4 else 5")
              (list
-              (move-ins 3 (temp-loc t5))
+              (lim-ins 3 (temp-loc t5))
               (cond-jump-ins (temp-loc t5) (label l4))
-              (move-ins 4 (temp-loc t2))
+              (lim-ins 4 (temp-loc t2))
               (move-ins (temp-loc t2) 'ans)
               (uncond-jump-ins (label l1))
               (label l4)
-              (move-ins 5 (temp-loc t3))
+              (lim-ins 5 (temp-loc t3))
               (move-ins (temp-loc t3) 'ans)
               (label l1)))
 
 (check-match (gen-prog "let var a := int[10] of 1 in a[5] := 6 end")
              (list
-              (move-ins 10 (temp-loc t0))
-              (move-ins 1 (temp-loc t2))
+              (lim-ins 10 (temp-loc t0))
+              (lim-ins 1 (temp-loc t2))
               (deref-ins (temp-loc t9) (mem-block m1 (temp-loc t0)))
               (array-allocate-ins (temp-loc t2) (mem-block m1 _))
-              (move-ins 5 (temp-loc t4))
-              (move-ins 6 (temp-loc t3))
+              (lim-ins 5 (temp-loc t4))
+              (lim-ins 6 (temp-loc t3))
               (pointer-set-ins (mem-loc (temp-loc t9) (temp-loc t4)) (temp-loc t3))))
 
 (check-match (gen-prog "if 4>1 then 0 else 16")
              (list
-              (move-ins 4 (temp-loc t0))
-              (move-ins 1 (temp-loc t1))
+              (lim-ins 4 (temp-loc t0))
+              (lim-ins 1 (temp-loc t1))
               (cond-jump-relop-ins '> (temp-loc t0) (temp-loc t1) (label l9))
-              (move-ins 0 (temp-loc t7))
+              (lim-ins 0 (temp-loc t7))
               (move-ins (temp-loc t7) 'ans)
               (uncond-jump-ins (label l6))
               (label l9)
-              (move-ins 16 (temp-loc t8))
+              (lim-ins 16 (temp-loc t8))
               (move-ins (temp-loc t8) 'ans)
               (label l6)))
 
+(check-match (gen-prog "let type a = {x:int} var z : a := nil in z := a{x=5} end")
+             (list
+              (lim-ins 0 (temp-loc t1))
+              (lim-ins 1 (temp-loc t2))
+              (deref-ins (temp-loc t1) (mem-block m3 (temp-loc t2)))
+              (lim-ins 5 (mem-loc (mem-block m3 _) 0))))
+
+(check-match (gen-prog "while 3 do (7;())")
+             (list
+              (label l2)
+              (lim-ins 3 (temp-loc t4))
+              (cond-jump-ins (temp-loc t4) (label l3))
+              (lim-ins 7 (temp-loc t5))
+              (uncond-jump-ins (label l2))
+              (label l3)))
 
 (test)
