@@ -36,8 +36,6 @@
 ; a word-sized loc is either:
 ;   - a temp-loc, which may be either a register or a word in memory
 (struct temp-loc (t) #:transparent)
-;   - a mem-loc, which is a word at a certain offset in a malloc'd block of memory
-(struct mem-loc (block offset) #:transparent)
 
 ; a malloc'd block of memory is:
 ;   m is a gensym to uniquely identify the block
