@@ -19,6 +19,7 @@
 (struct binary-ins (op src1 src2 dest) #:transparent)
 (struct unary-ins (op src dest) #:transparent)
 
+(struct uncond-jump-ins (dest) #:transparent)
 (struct cond-jump-ins (src dest) #:transparent) ; conditionally jumps if src is true
 (struct cond-jump-relop-ins (op src1 src2 dest) #:transparent) ; conditionally jumps if (relop src1 src2) is true
 
@@ -33,8 +34,12 @@
 (struct location-binding (var loc) #:transparent)
 (struct temp-loc (t) #:transparent) ; each location can either represent a location in memory, or a register
 (struct mem-block (m size) #:transparent) ; the size is the location of the register or temporary holding the size of this block, which is itself an expression that must be computed at runtime
-(struct mem-loc (block offset) #:transparent) ; the offset of a mem-loc is the location within the block, indexed from 0.  the block is represented by a location holding the address of that block.
+(struct mem-loc (block offset) #:transparent) ; the offset of a mem-loc is the location within the block, described as the number of words from the beginning, indexed from 0.  the block is represented by a location holding the address of that block.
 
+;TODO figure out how to hold on to the size for bounds checking
+
+
+(struct record-table-entry (name pointer? offset) #:transparent) ; the pointer? of a record-table-entry is a boolean describing whether or not this word of the record is a pointer or if the bits of the word actually contain the desired data.  this is #t for integers and #f otherwise.  the offset is given as number of words indexed from 0.
 
 (struct label (l) #:transparent)
 
@@ -60,16 +65,17 @@
 
 ; gen ast symbol listof-location-binding -> listof-instruction
 ; takes an ast and returns a list of horrible spaghetti instructions with gotos and unreadable garbage and things
-(define (gen-prog ast)
-  (gen ast 'ans empty))
+(define (gen-prog prog)
+  (gen (canonicalize (parse-string prog)) 'ans empty (make-immutable-hash empty)))
 
-(define (gen ast result-sym loc-env)
+(define (gen ast result-sym loc-env record-table)
   (match ast
     [(binary-op (op op) arg1 arg2) 
      (let [(sym1 (gen-temp))
            (sym2 (gen-temp))]
-       (append (gen arg1 sym1 loc-env)
-               (gen arg2 sym2 loc-env)
+       (append (gen arg1 sym1 loc-env record-table
+                    )
+               (gen arg2 sym2 loc-env record-table)
                (list (binary-ins op sym1 sym2 result-sym))))]
     [(unary-op (op op) arg)
      (let [(sym (gen-temp))]
@@ -84,10 +90,10 @@
     
     [(array-creation type-id size-expr initval)
      (let* [(size-register (gen-temp)) 
-            (size-gen-code (gen size-expr size-register loc-env))
+            (size-gen-code (gen size-expr size-register loc-env record-table))
             (block (gen-mem size-register))
             (initval-register (gen-temp))
-            (initval-gen-code (gen initval initval-register loc-env))]
+            (initval-gen-code (gen initval initval-register loc-env record-table))]
        (append size-gen-code initval-gen-code
                (list
                 (deref-ins result-sym block)
@@ -112,7 +118,7 @@
     [(assignment (id name) expr)
      (let [(dest-loc (lookup name loc-env))]
        (if (temp-loc? dest-loc)
-           (gen expr dest-loc loc-env)
+           (gen expr dest-loc loc-env record-table)
            (error (format "internal error: identifier ~a or bound to wrong location type" name)))
        )]
     
@@ -122,18 +128,22 @@
     [(assignment (and ast-node (array-access (id array-id) index)) val)
      ;(displayln ast-node)
      ;(displayln loc-env)
-     (let [(dest-loc (lookup array-id loc-env))
+     (let* [(dest-loc (lookup array-id loc-env))
            (val-temp (gen-temp))
+           (val-gen-code (gen val val-temp loc-env record-table))
+           (index-temp (gen-temp))
+           (index-gen-code (gen index index-temp loc-env record-table))
            ]
        (if (temp-loc? dest-loc)
            (append
-             (gen val val-temp loc-env)
-             (list (pointer-set-ins (mem-loc dest-loc index) val-temp)))
+            index-gen-code
+            val-gen-code
+            (list (pointer-set-ins (mem-loc dest-loc index-temp) val-temp)))
            (error (format "internal error: array ~a bound to wrong location type" array-id))))]
     
     
     ; leaving something in ans is ok. the program has already been typechecked.
-    [(expseq exprs) (apply append (map (λ (expr) (gen expr result-sym loc-env)) exprs))]
+    [(expseq exprs) (apply append (map (λ (expr) (gen expr result-sym loc-env record-table)) exprs))]
     
     [(let-vars decs body)
      (let-values [((inner-loc-env decs-instructions)
@@ -146,46 +156,83 @@
                         (let [(sym (gen-temp))]
                           (values 
                            (cons (location-binding id sym) le)
-                           (append instructions (gen expr sym le))))])))]
+                           (append instructions (gen expr sym le record-table))))])))]
        (append decs-instructions
-               (gen body result-sym inner-loc-env)))]
+               (gen body result-sym inner-loc-env record-table)))]
     
-    ;[(let-types decs body)
-    ; to do record declarations we need to decide on the structure of our records table
+    [(let-types decs body)
+     (let [(updated-record-table
+            (foldl (λ (dec table)
+                     (match dec
+                       [(tydec ty-id (record-of tyfields))
+                        (hash-set table
+                                  ty-id
+                                  (map (λ (tyf offset)
+                                         (match tyf
+                                           [(tyfield tyf-id tyf-ty)
+                                            (record-table-entry tyf-id (not (equal? (type-id 'int) tyf-ty)) offset)]))
+                                       ;TODO: find a smarter way to figure out if the type of the thing in this record is a pointer
+                                       ; this is only a problem because some stupid programmer might decide to rebind int
+                                       ; i'm okay with letting it be a pointer if someone does type a = int and declares it of type a
+                                       tyfields
+                                       (build-list (length tyfields) values)))]
+                       [else table]))
+                   record-table
+                   decs))]
+       
+       ;(displayln updated-record-table)
+       (gen body result-sym loc-env updated-record-table))]
      
-    [(if-statement cond then else)
-     (let* [(then-register (gen-temp))
-            (then-gen-code (gen then then-register loc-env))
-            (else-register (gen-temp))
-            (else-label (gen-label)) ; TODO figure out how this label can find something
-            (else-gen-code (gen else else-register loc-env))
-            (cond-gen-code
-             (match cond
-               [(binary-op (and op (or '> '< '>= '<=)) arg1 arg2)
-                (let [(arg1-register (gen-temp))
-                      (arg2-register (gen-temp))]
-                  (append (gen arg1 arg1-register loc-env)
-                          (gen arg2 arg2-register loc-env)
-                          (list (cond-jump-relop-ins op arg1-register arg2-register else-label))))]
-               [else
-                (let [(cond-register (gen-temp))]
-                  (append (gen cond cond-register loc-env)
-                          (list (cond-jump-ins cond-register else-label))))]))]
+    [(if-statement cond then (expseq empty))
+     (let* [(end-label (gen-label))
+            (then-register (gen-temp))
+            (then-gen-code (append (gen then then-register loc-env record-table) ))
+            (cond-gen-code (create-conditional-jump cond end-label loc-env record-table))]
        (append cond-gen-code
                then-gen-code
-               (list else-label)
-               else-gen-code))]
+               (list end-label)))]
+    
+    [(if-statement cond then else)
+     (let* [(end-label (gen-label))
+            (then-register (gen-temp))
+            (else-label (gen-label))
+            (else-register (gen-temp))
+            (then-gen-code (append (gen then then-register loc-env record-table)
+                                   (list (move-ins then-register result-sym)
+                                         (uncond-jump-ins end-label)
+                                         else-label)))
+            (else-gen-code (gen else else-register loc-env record-table))
+            (cond-gen-code (create-conditional-jump cond else-label loc-env record-table))]
+       (append cond-gen-code
+               then-gen-code
+               else-gen-code
+               (list (move-ins else-register result-sym) end-label)))]
+    
+    [(nil) 
     )
   )
 
+(define (create-conditional-jump condition to-label loc-env record-table)
+  (match condition
+    [(binary-op (op (and op (or '> '< '>= '<=))) arg1 arg2)
+     (let [(arg1-register (gen-temp))
+           (arg2-register (gen-temp))]
+       (append (gen arg1 arg1-register loc-env record-table)
+               (gen arg2 arg2-register loc-env record-table)
+               (list (cond-jump-relop-ins op arg1-register arg2-register to-label))))]
+    [else
+     (let [(cond-register (gen-temp))]
+       (append (gen condition cond-register loc-env record-table)
+               (list (cond-jump-ins cond-register to-label))))]))
 
-(check-match (gen-prog (parse-string "let var x := 0 in x := 3; x end")) 
+
+(check-match (gen-prog "let var x := 0 in x := 3; x end") 
              (list 
               (move-ins 0 loc1)
               (move-ins 3 loc1)
               (move-ins loc1 'ans)))
 
-(check-match (gen-prog (parse-string "let var x := 0 in x := x+2; x end"))
+(check-match (gen-prog "let var x := 0 in x := x+2; x end")
              (list
               (move-ins 0 loc1)
               (move-ins loc1 loc2)
@@ -193,7 +240,7 @@
               (binary-ins '+ loc2 loc3 loc1)
               (move-ins loc1 'ans)))
 
-(check-match (gen-prog (parse-string "let var x := 0 in x := x+2; x; () end"))  
+(check-match (gen-prog "let var x := 0 in x := x+2; x; () end")  
              (list
               (move-ins 0 loc1)
               (move-ins loc1 loc2)
@@ -201,14 +248,14 @@
               (binary-ins '+ loc2 loc3 loc1)
               (move-ins loc1 'ans)))
 
-(check-match (gen-prog (parse-string "let var y := 0 in let var x := (y := 2; 7) in y end end"))
+(check-match (gen-prog "let var y := 0 in let var x := (y := 2; 7) in y end end")
              (list
               (move-ins 0 loc1)
               (move-ins 2 loc1)
               (move-ins 7 loc2)
               (move-ins loc1 'ans)))
 
-(check-match (gen-prog (parse-string "int[10] of 15+3")) ;note that this fails to type check but we don't care
+(check-match (gen-prog "int[10] of 15+3") ;note that this fails to type check but we don't care
              (list
               (move-ins 10 (temp-loc t0))
               (move-ins 15 (temp-loc t3))
@@ -217,28 +264,62 @@
               (deref-ins 'ans (mem-block m1 (temp-loc t0)))
               (array-allocate-ins (temp-loc t2) (mem-block m1 _))))
 
-(check-match (gen-prog (parse-string "if 3 then ()"))
+(check-match (gen-prog "if 3 then ()")
              (list
               (move-ins 3 (temp-loc t5))
               (cond-jump-ins (temp-loc t5) (label l4))
               (label l4)))
 
-(check-match (gen-prog (parse-string "if 3 then 4 else 5"))
+(check-match (gen-prog "if 3 then (5;())")
+             (list
+              (move-ins 3 (temp-loc t5))
+              (cond-jump-ins (temp-loc t5) (label l4))
+              (move-ins 5 (temp-loc t6))
+              (label l4)))
+
+
+(check-match (gen-prog "let var x : int := 26 in if 3 then x := 7 end")
+             (list
+              (move-ins 26 (temp-loc t3))
+              (move-ins 3 (temp-loc t5))
+              (cond-jump-ins (temp-loc t5) (label l4))
+              (move-ins 7 (temp-loc t3))
+              (label l4)))
+
+(check-match (gen-prog "if 3 then 4 else 5")
              (list
               (move-ins 3 (temp-loc t5))
               (cond-jump-ins (temp-loc t5) (label l4))
               (move-ins 4 (temp-loc t2))
+              (move-ins (temp-loc t2) 'ans)
+              (uncond-jump-ins (label l1))
               (label l4)
-              (move-ins 5 (temp-loc t3))))
+              (move-ins 5 (temp-loc t3))
+              (move-ins (temp-loc t3) 'ans)
+              (label l1)))
 
-(check-match (gen-prog (parse-string "let var a := int[10] of 1 in a[5] := 6 end"))
+(check-match (gen-prog "let var a := int[10] of 1 in a[5] := 6 end")
              (list
               (move-ins 10 (temp-loc t0))
               (move-ins 1 (temp-loc t2))
               (deref-ins (temp-loc t9) (mem-block m1 (temp-loc t0)))
               (array-allocate-ins (temp-loc t2) (mem-block m1 _))
+              (move-ins 5 (temp-loc t4))
               (move-ins 6 (temp-loc t3))
-              (pointer-set-ins (mem-loc (temp-loc t9) (int-literal 5)) (temp-loc t3))))
+              (pointer-set-ins (mem-loc (temp-loc t9) (temp-loc t4)) (temp-loc t3))))
+
+(check-match (gen-prog "if 4>1 then 0 else 16")
+             (list
+              (move-ins 4 (temp-loc t0))
+              (move-ins 1 (temp-loc t1))
+              (cond-jump-relop-ins '> (temp-loc t0) (temp-loc t1) (label l9))
+              (move-ins 0 (temp-loc t7))
+              (move-ins (temp-loc t7) 'ans)
+              (uncond-jump-ins (label l6))
+              (label l9)
+              (move-ins 16 (temp-loc t8))
+              (move-ins (temp-loc t8) 'ans)
+              (label l6)))
 
 
 (test)
