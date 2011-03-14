@@ -306,14 +306,14 @@
     
     (lvalue [(id lvalue-rest) 
              (foldl (lambda (lval-suf sub-lval)
-                            ; transform-lvalue into left recursive representation
-                            ; lval-suf is the first suffix in the suffix list
-                            ; sub-lval is the new lvalue constructed so far
-                            (match lval-suf
-                              [(lvalue-record-access field-name) (record-access sub-lval field-name #f)]
-                              [(lvalue-array-access index) (array-access sub-lval index)]))
-                          (id $1)
-                           $2)])
+                      ; transform-lvalue into left recursive representation
+                      ; lval-suf is the first suffix in the suffix list
+                      ; sub-lval is the new lvalue constructed so far
+                      (match lval-suf
+                        [(lvalue-record-access field-name) (record-access sub-lval field-name #f)]
+                        [(lvalue-array-access index) (array-access sub-lval index)]))
+                    (id $1)
+                    $2)])
     (lvalue-rest [() empty]
                  [(dot id lvalue-rest) (cons (lvalue-record-access $2) $3)]
                  [(open-bracket exp close-bracket lvalue-rest) (cons (lvalue-array-access $2) $4)])

@@ -139,6 +139,14 @@
 ;    [(assignment (record-access rec-id field-id) val) ; TODO: but depends on record declarations
 ;     ...]
     
+    [(array-access arr indx)
+     (let* [(indx-temp (gen-temp))
+            (indx-gen-code (gen indx indx-temp loc-env record-table))
+            (arr-temp (gen-temp))
+            (arr-gen-code (gen arr arr-temp loc-env record-table))]
+       empty)]
+       
+            
     [(assignment (and ast-node (array-access (id array-id) index)) val)
      ;(displayln ast-node)
      ;(displayln loc-env)
@@ -164,7 +172,6 @@
                    (for/fold ([le loc-env]
                               [instructions empty])
                      [(dec decs)]
-                     
                      (match dec
                        [(vardec id t-id expr)
                         (let [(sym (gen-temp))]
