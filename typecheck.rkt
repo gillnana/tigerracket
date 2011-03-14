@@ -309,7 +309,7 @@
                  (type-lookup name new-te))]))
         
         ; t-type ast-node -> bool       
-        (define (resolve-dec? t-box dec)
+        (define (resolve-dec‽ t-box dec)
           (and (false? (unbox t-box)) ; break and return false if it's not an empty box
                (let [(new-t (match dec
                               ; if the dec is just binding it to another type,
@@ -320,11 +320,11 @@
                               [complex-type (instantiate-t-type complex-type)]))]
                  (and new-t                  ; if it did not remain an empty box
                       (set-box! t-box new-t) ; make the change
-                      #t))))                         ; return true so we know to keep going
+                      #t))))                 ; return true so we know to keep going
         
         ; (listof box t-type) (listof ast-node) -> void
         (define (fix-decs! new-bindings tydecs)
-          (if (ormap resolve-dec? new-bindings tydecs)
+          (if (ormap resolve-dec‽ new-bindings tydecs)
               (fix-decs! new-bindings tydecs) ; keep going if something changed
               (unless (andmap unbox new-bindings)
                 ; here we have reached fixed point of fix-decs! if there are empty boxes, we have a cycle
