@@ -318,6 +318,15 @@
                  [(dot id lvalue-rest) (cons (lvalue-record-access $2) $3)]
                  [(open-bracket exp close-bracket lvalue-rest) (cons (lvalue-array-access $2) $4)])
     
+    #;(lvalue [(id lvalue-rest)
+             ($2 (id $1))])
+    
+    #;(lvalue-rest [() values]
+                 [(dot id lvalue-rest)
+                  (lambda (x) ($3 (record-access x $2)))]
+                 [(open-bracket exp close-bracket lvalue-rest)
+                  (lambda (x) ($4 (array-access x $2)))])
+    
     (literal [(int) (int-literal $1)]
              [(string) (string-literal $1)]
              [(nil) (nil)])
