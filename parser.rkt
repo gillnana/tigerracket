@@ -437,7 +437,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;  Canonicalization  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+(define (symbol<=? sym1 sym2)
+  (string<=? (symbol->string sym1)
+             (symbol->string sym2)))
 
 (define (canonicalize ast)
   
@@ -447,15 +449,14 @@
   (match ast
     
     [(for-statement index start end body)
-     (let-vars
-      (list (vardec index #f start))
-      (expseq
-       (list
-        (while-statement (binary-op (op '<=) (id index) end) 
-                         (expseq
-                          (list
-                           (canonicalize body)
-                           (binary-op (op '+) (id index) (int-literal 1))))))))]
+     (expseq
+      (list
+       (assignment (id index) start)
+       (while-statement (binary-op (op '<=) index end) 
+                        (expseq
+                         (list
+                          (canonicalize body)
+                          (binary-op (op '+) index (int-literal 1)))))))]
     
     [(while-statement cond body) (while-statement (canonicalize cond) (canonicalize body))]
     
@@ -477,12 +478,16 @@
     [(array-access id index) (array-access (canonicalize id) (canonicalize index))]
     
     [(funcall fun-id args) (funcall fun-id (map canonicalize args))]
-    [(record-creation type-id fieldvals) (record-creation type-id 
-                                                          (map
-                                                           (match-lambda
-                                                             [(fieldval name val)
-                                                              (fieldval name (canonicalize val))])
-                                                           fieldvals))]
+    [(record-creation type-id fieldvals) (record-creation type-id
+                                                          (sort (map
+                                                                 (match-lambda
+                                                                   [(fieldval name val)
+                                                                    (fieldval name (canonicalize val))])
+                                                                 fieldvals)
+                                                                (match-lambda*
+                                                                  [(list (fieldval name1 _)
+                                                                         (fieldval name2 _))
+                                                                   (symbol<=? name1 name2)])))]
     [(array-creation type-id size initval) (array-creation type-id (canonicalize size) (canonicalize initval))]
     [(assignment lvalue val) (assignment (canonicalize lvalue) (canonicalize val))]
     
@@ -491,7 +496,13 @@
     
     [(let-vars bindings body) (let-vars (map canonicalize bindings) (canonicalize body))]
     [(let-funs bindings body) (let-funs (map canonicalize bindings) (canonicalize body))]
-    [(let-types bindings body) (let-types bindings (canonicalize body))]
+    [(let-types bindings body) (let-types (map (match-lambda
+                                                 [(
+                                               
+                                           
+                                           
+                                           
+                                           bindings (canonicalize body))]
     
     
     [(int-literal val) (int-literal val)]
