@@ -441,7 +441,12 @@
   (string<=? (symbol->string sym1)
              (symbol->string sym2)))
 
-(define (canonicalize ast)
+(struct record-index (id offset-list) #:transparent)
+(struct field-offset (id num) #:transparent)
+
+(struct record-access-offset (rec-id field-id offset))
+
+(define (canonicalize ast r-indx)
   
   ; TODO make sure that fields are specified in the same order as declared for record creation
   ; do this by alphabetizing the field order at canonicalization
@@ -455,62 +460,96 @@
        (while-statement (binary-op (op '<=) index end) 
                         (expseq
                          (list
-                          (canonicalize body)
+                          (canonicalize body r-indx)
                           (binary-op (op '+) index (int-literal 1)))))))]
     
-    [(while-statement cond body) (while-statement (canonicalize cond) (canonicalize body))]
+    [(while-statement cond body) (while-statement (canonicalize cond r-indx) (canonicalize body r-indx))]
     
-    [(if-statement c t e) (if-statement (canonicalize c) (canonicalize t) (canonicalize e))]
+    [(if-statement c t e) (if-statement (canonicalize c r-indx)
+                                        (canonicalize t r-indx)
+                                        (canonicalize e r-indx))]
     
     [(binary-op (op '&) a b)
-     (if-statement (canonicalize a)
-                   (if-statement (canonicalize b) (int-literal 1) (int-literal 0))
+     (if-statement (canonicalize a r-indx)
+                   (if-statement (canonicalize b r-indx) (int-literal 1) (int-literal 0))
                    (int-literal 0))]
     
     [(binary-op (op 'or) a b)
-     (if-statement (canonicalize a)
+     (if-statement (canonicalize a r-indx)
                    (int-literal 1)
-                   (if-statement (canonicalize b) (int-literal 1) (int-literal 0)))]
+                   (if-statement (canonicalize b r-indx) (int-literal 1) (int-literal 0)))]
     
-    [(binary-op other a b) (binary-op other (canonicalize a) (canonicalize b))]
-    [(unary-op op a) (unary-op op (canonicalize a))]
-    [(expseq seq) (expseq (map canonicalize seq))] 
-    [(array-access id index) (array-access (canonicalize id) (canonicalize index))]
+    [(binary-op other a b) (binary-op other (canonicalize a r-indx) (canonicalize b r-indx))]
+    [(unary-op op a) (unary-op op (canonicalize a r-indx))]
+    [(expseq seq) (expseq (map (λ (exp) (canonicalize exp r-indx)) seq))] 
+    [(array-access id index) (array-access (canonicalize id r-indx) (canonicalize index r-indx))]
     
-    [(funcall fun-id args) (funcall fun-id (map canonicalize args))]
+    [(funcall fun-id args) (funcall fun-id (map (λ (arg) (canonicalize arg r-indx)) args))]
     [(record-creation type-id fieldvals) (record-creation type-id
                                                           (sort (map
                                                                  (match-lambda
                                                                    [(fieldval name val)
-                                                                    (fieldval name (canonicalize val))])
+                                                                    (fieldval name (canonicalize val r-indx))])
                                                                  fieldvals)
                                                                 (match-lambda*
                                                                   [(list (fieldval name1 _)
                                                                          (fieldval name2 _))
                                                                    (symbol<=? name1 name2)])))]
-    [(array-creation type-id size initval) (array-creation type-id (canonicalize size) (canonicalize initval))]
-    [(assignment lvalue val) (assignment (canonicalize lvalue) (canonicalize val))]
+    [(array-creation type-id size initval) (array-creation type-id (canonicalize size r-indx) (canonicalize initval r-indx))]
+    [(assignment lvalue val) (assignment (canonicalize lvalue r-indx) (canonicalize val r-indx))]
     
-    [(vardec id type-id val) (vardec id type-id (canonicalize val))]
-    [(fundec id tyfields type-id body) (fundec id tyfields type-id (canonicalize body))]
+    [(vardec id type-id val) (vardec id type-id (canonicalize val r-indx))]
+    [(fundec id tyfields type-id body) (fundec id tyfields type-id (canonicalize body r-indx))]
     
-    [(let-vars bindings body) (let-vars (map canonicalize bindings) (canonicalize body))]
-    [(let-funs bindings body) (let-funs (map canonicalize bindings) (canonicalize body))]
-    [(let-types bindings body) (let-types (map (match-lambda
-                                                 [(
-                                               
-                                           
-                                           
-                                           
-                                           bindings (canonicalize body))]
+    [(let-vars bindings body) (let-vars (map (λ (binding) (canonicalize binding r-indx)) bindings) (canonicalize body r-indx))]
+    [(let-funs bindings body) (let-funs (map (λ (binding) (canonicalize binding r-indx)) bindings) (canonicalize body r-indx))]
     
+    [(let-types bindings body)
+     (local [(define sorted-bindings (map (match-lambda
+                                            [(tydec type-id (record-of tyfields))
+                                             (tydec type-id (record-of (sort tyfields
+                                                                             (match-lambda*
+                                                                               [(list (tyfield id1 _)
+                                                                                      (tyfield id2 _))
+                                                                                (symbol<=? id1 id2)]))))]
+                                            [other-tydec other-tydec])
+                                          bindings))
+             (define (accumulate-record-indices sorted-binding record-index-acc)
+               (match sorted-binding
+                 [(tydec id (record-of tyfields))
+                  (cons (record-index id (map (λ (tf num)
+                                                (field-offset (tyfield-id tf) num))
+                                              tyfields
+                                              (build-list (length tyfields) values))) record-index-acc)]))]
+       (let-types sorted-bindings (canonicalize body (foldl accumulate-record-indices
+                                                            r-indx
+                                                            (filter (match-lambda
+                                                                      [(tydec type-id (record-of tyfields)) #t]
+                                                                      [other-tydec #f])
+                                                                    sorted-bindings)))))]
+
     
     [(int-literal val) (int-literal val)]
     [(string-literal val) (string-literal val)]
     [(nil) (nil)]
     [(id a) (id a)]
     [(break) (break)]
-    [(record-access rec-id field-id) (record-access rec-id field-id)]
+    ; TODO: error here or just false in record-access-offset-struct
+    ; related question: do we do canonicalization before or after typechecking?
+    [(record-access rec-id field-id)
+     (let [(offset (ormap (match-lambda
+                            [(record-index rec-type offset-list)
+                             (and (equal? rec-type rec-id)
+                                  (ormap (match-lambda
+                                           [(field-offset fi num)
+                                            (and (equal? fi field-id)
+                                                 num)])
+                                         offset-list))])
+                          r-indx))]
+       (when (not offset)
+         (displayln r-indx)
+         (error (format "unknown field ~a of record type ~a" field-id rec-id)))
+       (record-access-offset rec-id field-id offset))]
     [(tydec type-id ty) (tydec type-id ty)]
     
     [else else]))
