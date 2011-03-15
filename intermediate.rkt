@@ -25,8 +25,9 @@
 
 (struct array-allocate-ins (src1 dest) #:transparent) ;this instruction allocates an array to some initial value, which most backends will do for free. src1 is the address of the expression to be inserted into the array.  dest is the mem-block struct which is the location of the array.
 
-(struct pointer-set-ins (src1 src2) #:transparent) ; this instruction corresponds to x=*y, putting the r-value of y into the r-value of x
-(struct deref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=&y, putting the l-value of y into the r-value of x
+(struct deref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=*y, putting the r-value of y into the r-value of x
+(struct ref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=&y, putting the l-value of y into the r-value of x
+(struct deref-assign-ins (src1 src) #:transparent) ; this instruction corresponds to x*=y, putting the r-value of y into the l-value of x
 
 
 ; LOCATIONS
@@ -80,8 +81,9 @@
   (match ast
     [(id name)
      (let [(sym (lookup name loc-env))]
+       (displayln loc-env)
        (if (temp-loc? sym)
-           (list (deref-ins sym result-sym))
+           (list (ref-ins result-sym sym))
            (error "huge error.")))]
     [(array-access arr indx)
      (let* [(indx-temp (gen-temp))
@@ -127,7 +129,7 @@
             (initval-gen-code (gen initval initval-register loc-env))]
        (append size-gen-code initval-gen-code
                (list
-                (deref-ins result-sym block)
+                (ref-ins result-sym block)
                 (array-allocate-ins initval-register block)))
        )]
       
@@ -140,7 +142,7 @@
        ;TODO should there be an malloc instruction that basically generates the code to do this first?
        ;TODO gen-mem is sort of malloc.  we need to make sure that it gets rid of the register it's using when we do register allocation
        (apply append size-gen-code
-              (list (deref-ins result-sym block))
+              (list (ref-ins result-sym block))
               (map (λ (field offset)
                      (match field
                        [(fieldval name val)
@@ -160,7 +162,7 @@
        (append
         lval-gen-code
         val-gen-code
-        (list (move-ins lval-temp val-temp))))] 
+        (list (deref-assign-ins lval-temp val-temp))))] 
     
     
     ; leaving something in ans is ok. the program has already been typechecked.
@@ -181,29 +183,7 @@
                (gen body result-sym inner-loc-env)))]
     
     [(let-types decs body)
-     #;(let [(updated-record-table
-            (foldl (λ (dec table)
-                     (match dec
-                       [(tydec ty-id (record-of tyfields))
-                        (hash-set table
-                                  ty-id
-                                  (map (λ (tyf offset)
-                                         (match tyf
-                                           [(tyfield tyf-id tyf-ty)
-                                            (record-table-entry tyf-id (not (equal? (type-id 'int) tyf-ty)) offset)]))
-                                       ;TODO: find a smarter way to figure out if the type of the thing in this record is a pointer
-                                       ; this is only a problem because some stupid programmer might decide to rebind int
-                                       ; i'm okay with letting it be a pointer if someone does type a = int and declares it of type a
-                                       tyfields
-                                       (build-list (length tyfields) values)))]
-                       [else table]))
-                   record-table
-                   decs))]
-       
-       ;(displayln updated-record-table)
-       (gen body result-sym loc-env))
-     (gen body result-sym loc-env)
-     ]
+     (gen body result-sym loc-env)]
      
     [(if-statement cond then (expseq empty))
      (let* [(end-label (gen-label))
@@ -259,32 +239,40 @@
 
 (check-match (gen-prog "let var x := 0 in x := 3; x end") 
              (list 
-              (lim-ins 0 loc1)
-              (lim-ins 3 loc1)
-              (move-ins loc1 'ans)))
+              (lim-ins 0 x)                   ; int x = 0;
+              (ref-ins dest x)                ; int* destination = &x;
+              (lim-ins 3 val)                 ; int value = 3;
+              (deref-assign-ins dest val)     ; *destination = value;
+              (move-ins x 'ans)))             ; ans = x;
 
 (check-match (gen-prog "let var x := 0 in x := x+2; x end")
              (list
-              (lim-ins 0 loc1)
-              (move-ins loc1 loc2)
-              (lim-ins 2 loc3)
-              (binary-ins '+ loc2 loc3 loc1)
-              (move-ins loc1 'ans)))
+              (lim-ins 0 x)                   ; int x = 0;
+              (ref-ins dest x)                ; int* destination = &x;
+              (move-ins x arg1)               ; int plusarg1 = x;
+              (lim-ins 2 arg2)                ; int plusarg2 = 2;
+              (binary-ins '+ arg1 arg2 res)   ; int plusresult = plusarg1 + plusarg2;
+              (deref-assign-ins dest res)     ; *destination = plusresult;
+              (move-ins x 'ans)))             ; ans = x;
 
 (check-match (gen-prog "let var x := 0 in x := x+2; x; () end")  
              (list
-              (lim-ins 0 loc1)
-              (move-ins loc1 loc2)
-              (lim-ins 2 loc3)
-              (binary-ins '+ loc2 loc3 loc1)
-              (move-ins loc1 'ans)))
+              (lim-ins 0 x)                   ; int x = 0;
+              (ref-ins dest x)                ; int* destination = &x;
+              (move-ins x arg1)               ; int plusarg1 = x;
+              (lim-ins 2 arg2)                ; int plusarg2 = 2;
+              (binary-ins '+ arg1 arg2 res)   ; int plusresult = plusarg1 + plusarg2;
+              (deref-assign-ins dest res)     ; *destination = plusresult;
+              (move-ins x 'ans)))             ; ans = x;
 
 (check-match (gen-prog "let var y := 0 in let var x := (y := 2; 7) in y end end")
              (list
-              (lim-ins 0 loc1)
-              (lim-ins 2 loc1)
-              (lim-ins 7 loc2)
-              (move-ins loc1 'ans)))
+              (lim-ins 0 y)                   ; int y := 0
+              (ref-ins dest y)                ; int* destination = &y;
+              (lim-ins 2 val)                 ; int val = 2;
+              (deref-assign-ins dest val)     ; *destination = val;
+              (lim-ins 7 x)                   ; int x = 7;
+              (move-ins y 'ans)))             ; ans = y;
 
 (check-match (gen-prog "int[10] of 15+3") ;note that this fails to type check but we don't care
              (list
@@ -292,7 +280,7 @@
               (lim-ins 15 (temp-loc t3))
               (lim-ins 3 (temp-loc t4))
               (binary-ins '+ (temp-loc t3) (temp-loc t4) (temp-loc t2))
-              (deref-ins 'ans (mem-block m1 (temp-loc t0)))
+              (ref-ins 'ans (mem-block m1 (temp-loc t0)))
               (array-allocate-ins (temp-loc t2) (mem-block m1 _))))
 
 (check-match (gen-prog "if 3 then ()")
@@ -333,11 +321,11 @@
              (list
               (lim-ins 10 (temp-loc t0))
               (lim-ins 1 (temp-loc t2))
-              (deref-ins (temp-loc t9) (mem-block m1 (temp-loc t0)))
+              (ref-ins (temp-loc t9) (mem-block m1 (temp-loc t0)))
               (array-allocate-ins (temp-loc t2) (mem-block m1 _))
               (lim-ins 5 (temp-loc t4))
               (lim-ins 6 (temp-loc t3))
-              (pointer-set-ins (mem-loc (temp-loc t9) (temp-loc t4)) (temp-loc t3))))
+              (deref-ins (mem-loc (temp-loc t9) (temp-loc t4)) (temp-loc t3))))
 
 (check-match (gen-prog "if 4>1 then 0 else 16")
              (list
@@ -356,7 +344,7 @@
              (list
               (lim-ins 0 (temp-loc t1))
               (lim-ins 1 (temp-loc t2))
-              (deref-ins (temp-loc t1) (mem-block m3 (temp-loc t2)))
+              (ref-ins (temp-loc t1) (mem-block m3 (temp-loc t2)))
               (lim-ins 5 (mem-loc (mem-block m3 _) 0))))
 
 (check-match (gen-prog "while 3 do (7;())")

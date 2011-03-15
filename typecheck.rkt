@@ -330,7 +330,7 @@
                 ; here we have reached fixed point of fix-decs! if there are empty boxes, we have a cycle
                 (error (format "illegal cycle in type declarations, unresolved types were: ~a"
                                (map type-binding-id 
-                                    (filter (lambda (binding)
+                                    (filter (λ (binding)
                                               (false? (unbox (type-binding-ty binding))))
                                             new-te)))))))
         
