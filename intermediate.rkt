@@ -23,11 +23,13 @@
 (struct cond-jump-ins (src dest) #:transparent) ; conditionally jumps if src is true
 (struct cond-jump-relop-ins (op src1 src2 dest) #:transparent) ; conditionally jumps if (relop src1 src2) is true
 
+(struct push-ins (src) #:transparent) ; pushes the contents of src onto the stack as a function parameter
+
 (struct array-allocate-ins (src1 dest) #:transparent) ;this instruction allocates an array to some initial value, which most backends will do for free. src1 is the address of the expression to be inserted into the array.  dest is the mem-block struct which is the location of the array.
 
 (struct pointer-set-ins (src1 src2) #:transparent) ; this instruction corresponds to x=*y, putting the r-value of y into the r-value of x
-(struct deref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=&y, putting the l-value of y into the r-value of x
-
+(struct ref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=&y, putting the l-value of y into the r-value of x
+(struct deref-ins (src src2) #:transparent) ; this instruction corresponds to x*=y, putting the l-value of y into the l-value of x
 
 ; LOCATIONS
 
@@ -35,6 +37,10 @@
 (struct temp-loc (t) #:transparent) ; each location can either represent a location in memory, or a register
 (struct mem-block (m size) #:transparent) ; the size is the location of the register or temporary holding the size of this block, which is itself an expression that must be computed at runtime
 (struct mem-loc (block offset) #:transparent) ; the offset of a mem-loc is the location within the block, described as the number of words from the beginning, indexed from 0.  the block is represented by a location holding the address of that block.
+
+
+(struct label-loc (l) #:transparent)
+(struct param-loc (p param-number) #:transparent)
 
 ;TODO figure out how to hold on to the size for bounds checking
 
@@ -46,6 +52,8 @@
 ; GENSYM PROCEDURES
 
 (define (gen-temp) (temp-loc (gensym 't)))
+(define (gen-label-temp) (label-loc (gensym 'lt)))
+(define (gen-param param-num) (param-loc (gensym 'p) param-num))
 (define (gen-mem size) (mem-block (gensym 'm) size)) ; we decided that size refers to the number of words this takes in the machine.  for
 ;most purposes a single word will hold one item, be that a pointer or integer.
 
@@ -84,9 +92,9 @@
      (list (lim-ins val result-sym))]
     [(id name)
      (let [(sym (lookup name loc-env))]
-       (if (temp-loc? sym)
+       (if (or (temp-loc? sym) (param-loc? sym) (label-loc? sym))
            (list (move-ins sym result-sym))
-           (error (format "internal error: identifier ~a found in wrong location type" name))))]
+           (error (format "internal error: identifier ~a found in wrong location type ~a" name sym))))]
     
     [(array-creation type-id size-expr initval)
      (let* [(size-register (gen-temp)) 
@@ -225,6 +233,64 @@
                (list (uncond-jump-ins start-label) end-label)))]
     
     [(nil) (list (lim-ins 0 result-sym))]
+    
+    
+    [(let-funs decs body)
+     (let-values [((inner-loc-env fun-instructions )
+                   (for/fold ([le loc-env]
+                              [instructions empty])
+                     [(dec decs)]
+                     
+                     (match dec
+                       [(fundec id tyfields type-id fun-body)
+                        (let [;(fun-id-sym (gen-temp))
+                              (fun-label (gen-label))
+                              (loc-of-label (gen-label-temp))
+                              (return-val (gen-temp))
+                              ]
+                          
+                          (values 
+                           (cons (location-binding id loc-of-label) le)
+                           (append instructions (list fun-label) (gen 
+                                                                  fun-body
+                                                                  loc-of-label
+                                                                  (append
+                                                                   (map (λ (tyf param-num)
+                                                                          (match tyf
+                                                                            [(tyfield ty-name ty-ty)
+                                                                             (location-binding ty-name 
+                                                                                               (gen-param param-num))]))
+                                                                        tyfields
+                                                                        (build-list (length tyfields) add1))
+                                                                   le)
+                                                                  record-table))))])))]
+       (append fun-instructions
+               (gen body result-sym inner-loc-env record-table)))]
+    
+    [(funcall fun-id args)
+     ;TODO evaluate fun-id which might be any expression
+     (let* [(f (lookup (id-name fun-id) loc-env))
+           (arg-sym-list (build-list (length args) (λ (ignore) (gen-temp))))
+           (label-here (gen-label))
+           (label-holder (gen-temp))
+           (param-gen-code (append
+                            (map (λ (arg param-sym)
+                                   (gen arg param-sym loc-env record-table))
+                                 args arg-sym-list)))
+           ]
+       (if (label-loc? f)
+           
+           (append param-gen-code
+                   (map (λ (arg-sym) (push-ins arg-sym)) arg-sym-list)
+                   (list (push-ins label-here)
+                         (pointer-set-ins label-holder f) ; want x=*y
+                         (uncond-jump-ins label-holder)
+                         label-here) ; the last argument is the return address
+                   )
+           
+           
+           (error (format "internal error: function ~a bound to wrong location type" fun-id f))))]
+     
     )
   )
 
