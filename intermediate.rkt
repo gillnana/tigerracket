@@ -1,5 +1,6 @@
 #lang racket
 (require "parser.rkt")
+(require "typecheck.rkt")
 ;(require "canonicalize.rkt")
 (require test-engine/racket-tests)
 
