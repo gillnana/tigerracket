@@ -34,7 +34,14 @@
 ; LOCATIONS
 
 (struct location-binding (var loc) #:transparent)
-(struct temp-loc (t) #:transparent) ; each location can either represent a location in memory, or a register
+
+; a word-sized loc is either:
+;   - a temp-loc, which may be either a register or a word in memory
+(struct temp-loc (t) #:transparent)
+
+; a malloc'd block of memory is:
+;   m is a gensym to uniquely identify the block
+;   size is a location that (at runtime) holds the size of the block to be allocated
 (struct mem-block (m size) #:transparent) ; the size is the location of the register or temporary holding the size of this block, which is itself an expression that must be computed at runtime
 (struct mem-loc (block offset) #:transparent) ; the offset of a mem-loc is the location within the block, described as the number of words from the beginning, indexed from 0.  the block is represented by a location holding the address of that block.
 
