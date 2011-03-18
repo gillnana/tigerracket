@@ -51,12 +51,22 @@
 (struct label-loc (l) #:transparent)
 (struct param-loc (p param-number) #:transparent)
 
+(struct return-val-loc () #:transparent) ;location of the return value
+
 ;TODO figure out how to hold on to the size for bounds checking
 
 
 (struct record-table-entry (name pointer? offset) #:transparent) ; the pointer? of a record-table-entry is a boolean describing whether or not this word of the record is a pointer or if the bits of the word actually contain the desired data.  this is #t for integers and #f otherwise.  the offset is given as number of words indexed from 0.
 
 (struct label (l) #:transparent)
+
+(struct stack-setup-ins () #:transparent) ; in MIPS, push ra and fp onto stack, sets new fp to current value of sp
+(struct stack-teardown-ins () #:transparent) ; pops fp and ra from stack into registers, sets stack to old value of sp
+(struct jump-to-return-address-ins () #:transparent)
+
+(struct funcall-ins (dest num-params return-val) #:transparent) ;num-params is a statically determined integer.  the return value of the funcall is placed in the return-val location
+(struct return-ins (return-val-loc) #:transparent) ;represents an instruction that puts the return value of a function in the location it should go, wherever that may be
+
 
 ; GENSYM PROCEDURES
 
@@ -245,36 +255,46 @@
     
     
     [(let-funs decs body)
-     (let-values [((inner-loc-env fun-instructions )
-                   (for/fold ([le loc-env]
-                              [instructions empty])
-                     [(dec decs)]
-                     
-                     (match dec
-                       [(fundec id tyfields type-id fun-body)
-                        (let [;(fun-id-sym (gen-temp))
-                              (fun-label (gen-label))
-                              (loc-of-label (gen-label-temp))
-                              (return-val (gen-temp))
-                              ]
-                          
-                          (values 
-                           (cons (location-binding id loc-of-label) le)
-                           (append instructions (list fun-label) (gen 
-                                                                  fun-body
-                                                                  loc-of-label
-                                                                  (append
-                                                                   (map (λ (tyf param-num)
-                                                                          (match tyf
-                                                                            [(tyfield ty-name ty-ty)
-                                                                             (location-binding ty-name 
-                                                                                               (gen-param param-num))]))
-                                                                        tyfields
-                                                                        (build-list (length tyfields) add1))
-                                                                   le)
-                                                                  record-table))))])))]
-       (append fun-instructions
-               (gen body result-sym inner-loc-env record-table)))]
+     (let [(skip-label (gen-label))]
+       
+       (let-values 
+           [((inner-loc-env fun-instructions )
+             (for/fold ([le loc-env]
+                        [instructions empty])
+               [(dec decs)]
+               
+               (match dec
+                 [(fundec id tyfields type-id fun-body)
+                  (let [;(fun-id-sym (gen-temp))
+                        (fun-label (gen-label))
+                        (loc-of-label (gen-label-temp))
+                        (loc-of-result (gen-temp))] ; TODO: maybe return-val-loc??
+                    
+                    (values 
+                     (cons (location-binding id loc-of-label) le)
+                     (append instructions 
+                             (list fun-label (stack-setup-ins))
+                             (gen 
+                              fun-body
+                              loc-of-result
+                              (append
+                               (map (λ (tyf param-num)
+                                      (match tyf
+                                        [(tyfield ty-name ty-ty)
+                                         (location-binding ty-name 
+                                                           (gen-param param-num))]))
+                                    tyfields
+                                    (build-list (length tyfields) add1))
+                               le)
+                              record-table)
+                             (list (return-ins loc-of-result)
+                                   (stack-teardown-ins)
+                                   (jump-to-return-address-ins)
+                                   ))))])))]
+         (append (list (uncond-jump-ins skip-label))
+                 fun-instructions
+                 (list skip-label)
+                 (gen body result-sym inner-loc-env record-table))))]
     
     [(funcall fun-id args)
      ;TODO evaluate fun-id which might be any expression
@@ -290,11 +310,9 @@
        (if (label-loc? f)
            
            (append param-gen-code
-                   (map (λ (arg-sym) (push-ins arg-sym)) arg-sym-list)
-                   (list (push-ins label-here)
-                         (pointer-set-ins label-holder f) ; want x=*y
-                         (uncond-jump-ins label-holder)
-                         label-here) ; the last argument is the return address
+                   (map push-ins arg-sym-list)
+                   (list (funcall-ins f (length args) result-sym) 
+                         ) ; the last argument is the return address
                    )
            
            
