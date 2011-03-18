@@ -25,6 +25,8 @@
 
 (struct push-ins (src) #:transparent) ; pushes the contents of src onto the stack as a function parameter
 
+(struct funcall-ins (src num-params) #:transparent) ;this instruction calls the function residing at label src with the number of parameters specified.  number of parameters is statically known and is an integer, not a location.
+
 (struct array-allocate-ins (src1 dest) #:transparent) ;this instruction allocates an array to some initial value, which most backends will do for free. src1 is the address of the expression to be inserted into the array.  dest is the mem-block struct which is the location of the array.
 
 (struct pointer-set-ins (src1 src2) #:transparent) ; this instruction corresponds to x=*y, putting the r-value of y into the r-value of x
