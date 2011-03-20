@@ -1,21 +1,27 @@
 #lang racket
 (require "parser.rkt")
+(require "typecheck.rkt")
 (require test-engine/racket-tests)
+
+(provide (all-defined-out))
 
 (define (canonicalize ast)
   
   ; TODO make sure that fields are specified in the same order as declared for record creation
+  ; do this by alphabetizing the field order at canonicalization
+  ; note type checking must follow canonicalization in this case
   (match ast
     
     [(for-statement index start end body)
-     (expseq
-      (list
-       (assignment index start)
-       (while-statement (binary-op (op '<=) index end) 
-                        (expseq
-                         (list
-                          (canonicalize body)
-                          (binary-op (op '+) index (int-literal 1)))))))]
+     (let-vars
+      (list (vardec index #f start))
+      (expseq
+       (list
+        (while-statement (binary-op (op '<=) (id index) end) 
+                         (expseq
+                          (list
+                           (canonicalize body)
+                           (binary-op (op '+) (id index) (int-literal 1))))))))]
     
     [(while-statement cond body) (while-statement (canonicalize cond) (canonicalize body))]
     
@@ -41,7 +47,8 @@
                                                           (map
                                                            (match-lambda
                                                              [(fieldval name val)
-                                                              (fieldval name (canonicalize val))])))]
+                                                              (fieldval name (canonicalize val))])
+                                                           fieldvals))]
     [(array-creation type-id size initval) (array-creation type-id (canonicalize size) (canonicalize initval))]
     [(assignment lvalue val) (assignment (canonicalize lvalue) (canonicalize val))]
     
@@ -52,9 +59,20 @@
     [(let-funs bindings body) (let-funs (map canonicalize bindings) (canonicalize body))]
     [(let-types bindings body) (let-types bindings (canonicalize body))]
     
+    [(string-literal val)
+     (let [(array (gensym 'array))]
+       (let-vars
+        (list (vardec array #f (array-creation #f (int-literal (string-length val)) (int-literal 0)))) ;TODO: type information?
+        (expseq
+         (append (map (λ (char offset)
+                       (assignment (array-access (id array) (int-literal offset)) (int-literal char)))
+                     (map char->integer (string->list val))
+                     (build-list (string-length val) values))
+                 (list (id array)))
+                 )))]
+    
     
     [(int-literal val) (int-literal val)]
-    [(string-literal val) (string-literal val)]
     [(nil) (nil)]
     [(id a) (id a)]
     [(break) (break)]
@@ -62,7 +80,8 @@
     [(tydec type-id ty) (tydec type-id ty)]
     
     [else else]))
-   
+
+
 (check-expect (begin (canonicalize (parse-file "./tests/queens.tig")) (call/cc (λ (k) {k (k "pizza")}))) "pizza")
 
 (test)

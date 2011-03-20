@@ -3,6 +3,8 @@
 (require "parser.rkt")
 (require test-engine/racket-tests)
 
+(provide (all-defined-out))
+
 ; type-binding represents creating a new type
 ; let type a = int in ... end
 (struct type-binding (id ty) #:transparent)
