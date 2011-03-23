@@ -76,7 +76,7 @@
     [(nil) (nil)]
     [(id a) (id a)]
     [(break) (break)]
-    [(record-access rec-id field-id) (record-access rec-id field-id)]
+    [(record-access rec-id field-id offset) (record-access rec-id field-id offset)]
     [(tydec type-id ty) (tydec type-id ty)]
     
     [else else]))

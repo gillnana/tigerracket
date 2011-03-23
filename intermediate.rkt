@@ -1,7 +1,7 @@
 #lang racket
 (require "parser.rkt")
 (require "typecheck.rkt")
-;(require "canonicalize.rkt")
+(require "canonicalize.rkt")
 ;(require "dag.rkt")
 (require test-engine/racket-tests)
 
@@ -115,8 +115,6 @@
           (hash-set! dag-table ast result-sym)
           (gen-helper ast result-sym loc-env)))))
 
-(define (gen-helper ast result-sym loc-env)
-
 (define (gen-lv ast result-sym loc-env)
   (displayln ast)
   (match ast
@@ -143,7 +141,7 @@
                (list (lim-ins offset offset-temp)
                      (binary-ins '+ result-sym rec-temp offset-temp))))]))
 
-(define (gen ast result-sym loc-env)
+(define (gen-helper ast result-sym loc-env)
   (match ast
     ;ARITHMETIC
     [(binary-op (op op) arg1 arg2) 
