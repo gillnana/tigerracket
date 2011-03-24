@@ -111,23 +111,15 @@
               (error (format "type error: type mismatch; wrong number of fields ~a specified for creation of record ~a"
                              var-fields decl-fields))]
              [(andmap
-               (λ (field-of-type)
-                 (or (ormap (λ (field-of-var) 
-                              (if (equal? (field-name field-of-type)
-                                          (fieldval-name field-of-var))
-                                  (let [(varfield-type (type-of-env (fieldval-val field-of-var) te ve))]
-                                    (if (assignable-to? (unbox (field-ty field-of-type)) varfield-type)
-                                        #t
-                                        (error (format "type error: type mismatch; field ~a was given value of type ~a; expected ~a"
-                                                       (field-name field-of-type)
-                                                       varfield-type
-                                                       (field-ty field-of-type)))))
-                                  #f))
-                            var-fields)
-                     (error (format "type mismatch; no value specified for field ~a in ~a" field-of-type type))))
-               (t-record-fields decl-fields))
+               (match-lambda*
+                 [(list (field t-name ty offset)
+                        (fieldval name val))
+                  (and (equal? t-name name)
+                       (assignable-to? (unbox ty) (type-of-env val te ve)))])
+               (t-record-fields decl-fields)
+               var-fields)
               decl-fields]
-             [else (error "internal error: code 8726. WE ARE FUCKED!")]))]
+             [else (error (format "type error: wrong fields specified for record type ~a" type))]))]
     
     [(and (record-access rec field-id offset) node)
      (or (ormap (λ (field) (if (equal? (field-name field) field-id)
