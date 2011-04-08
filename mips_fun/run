@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# recompile standard library
+mips-linux-gcc -c -O0 -mips1 -mno-abicalls -nostdlib -o libtiger.o libtiger.c
+# asseble user's mips program
+mips-linux-as $1 -o .tmp1.a
+# link standard library, runtime system, and user's program
+mips-linux-ld -o .tmp .tmp1.a libtiger.o /course/cs195r/lib/mips-rt/mips-rt.a
+# run
+qemu-mips .tmp
