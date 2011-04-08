@@ -171,11 +171,12 @@
            [else (t-void)])]
     
     [(for-statement var start end body)
-     (cond [(not (and (t-int? (type-of-env start te ve))
-                      (t-int? (type-of-env end te ve))))
-            (error "type error: for statement must increment an int from start to end int values")]
-           [(not (t-void? (type-of-env body te ve))) (error "type error: body of for statement must return no value")]
-           [else (t-void)])]
+     (let [(new-ve (cons (var-binding var (t-int)) ve))]
+       (cond [(not (and (t-int? (type-of-env start te ve))
+                        (t-int? (type-of-env end te ve))))
+              (error "type error: for statement must increment an int from start to end int values")]
+             [(not (t-void? (type-of-env body te new-ve))) (error "type error: body of for statement must return no value")]
+             [else (t-void)]))]
     
     ;let statements
     ;let-vars
@@ -623,5 +624,7 @@ end
                 tc))
 
 (check-expect (type-of (wrapstdlib (parse-string "print(\"wossar\")"))) (t-void))
+
+(check-expect (type-of (parse-string "for i:=1 to 200 do (i; ())")) (t-void))
 
 (test)

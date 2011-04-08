@@ -25,7 +25,7 @@
          (ln "jr $ra")
          ))]
     ; TODO: some of these cases may be overly specific; we need to actually do instruction selection
-    [(lim-ins imm dest)
+    #;[(lim-ins imm dest)
      (when (not (eq? dest 'ans)) ; hacky! prevents lim into the ans, but instruction selection should actually handle this...
        (begin
          ; hacky! we have to do real instruction selection instead of this super-specific bullshit I made!  --dpercy
@@ -34,6 +34,19 @@
          )
        )
      ]
+    
+    [(lim-ins imm 'ans) (void)]
+    [(lim-ins (label l) dest)
+     (if (label-loc? dest)
+         (begin (ln "la $t0, " l)
+                (ln "sw $t0, " (get-offset dest temps) "($sp)")) ; TODO: register onionization
+         (error (format "internal error: label assigned to location ~a that cannot hold labels" dest)))]
+    [(lim-ins (? number? imm) dest)
+     (if (number-location? dest)
+         (begin
+           (ln "li $t0, " imm)
+           (ln "sw $t0, " (get-offset dest temps) "($sp)")) ; TODO: register onionization 
+         (error (format "internal error: number assigned to location ~a that cannot hold numbers" dest)))]
     
     [(funcall-ins labloc args dest)
      (begin

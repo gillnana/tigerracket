@@ -24,6 +24,9 @@
 (define (location? item)
   (or (temp-loc? item) (mem-loc? item) (label-loc? item) (param-loc? item) (return-val-loc? item)))
 
+(define (number-location? item)
+   (or (temp-loc? item) (mem-loc? item) (param-loc? item) (return-val-loc? item)))
+
 (struct move-ins (src dest) #:transparent)
 (struct lim-ins (imm dest) #:transparent) ; constant value imm is put into dest
 (struct binary-ins (op src1 src2 dest) #:transparent)
@@ -265,7 +268,7 @@
         (list (deref-assign-ins lval-temp val-temp))))] 
     
     
-    ; leaving something in ans is ok. the program has already been typechecked.
+    ; leaving something in ans is (label l)ok. the program has already been typechecked.
     
     [(let-vars decs body)
      (let-values [((inner-loc-env decs-instructions)
@@ -384,11 +387,11 @@
                               [instructions empty])
                      [(dec decs)]
                      (match dec
-                       [(fundec id tyfields type-id (stdlibfxn label _))
+                       [(fundec id tyfields type-id (stdlibfxn lbl _))
                         (let [(sym (gen-label-loc))]
                           (values 
                            (cons (location-binding id sym) le)
-                           (cons (lim-ins (string->symbol (string-append "lt_" (symbol->string label))) sym) instructions)
+                           (cons (lim-ins (label (string->symbol (string-append "lt_" (symbol->string lbl)))) sym) instructions)
                            ))])))]
        (append stdlib-instructions
                (dag-gen body result-sym inner-loc-env)))
