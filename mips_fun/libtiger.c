@@ -131,3 +131,7 @@ extern void lt_exit(int code) {
   exit(code);
 }
 
+extern void lt_flush() {
+  // lol who cares about buffered IO?
+  // especially considering our garbage collection strategy
+}

@@ -12,10 +12,10 @@ typedef struct array {
 typedef array_t string_t;
 
 
-
+extern void lt_flush();
 extern void lt_print(string_t* str);
 extern void lt_print_int(int n);
-extern struct array* lt_getchar();
+extern array_t* lt_getchar();
 extern int lt_ord(string_t* str);
 extern string_t* lt_chr(int n);
 extern int lt_size(string_t* str);

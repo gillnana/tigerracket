@@ -126,4 +126,4 @@
 ;(check-error (verify-loop-semantics (parse-string "for i := 1 to 10 do i := 5")) "semantic error: illegal assignment to iterator i")
 ;(check-error (verify-loop-semantics (parse-string "for i := 1 to 10 do i := 5")) "semantic error: illegal assignment to iterator i")
  
-(test)
+;(test)

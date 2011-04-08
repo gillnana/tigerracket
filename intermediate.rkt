@@ -76,7 +76,11 @@
 (struct stack-teardown-ins () #:transparent) ; pops fp and ra from stack into registers, sets stack to old value of sp
 (struct jump-to-return-address-ins () #:transparent)
 
-(struct funcall-ins (dest num-params return-val) #:transparent) ;num-params is a statically determined integer.  the return value of the funcall is placed in the return-val location
+;(struct funcall-ins (labloc num-params return-val) #:transparent) ;num-params is a statically determined integer.  the return value of the funcall is placed in the return-val location
+
+; this is a better representation; you don't always put arguments on the stack. you sometimes use $a0-$a3
+(struct funcall-ins (labloc params dest) #:transparent)
+
 (struct return-ins (return-val-loc) #:transparent) ;represents an instruction that puts the return value of a function in the location it should go, wherever that may be
 
 
@@ -403,8 +407,8 @@
        (if (label-loc? f)
            
            (append param-gen-code
-                   (map push-ins arg-sym-list)
-                   (list (funcall-ins f (length args) result-sym) 
+                   ;(map push-ins arg-sym-list)
+                   (list (funcall-ins f arg-sym-list result-sym)
                          ) ; the last argument is the return address
                    )
            
@@ -550,4 +554,4 @@
               (uncond-jump-ins (label l2))
               (label l3)))
 
-(test)
+;(test)

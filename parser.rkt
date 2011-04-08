@@ -449,7 +449,7 @@
   (let-funs
    (list
     (fundec 'print (list (tyfield 's (type-id 'string))) #f (stdlibfxn 'print 'void))
-    (fundec 'flush (list) #f (stdlibfxn 'flush 'void))
+    ;(fundec 'flush (list) #f (stdlibfxn 'flush 'void))
     (fundec 'getchar (list) 'string (stdlibfxn 'getchar 'str))
     (fundec 'ord (list (tyfield 's (type-id 'string))) 'int (stdlibfxn 'ord 'int))
     (fundec 'chr (list (tyfield 'i (type-id 'int))) 'string (stdlibfxn 'chr 'str))
@@ -469,7 +469,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(define (run)
+(define (parse-stdin)
   (parse (λ () (lex (current-input-port)))))
 
 (define (parse-string str)

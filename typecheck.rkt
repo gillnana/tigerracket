@@ -625,4 +625,4 @@ end
 
 #;(check-expect (type-of (wrapstdlib (parse-string "print(\"wossar\")"))) (t-void))
 
-(test)
+;(test)
