@@ -1,0 +1,68 @@
+#!/bin/ksh -e
+
+function compile {
+	# Write this function according to however your Tiger compiler works
+	# $1 is the Tiger input file
+	# $2 is the file where the compiled MIPS assembly should be written
+
+	# Examples:
+	#/path/to/your/tiger/compiler "$1" "$2"
+	racket compile.rkt <"$1" >"$2"
+	#/path/to/your/tiger/compiler -o "$2" "$1"
+}
+
+# Change this path to your libtiger implementation
+LIBTIGER=./mips_fun/libtiger.o
+MIPSRT=/course/cs195r/lib/mips-rt/mips-rt.a
+
+
+
+# *** No user-serviceable parts below this line ***
+
+USAGE="$0 [-o outfile] infile"
+outfile=a.out
+while getopts :o: CH
+do
+	if [[ $CH == "o" ]]
+	then
+		outfile=$OPTARG
+	else
+		print -u2 "$0: Unknown option: $OPTARG"
+		print -u2 "$USAGE"
+		exit 2
+	fi
+done
+
+shift $((OPTIND - 1))
+
+if (( $# != 1 ))
+then
+	print -u2 "$USAGE"
+	exit 2
+fi
+
+infile=$1
+
+if [[ ! -f $infile ]]
+then
+	print -u2 "$infile: No such file"
+	exit 1
+fi
+
+malfile=$(mktemp -t mips_malfile.XXXXXX)
+trap "rm -f $malfile" EXIT
+ofile=$(mktemp -t mips_ofile.XXXXXX)
+trap "rm -f $malfile $ofile" EXIT
+
+echo "compiling $infile to $malfile..."
+compile "$infile" "$malfile"
+cat "$malfile"
+echo
+echo "assembling $malfile to $ofile..."
+mips-linux-as -O0 -mips1 -o "$ofile" "$malfile"
+echo
+echo "linking..."
+mips-linux-ld -o "$outfile" "$ofile" "$LIBTIGER" "$MIPSRT"
+#mips-linux-ld -o "$outfile" "$MIPSRT" "$LIBTIGER" "$ofile"
+echo "successfully compiled $infile to $outfile"
+echo
