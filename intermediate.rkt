@@ -15,8 +15,14 @@
    #t))
 
 
+
+(struct fxn-block (label ins-list) #:transparent)
+
 ; INSTRUCTIONS
 ; each instruction also needs to potentially contain a label
+
+(define (location? item)
+  (or (temp-loc? item) (mem-loc? item) (label-loc? item) (param-loc? item) (return-val-loc? item)))
 
 (struct move-ins (src dest) #:transparent)
 (struct lim-ins (imm dest) #:transparent) ; constant value imm is put into dest
@@ -29,13 +35,15 @@
 
 (struct push-ins (src) #:transparent) ; pushes the contents of src onto the stack as a function parameter
 
-(struct break-ins) #:transparent) ;breaks out of a current for loop.  expects loops to be implemented as tail-recursive functions
+(struct break-ins () #:transparent) ;breaks out of a current for loop.  expects loops to be implemented as tail-recursive functions
 
 (struct array-allocate-ins (src1 dest) #:transparent) ;this instruction allocates an array to some initial value, which most backends will do for free. src1 is the address of the expression to be inserted into the array.  dest is the mem-block struct which is the location of the array.
 
 (struct deref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=*y, putting the r-value of y into the r-value of x
 (struct ref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=&y, putting the l-value of y into the r-value of x
 (struct deref-assign-ins (src1 src) #:transparent) ; this instruction corresponds to x*=y, putting the r-value of y into the l-value of x
+
+
 
 ; LOCATIONS
 
@@ -97,13 +105,13 @@
 ; gen ast symbol listof-location-binding -> listof-instruction
 ; takes an ast and returns a list of horrible spaghetti instructions with gotos and unreadable garbage and things
 (define (gen-prog prog)
-  (gen (canonicalize (parse-string prog)) 'ans empty))
+  (gen prog 'ans empty))
 
 (define (reset-dag-table!) (set! dag-table (make-hash)))
 
 (define (gen ast result-sym loc-env)
   (reset-dag-table!)
-  (dag-gen ast result-sym loc-env))
+  (fxn-block 'main (dag-gen ast result-sym loc-env)))
 
 (define dag-table (make-hash))
 
@@ -310,55 +318,76 @@
     [(nil) (list (lim-ins 0 result-sym))]
     
     
+;    [(let-funs decs body)
+;     (begin
+;       (reset-dag-table!)
+;       (let [(skip-label (gen-label))
+;             (fun-labels (build-list (length decs) (λ (ignore) (gen-label))))
+;             (loc-of-labels (build-list (length decs) (λ (ignore) (gen-label-loc))))
+;             
+;             ]
+;         
+;         (let-values 
+;             [((inner-loc-env fun-instructions )
+;               (for/fold ([le loc-env]
+;                          [instructions empty])
+;                 [(dec decs)
+;                  (fun-label fun-labels)
+;                  (loc-of-label loc-of-labels)]
+;                 
+;                 (match dec
+;                   [(fundec id tyfields type-id fun-body)
+;                    (let [;(fun-id-sym (gen-temp))
+;                          ;(fun-label (gen-label))
+;                          ;(loc-of-label (gen-label-temp))
+;                          (loc-of-result (gen-temp))] ; TODO: maybe return-val-loc??
+;                      
+;                      (values 
+;                       (cons (location-binding id loc-of-label) le)
+;                       (append instructions 
+;                               (list fun-label (stack-setup-ins))
+;                               (dag-gen fun-body
+;                                        loc-of-result
+;                                        (append
+;                                         (map (λ (tyf param-num)
+;                                                (match tyf
+;                                                  [(tyfield ty-name ty-ty)
+;                                                   (location-binding ty-name 
+;                                                                     (gen-param param-num))]))
+;                                              tyfields
+;                                              (build-list (length tyfields) add1))
+;                                         le)
+;                                       
+;                                        )
+;                               (list (return-ins loc-of-result)
+;                                     (stack-teardown-ins)
+;                                     (jump-to-return-address-ins)))))])))]
+;           (append (map (λ (fun-label loc-of-label) (lim-ins fun-label loc-of-label)) fun-labels loc-of-labels)
+;                   ;(list (uncond-jump-ins skip-label))
+;                   fun-instructions
+;                   ;(list skip-label)
+;                   (dag-gen body result-sym inner-loc-env )))))]
+    
     [(let-funs decs body)
      (begin
        (reset-dag-table!)
-       (let [(skip-label (gen-label))
-             (fun-labels (build-list (length decs) (λ (ignore) (gen-label))))
-             (loc-of-labels (build-list (length decs) (λ (ignore) (gen-label-loc))))
-             
-             ]
-         
-         (let-values 
-             [((inner-loc-env fun-instructions )
-               (for/fold ([le loc-env]
-                          [instructions empty])
-                 [(dec decs)
-                  (fun-label fun-labels)
-                  (loc-of-label loc-of-labels)]
-                 
-                 (match dec
-                   [(fundec id tyfields type-id fun-body)
-                    (let [;(fun-id-sym (gen-temp))
-                          ;(fun-label (gen-label))
-                          ;(loc-of-label (gen-label-temp))
-                          (loc-of-result (gen-temp))] ; TODO: maybe return-val-loc??
-                      
-                      (values 
-                       (cons (location-binding id loc-of-label) le)
-                       (append instructions 
-                               (list fun-label (stack-setup-ins))
-                               (dag-gen fun-body
-                                        loc-of-result
-                                        (append
-                                         (map (λ (tyf param-num)
-                                                (match tyf
-                                                  [(tyfield ty-name ty-ty)
-                                                   (location-binding ty-name 
-                                                                     (gen-param param-num))]))
-                                              tyfields
-                                              (build-list (length tyfields) add1))
-                                         le)
-                                       
-                                        )
-                               (list (return-ins loc-of-result)
-                                     (stack-teardown-ins)
-                                     (jump-to-return-address-ins)))))])))]
-           (append (map (λ (fun-label loc-of-label) (lim-ins fun-label loc-of-label)) fun-labels loc-of-labels)
-                   (list (uncond-jump-ins skip-label))
-                   fun-instructions
-                   (list skip-label) ;some parentheses ((((())))])){))))[))))))](())(()){}((([))))))((()))
-                   (dag-gen body result-sym inner-loc-env )))))]
+       ; TODO: this is EXTREMELY SILLY for now
+       ; assume that this is the top-level let-standard-library thingy
+       (let-values [((inner-loc-env stdlib-instructions)
+                   (for/fold ([le loc-env]
+                              [instructions empty])
+                     [(dec decs)]
+                     (match dec
+                       [(fundec id tyfields type-id (stdlibfxn label _))
+                        (let [(sym (gen-label-loc))]
+                          (values 
+                           (cons (location-binding id sym) le)
+                           (cons (lim-ins (string->symbol (string-append "lt_" (symbol->string label))) sym) instructions)
+                           ))])))]
+       (append stdlib-instructions
+               (dag-gen body result-sym inner-loc-env)))
+       )]
+     
     
     [(funcall fun-id args)
      ;TODO evaluate fun-id which might be any expression
@@ -402,7 +431,7 @@
 
 
 
-(check-match (gen-prog "let var x := 0 in x := 3; x end") 
+(check-match (gen-prog (canonicalize (parse-string "let var x := 0 in x := 3; x end"))) 
              (list 
               (lim-ins 0 x)                   ; int x = 0;
               (ref-ins dest x)                ; int* destination = &x;
@@ -410,7 +439,7 @@
               (deref-assign-ins dest val)     ; *destination = value;
               (move-ins x 'ans)))             ; ans = x;
 
-(check-match (gen-prog "let var x := 0 in x := x+2; x end")
+(check-match (gen-prog (canonicalize (parse-string  "let var x := 0 in x := x+2; x end")))
              (list
               (lim-ins 0 x)                   ; int x = 0;
               (ref-ins dest x)                ; int* destination = &x;
@@ -420,17 +449,17 @@
               (deref-assign-ins dest res)     ; *destination = plusresult;
               (move-ins x 'ans)))             ; ans = x;
 
-(check-match (gen-prog "let var x := 0 in x := x+2; x; () end")  
+(check-match (gen-prog (canonicalize (parse-string  "let var x := 0 in x := x+2; x; () end")))  
              (list
               (lim-ins 0 x)                   ; int x = 0;
-              (ref-ins dest x)                ; int* destination = &x;
+              (ref-ins dest x)                ; int* destination = &x; (canonicalize (parse-string 
               (move-ins x arg1)               ; int plusarg1 = x;
               (lim-ins 2 arg2)                ; int plusarg2 = 2;
               (binary-ins '+ arg1 arg2 res)   ; int plusresult = plusarg1 + plusarg2;
               (deref-assign-ins dest res)     ; *destination = plusresult;
               (move-ins x 'ans)))             ; ans = x;
 
-(check-match (gen-prog "let var y := 0 in let var x := (y := 2; 7) in y end end")
+(check-match (gen-prog (canonicalize (parse-string  "let var y := 0 in let var x := (y := 2; 7) in y end end")))
              (list
               (lim-ins 0 y)                   ; int y := 0
               (ref-ins dest y)                ; int* destination = &y;
@@ -439,7 +468,7 @@
               (lim-ins 7 x)                   ; int x = 7;
               (move-ins y 'ans)))             ; ans = y;
 
-(check-match (gen-prog "int[10] of 15+3") ;note that this fails to type check but we don't care
+(check-match (gen-prog (canonicalize (parse-string  "int[10] of 15+3"))) ;note that this fails to type check but we don't care
              (list
               (lim-ins 10 (temp-loc t0))
               (lim-ins 15 (temp-loc t3))
@@ -448,13 +477,13 @@
               (ref-ins 'ans (mem-block m1 (temp-loc t0)))
               (array-allocate-ins (temp-loc t2) (mem-block m1 _))))
 
-(check-match (gen-prog "if 3 then ()")
+(check-match (gen-prog (canonicalize (parse-string  "if 3 then ()")))
              (list
               (lim-ins 3 (temp-loc t5))
               (cond-jump-ins (temp-loc t5) (label l4))
               (label l4)))
 
-(check-match (gen-prog "if 3 then (5;())")
+(check-match (gen-prog (canonicalize (parse-string  "if 3 then (5;())")))
              (list
               (lim-ins 3 (temp-loc t5))
               (cond-jump-ins (temp-loc t5) (label l4))
@@ -462,7 +491,7 @@
               (label l4)))
 
 
-(check-match (gen-prog "let var x : int := 26 in if 3 then x := 7 end")
+(check-match (gen-prog (canonicalize (parse-string  "let var x : int := 26 in if 3 then x := 7 end")))
              (list
               (lim-ins 26 (temp-loc t3))
               (lim-ins 3 (temp-loc t5))
@@ -470,7 +499,7 @@
               (lim-ins 7 (temp-loc t3))
               (label l4)))
 
-(check-match (gen-prog "if 3 then 4 else 5")
+(check-match (gen-prog (canonicalize (parse-string  "if 3 then 4 else 5")))
              (list
               (lim-ins 3 (temp-loc t5))
               (cond-jump-ins (temp-loc t5) (label l4))
@@ -482,7 +511,7 @@
               (move-ins (temp-loc t3) 'ans)
               (label l1)))
 
-(check-match (gen-prog "let var a := int[10] of 1 in a[5] := 6 end")
+(check-match (gen-prog (canonicalize (parse-string  "let var a := int[10] of 1 in a[5] := 6 end")))
              (list
               (lim-ins 10 (temp-loc t0))
               (lim-ins 1 (temp-loc t2))
@@ -492,7 +521,7 @@
               (lim-ins 6 (temp-loc t3))
               (deref-ins (mem-loc (temp-loc t9) (temp-loc t4)) (temp-loc t3))))
 
-(check-match (gen-prog "if 4>1 then 0 else 16")
+(check-match (gen-prog (canonicalize (parse-string  "if 4>1 then 0 else 16")))
              (list
               (lim-ins 4 (temp-loc t0))
               (lim-ins 1 (temp-loc t1))
@@ -505,14 +534,14 @@
               (move-ins (temp-loc t8) 'ans)
               (label l6)))
 
-(check-match (gen-prog "let type a = {x:int} var z : a := nil in z := a{x=5} end")
+(check-match (gen-prog (canonicalize (parse-string  "let type a = {x:int} var z : a := nil in z := a{x=5} end")))
              (list
               (lim-ins 0 (temp-loc t1))
               (lim-ins 1 (temp-loc t2))
               (ref-ins (temp-loc t1) (mem-block m3 (temp-loc t2)))
               (lim-ins 5 (mem-loc (mem-block m3 _) 0))))
 
-(check-match (gen-prog "while 3 do (7;())")
+(check-match (gen-prog (canonicalize (parse-string  "while 3 do (7;())")))
              (list
               (label l2)
               (lim-ins 3 (temp-loc t4))

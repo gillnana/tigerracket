@@ -361,6 +361,10 @@
            (unbox (t-fun-result f))
            (error (format "type error: mismatched type applied to function argument, expected ~a, found ~a"
                           (t-fun-args f) caller-args))))]
+    
+    [(stdlibfxn _ 'void) (box (t-void))]
+    [(stdlibfxn _ 'int) (box (t-int))]
+    [(stdlibfxn _ 'str) (box (t-string))]
      
     ))
                                
@@ -618,5 +622,7 @@ end
                 (set-box! c->x ta)
                 (set-box! c->y tb)
                 tc))
+
+#;(check-expect (type-of (wrapstdlib (parse-string "print(\"wossar\")"))) (t-void))
 
 (test)

@@ -4,7 +4,7 @@
 (require (prefix-in : parser-tools/lex-sre))
 (require test-engine/racket-tests)
 
-(struct stdlibfxn #:transparent)
+(struct stdlibfxn (fxn type) #:transparent)
 
 (provide (all-defined-out))
 
@@ -448,18 +448,19 @@
 (define (wrapstdlib ast)
   (let-funs
    (list
-    (fundec 'print (list (tyfield 's (type-id 'string))) #f (stdlibfxn))
-    (fundec 'flush (list) #f (stdlibfxn))
-    (fundec 'getchar (list) 'string (stdlibfxn))
-    (fundec 'ord (list (tyfield 's (type-id 'string))) 'int (stdlibfxn))
-    (fundec 'chr (list (tyfield 'i (type-id 'int))) 'string (stdlibfxn))
-    (fundec 'size (list (tyfield 's (type-id 'string))) 'int (stdlibfxn))
+    (fundec 'print (list (tyfield 's (type-id 'string))) #f (stdlibfxn 'print 'void))
+    (fundec 'flush (list) #f (stdlibfxn 'flush 'void))
+    (fundec 'getchar (list) 'string (stdlibfxn 'getchar 'str))
+    (fundec 'ord (list (tyfield 's (type-id 'string))) 'int (stdlibfxn 'ord 'int))
+    (fundec 'chr (list (tyfield 'i (type-id 'int))) 'string (stdlibfxn 'chr 'str))
+    (fundec 'size (list (tyfield 's (type-id 'string))) 'int (stdlibfxn 'size 'int))
     (fundec 'substring (list (tyfield 's (type-id 'string))
                              (tyfield 'first (type-id 'int))
-                             (tyfield 'n (type-id 'int))) 'string (stdlibfxn))
-    (fundec 'concat (list (tyfield 's1 (type-id 'string)) (tyfield 's2 (type-id 'string))) 'string (stdlibfxn))
-    (fundec 'not (list (tyfield 'i (type-id 'int))) 'int (stdlibfxn))
-    (fundec 'exit (list (tyfield 'i (type-id 'int))) #f (stdlibfxn))
+                             (tyfield 'n (type-id 'int))) 'string (stdlibfxn 'substring 'str))
+    (fundec 'concat (list (tyfield 's1 (type-id 'string)) (tyfield 's2 (type-id 'string))) 'string (stdlibfxn 'concat 'str))
+    (fundec 'not (list (tyfield 'i (type-id 'int))) 'int (stdlibfxn 'not 'int))
+    (fundec 'exit (list (tyfield 'i (type-id 'int))) #f (stdlibfxn 'exit 'void))
+    (fundec 'print_int (list (tyfield 'i (type-id 'int))) #f (stdlibfxn 'print_int 'void))
     )
    (expseq (list ast))))
 
