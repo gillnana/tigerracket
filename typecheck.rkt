@@ -212,7 +212,7 @@
                                                          (type-lookup type-sym te)]))
                                                     tyfields)
                                                (if (not return-type)
-                                                   (t-void)
+                                                   (box (t-void))
                                                    (type-lookup return-type te))))
                         v-env)]))
              ; takes a fundec and a ve
@@ -232,25 +232,23 @@
                        (format "semantic error: definition of function ~a contains multiple arguments with the same identifier ~a" 
                                id (contains-dupes? (map tyfield-id tyfields))))
                   
-                      (let [(v-env-plus-args (foldl (lambda (tf var-env)
+                      (let* [(v-env-plus-args (foldl (lambda (tf var-env)
                                                       (match tf
                                                         [(tyfield id (type-id type-sym))
                                                          (cons (var-binding id (unbox (type-lookup type-sym te)))
                                                                var-env)]))
                                                 v-env
-                                                tyfields))]
-                        (or (same-type? (type-of-env body te v-env-plus-args); TODO (should be assignable-to?)?
-                                        (if (not return-type)
-                                            (t-void)
-                                            (unbox (type-lookup return-type te))))
+                                                tyfields))
+                             (body-type (type-of-env body te v-env-plus-args)); TODO (should be assignable-to?)?
+                             (type-of-return (if (not return-type)
+                                                 (t-void)
+                                                 (unbox (type-lookup return-type te))))
+                             ]
+                        ;(displayln (format "body-type ~a, return type ~a" body-type type-of-return))
+                        (or (same-type? body-type type-of-return)
                             (error (format "type error: type mismatch, declaration of function ~a was declared as ~a but body returns type ~a"
-                                           id
-                                           (if (not return-type)
-                                               (t-void)
-                                               (unbox (type-lookup return-type te)))
-                                           (type-of-env body te v-env-plus-args))))))
-                  
-                  ]))
+                                           id type-of-return body-type)))))]))
+                 
              (define working-env (foldl accumulate-fun-declaration ve decs))
              
              (define (check-repeat-fundecs decs)
@@ -354,6 +352,7 @@
     [(funcall fun-id caller-args)
      (let* [(f (var-lookup (id-name fun-id) ve))
             (fundef-args (t-fun-args f))]
+       ;(displayln f)
        ;TODO make sure the funcall and the fundef have the same number of arguments
        (if (andmap (λ (fundef-arg caller-arg) (assignable-to? (unbox fundef-arg) (type-of-env caller-arg te ve)))
                    (t-fun-args f)
@@ -362,9 +361,9 @@
            (error (format "type error: mismatched type applied to function argument, expected ~a, found ~a"
                           (t-fun-args f) caller-args))))]
     
-    [(stdlibfxn _ 'void) (box (t-void))]
-    [(stdlibfxn _ 'int) (box (t-int))]
-    [(stdlibfxn _ 'str) (box (t-string))]
+    [(stdlibfxn _ 'void) (t-void)]
+    [(stdlibfxn _ 'int) (t-int)]
+    [(stdlibfxn _ 'str) (t-string)]
      
     ))
                                
@@ -508,7 +507,7 @@
 ; fundec/funcall tests
 (check-expect (type-of (parse-string "let function f() : int = 25 in f end")) (t-fun empty (box (t-int))))
 (check-expect (type-of (parse-string "let function f(x : int) : int = 25 in f(12) end")) (t-int))
-(check-expect (type-of (parse-string "let function f(x : int) = (25;()) in f end")) (t-fun (list (box (t-int))) (t-void)))
+(check-expect (type-of (parse-string "let function f(x : int) = (25;()) in f end")) (t-fun (list (box (t-int))) (box (t-void))))
 
 (check-expect (type-of (parse-string "let function g(x : int) : int = 12 in g end")) (t-fun (list (box (t-int))) (box (t-int))))
 (check-expect (type-of (parse-string "let type fun = int -> int function f(x : fun) : fun = let function g(x : int) : int = 7 in g end in f end"))
@@ -623,6 +622,6 @@ end
                 (set-box! c->y tb)
                 tc))
 
-#;(check-expect (type-of (wrapstdlib (parse-string "print(\"wossar\")"))) (t-void))
+(check-expect (type-of (wrapstdlib (parse-string "print(\"wossar\")"))) (t-void))
 
-;(test)
+(test)

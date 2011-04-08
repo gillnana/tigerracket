@@ -4,6 +4,8 @@
 (require (prefix-in : parser-tools/lex-sre))
 (require test-engine/racket-tests)
 
+(test-silence true)
+
 (struct stdlibfxn (fxn type) #:transparent)
 
 (provide (all-defined-out))
@@ -103,7 +105,7 @@
    ; reserved words (like keywords, but no meaning)
    ["and" (token-invalid)]
    ["or" (token-invalid)]
-   ["not" (token-invalid)]
+   ;["not" (token-invalid)] ;uh this is a call in the stdlib.  this causes it to not parse.
    ["goto" (token-invalid)]
    
    ; arithmetic 
@@ -616,4 +618,4 @@
 ;; canonicalization tests
 ;no
 ;(check-expect (begin (canonicalize (parse-file "./tests/queens.tig")) (call/cc (λ (k) {k (k "pizza")}))) "pizza")
-;(test)
+(test)

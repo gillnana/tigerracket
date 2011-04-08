@@ -54,7 +54,7 @@
          )
        )]
      
-    #;[(move-ins src dest)
+    [(move-ins src dest)
      (ln "move " (get-offset dest temps) "($sp), " (get-offset src temps) "($sp)")
      ]
     
@@ -62,14 +62,10 @@
     
     ))
   
-(define (index-of item ls (count 0))
-  (if (empty? ls)
-      (error (format "item ~a not in list ~a" item ls))
-      (if (equal? item (first ls))
-          count
-          (index-of item (rest ls) (+ count 1))
-          )
-      ))
+
+
+
+
 
 
 (define (get-offset temp temp-list)
@@ -90,37 +86,31 @@
 ; annoying function that extracts a list of locations from an instruction
 (define (get-locs ins)
   (match ins
-    [(move-ins src dest)
-     (map get-loc (filter location? (list src dest)))
-     ]
-    [(lim-ins imm dest)
-     (map get-loc (filter location? (list imm dest)))
-     ]
-    [(binary-ins op src1 src2 dest)
-     (map get-loc (filter location? (list op src1 src2 dest)))
-     ]
-    [(unary-ins op src dest)
-     (map get-loc (filter location? (list op src dest)))
-     ]
-    [(uncond-jump-ins dest)
-     (map get-loc (filter location? (list dest)))
-     ]
-     [(cond-jump-ins src dest)
-      (filter location? (list src dest))
-      ]
-     [(cond-jump-relop-ins op src1 src2 dest)
-      (filter location? (list src1 src2 dest))
-      ]
-     [(push-ins src)
-      (filter location? (list src))
-      ]
-    [(funcall-ins labloc params dest)
-     (filter location? (list* labloc dest params))
-     ]
-    ;todo some instructions remain
+    [(move-ins src dest) (filter location? (list src dest))]
+    [(lim-ins imm dest) (filter location? (list dest))]
+    [(binary-ins op src1 src2 dest) (filter location? (list src1 src2 dest))]
+    [(unary-ins op src dest) (filter location? (list src dest))]
+    [(uncond-jump-ins dest) (filter location? (list dest))]
+    [(cond-jump-ins src dest) (filter location? (list src dest))]
+    [(cond-jump-relop-ins op src1 src2 dest) (filter location? (list src1 src2 dest))]
+    [(push-ins src) (filter location? (list src))]
+    [(array-allocate-ins src dest) (filter location? (list src dest))]
+    [(deref-ins src1 src2) (filter location? (list src1 src2))]
+    [(ref-ins src1 src2) (filter location? (list src1 src2))]
+    [(deref-assign-ins src1 src2) (filter location? (list src1 src2))]
+    [(funcall-ins labloc params dest) (filter location? (list* labloc dest params))]
+    [(return-ins return-val-loc) (filter location? (list return-val-loc))]
+    [other-ins empty] ; all of the other instructions have no arguments that could possibly be locations
   ))
 
-(define (get-loc loc) loc) ;silly, but was easier than deleting all those calls to get-loc. 
+(define (index-of item ls (count 0))
+  (if (empty? ls)
+      (error (format "item ~a not in list ~a" item ls))
+      (if (equal? item (first ls))
+          count
+          (index-of item (rest ls) (+ count 1))
+          )
+      )) 
 
   
 (define (push name)

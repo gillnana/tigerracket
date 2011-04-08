@@ -84,4 +84,4 @@
 
 (check-expect (begin (canonicalize (parse-file "./tests/queens.tig")) (call/cc (λ (k) {k (k "pizza")}))) "pizza")
 
-;(test)
+(test)

@@ -3,6 +3,8 @@
 (require "parser.rkt")
 (require test-engine/racket-tests)
 
+(provide (all-defined-out))
+
 ;iterator? is true iff the local variable is a for loop indexing variable
 (struct iterator-binding (id iterator?) #:transparent)
 
@@ -57,6 +59,8 @@
     
     [(let-funs bindings body)
      (map (match-lambda
+            [(fundec id tyfields type-id (stdlibfxn _ _))
+             (void)]
             [(fundec id tyfields type-id body)
              (vls body #f
                   (foldl (match-lambda*
@@ -92,7 +96,7 @@
         (vls initval in-loop? env))]
      
      [(id name) (void)]
-     [(record-access rec-id field-id) (void)]
+     [(record-access rec-id field-id offset) (void)]
      [(array-access id index) (vls index in-loop? env)]
     
     [(if-statement c t e)
@@ -126,4 +130,4 @@
 ;(check-error (verify-loop-semantics (parse-string "for i := 1 to 10 do i := 5")) "semantic error: illegal assignment to iterator i")
 ;(check-error (verify-loop-semantics (parse-string "for i := 1 to 10 do i := 5")) "semantic error: illegal assignment to iterator i")
  
-;(test)
+(test)

@@ -41,8 +41,20 @@
 
 (struct deref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=*y, putting the r-value of y into the r-value of x
 (struct ref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=&y, putting the l-value of y into the r-value of x
-(struct deref-assign-ins (src1 src) #:transparent) ; this instruction corresponds to x*=y, putting the r-value of y into the l-value of x
+(struct deref-assign-ins (src1 src2) #:transparent) ; this instruction is x*=y, putting the r-value of y into the l-value of x
 
+
+
+(struct stack-setup-ins () #:transparent) ; in MIPS, push ra and fp onto stack, sets new fp to current value of sp
+(struct stack-teardown-ins () #:transparent) ; pops fp and ra from stack into registers, sets stack to old value of sp
+(struct jump-to-return-address-ins () #:transparent)
+
+;(struct funcall-ins (labloc num-params return-val) #:transparent) ;num-params is a statically determined integer.  the return value of the funcall is placed in the return-val location
+
+; this is a better representation; you don't always put arguments on the stack. you sometimes use $a0-$a3
+(struct funcall-ins (labloc params dest) #:transparent)
+
+(struct return-ins (return-val-loc) #:transparent) ;represents an instruction that puts the return value of a function in the location it should go, wherever that may be
 
 
 ; LOCATIONS
@@ -72,16 +84,6 @@
 
 (struct label (l) #:transparent)
 
-(struct stack-setup-ins () #:transparent) ; in MIPS, push ra and fp onto stack, sets new fp to current value of sp
-(struct stack-teardown-ins () #:transparent) ; pops fp and ra from stack into registers, sets stack to old value of sp
-(struct jump-to-return-address-ins () #:transparent)
-
-;(struct funcall-ins (labloc num-params return-val) #:transparent) ;num-params is a statically determined integer.  the return value of the funcall is placed in the return-val location
-
-; this is a better representation; you don't always put arguments on the stack. you sometimes use $a0-$a3
-(struct funcall-ins (labloc params dest) #:transparent)
-
-(struct return-ins (return-val-loc) #:transparent) ;represents an instruction that puts the return value of a function in the location it should go, wherever that may be
 
 
 ; GENSYM PROCEDURES
@@ -435,123 +437,123 @@
 
 
 
-(check-match (gen-prog (canonicalize (parse-string "let var x := 0 in x := 3; x end"))) 
-             (list 
-              (lim-ins 0 x)                   ; int x = 0;
-              (ref-ins dest x)                ; int* destination = &x;
-              (lim-ins 3 val)                 ; int value = 3;
-              (deref-assign-ins dest val)     ; *destination = value;
-              (move-ins x 'ans)))             ; ans = x;
+;(check-match (gen-prog (canonicalize (parse-string "let var x := 0 in x := 3; x end"))) 
+;             (list 
+;              (lim-ins 0 x)                   ; int x = 0;
+;              (ref-ins dest x)                ; int* destination = &x;
+;              (lim-ins 3 val)                 ; int value = 3;
+;              (deref-assign-ins dest val)     ; *destination = value;
+;              (move-ins x 'ans)))             ; ans = x;
+;
+;(check-match (gen-prog (canonicalize (parse-string  "let var x := 0 in x := x+2; x end")))
+;             (list
+;              (lim-ins 0 x)                   ; int x = 0;
+;              (ref-ins dest x)                ; int* destination = &x;
+;              (move-ins x arg1)               ; int plusarg1 = x;
+;              (lim-ins 2 arg2)                ; int plusarg2 = 2;
+;              (binary-ins '+ arg1 arg2 res)   ; int plusresult = plusarg1 + plusarg2;
+;              (deref-assign-ins dest res)     ; *destination = plusresult;
+;              (move-ins x 'ans)))             ; ans = x;
+;
+;(check-match (gen-prog (canonicalize (parse-string  "let var x := 0 in x := x+2; x; () end")))  
+;             (list
+;              (lim-ins 0 x)                   ; int x = 0;
+;              (ref-ins dest x)                ; int* destination = &x; (canonicalize (parse-string 
+;              (move-ins x arg1)               ; int plusarg1 = x;
+;              (lim-ins 2 arg2)                ; int plusarg2 = 2;
+;              (binary-ins '+ arg1 arg2 res)   ; int plusresult = plusarg1 + plusarg2;
+;              (deref-assign-ins dest res)     ; *destination = plusresult;
+;              (move-ins x 'ans)))             ; ans = x;
+;
+;(check-match (gen-prog (canonicalize (parse-string  "let var y := 0 in let var x := (y := 2; 7) in y end end")))
+;             (list
+;              (lim-ins 0 y)                   ; int y := 0
+;              (ref-ins dest y)                ; int* destination = &y;
+;              (lim-ins 2 val)                 ; int val = 2;
+;              (deref-assign-ins dest val)     ; *destination = val;
+;              (lim-ins 7 x)                   ; int x = 7;
+;              (move-ins y 'ans)))             ; ans = y;
+;
+;(check-match (gen-prog (canonicalize (parse-string  "int[10] of 15+3"))) ;note that this fails to type check but we don't care
+;             (list
+;              (lim-ins 10 (temp-loc t0))
+;              (lim-ins 15 (temp-loc t3))
+;              (lim-ins 3 (temp-loc t4))
+;              (binary-ins '+ (temp-loc t3) (temp-loc t4) (temp-loc t2))
+;              (ref-ins 'ans (mem-block m1 (temp-loc t0)))
+;              (array-allocate-ins (temp-loc t2) (mem-block m1 _))))
+;
+;(check-match (gen-prog (canonicalize (parse-string  "if 3 then ()")))
+;             (list
+;              (lim-ins 3 (temp-loc t5))
+;              (cond-jump-ins (temp-loc t5) (label l4))
+;              (label l4)))
+;
+;(check-match (gen-prog (canonicalize (parse-string  "if 3 then (5;())")))
+;             (list
+;              (lim-ins 3 (temp-loc t5))
+;              (cond-jump-ins (temp-loc t5) (label l4))
+;              (lim-ins 5 (temp-loc t6))
+;              (label l4)))
+;
+;
+;(check-match (gen-prog (canonicalize (parse-string  "let var x : int := 26 in if 3 then x := 7 end")))
+;             (list
+;              (lim-ins 26 (temp-loc t3))
+;              (lim-ins 3 (temp-loc t5))
+;              (cond-jump-ins (temp-loc t5) (label l4))
+;              (lim-ins 7 (temp-loc t3))
+;              (label l4)))
+;
+;(check-match (gen-prog (canonicalize (parse-string  "if 3 then 4 else 5")))
+;             (list
+;              (lim-ins 3 (temp-loc t5))
+;              (cond-jump-ins (temp-loc t5) (label l4))
+;              (lim-ins 4 (temp-loc t2))
+;              (move-ins (temp-loc t2) 'ans)
+;              (uncond-jump-ins (label l1))
+;              (label l4)
+;              (lim-ins 5 (temp-loc t3))
+;              (move-ins (temp-loc t3) 'ans)
+;              (label l1)))
+;
+;(check-match (gen-prog (canonicalize (parse-string  "let var a := int[10] of 1 in a[5] := 6 end")))
+;             (list
+;              (lim-ins 10 (temp-loc t0))
+;              (lim-ins 1 (temp-loc t2))
+;              (ref-ins (temp-loc t9) (mem-block m1 (temp-loc t0)))
+;              (array-allocate-ins (temp-loc t2) (mem-block m1 _))
+;              (lim-ins 5 (temp-loc t4))
+;              (lim-ins 6 (temp-loc t3))
+;              (deref-ins (mem-loc (temp-loc t9) (temp-loc t4)) (temp-loc t3))))
+;
+;(check-match (gen-prog (canonicalize (parse-string  "if 4>1 then 0 else 16")))
+;             (list
+;              (lim-ins 4 (temp-loc t0))
+;              (lim-ins 1 (temp-loc t1))
+;              (cond-jump-relop-ins '> (temp-loc t0) (temp-loc t1) (label l9))
+;              (lim-ins 0 (temp-loc t7))
+;              (move-ins (temp-loc t7) 'ans)
+;              (uncond-jump-ins (label l6))
+;              (label l9)
+;              (lim-ins 16 (temp-loc t8))
+;              (move-ins (temp-loc t8) 'ans)
+;              (label l6)))
+;
+;(check-match (gen-prog (canonicalize (parse-string  "let type a = {x:int} var z : a := nil in z := a{x=5} end")))
+;             (list
+;              (lim-ins 0 (temp-loc t1))
+;              (lim-ins 1 (temp-loc t2))
+;              (ref-ins (temp-loc t1) (mem-block m3 (temp-loc t2)))
+;              (lim-ins 5 (mem-loc (mem-block m3 _) 0))))
+;
+;(check-match (gen-prog (canonicalize (parse-string  "while 3 do (7;())")))
+;             (list
+;              (label l2)
+;              (lim-ins 3 (temp-loc t4))
+;              (cond-jump-ins (temp-loc t4) (label l3))
+;              (lim-ins 7 (temp-loc t5))
+;              (uncond-jump-ins (label l2))
+;              (label l3)))
 
-(check-match (gen-prog (canonicalize (parse-string  "let var x := 0 in x := x+2; x end")))
-             (list
-              (lim-ins 0 x)                   ; int x = 0;
-              (ref-ins dest x)                ; int* destination = &x;
-              (move-ins x arg1)               ; int plusarg1 = x;
-              (lim-ins 2 arg2)                ; int plusarg2 = 2;
-              (binary-ins '+ arg1 arg2 res)   ; int plusresult = plusarg1 + plusarg2;
-              (deref-assign-ins dest res)     ; *destination = plusresult;
-              (move-ins x 'ans)))             ; ans = x;
-
-(check-match (gen-prog (canonicalize (parse-string  "let var x := 0 in x := x+2; x; () end")))  
-             (list
-              (lim-ins 0 x)                   ; int x = 0;
-              (ref-ins dest x)                ; int* destination = &x; (canonicalize (parse-string 
-              (move-ins x arg1)               ; int plusarg1 = x;
-              (lim-ins 2 arg2)                ; int plusarg2 = 2;
-              (binary-ins '+ arg1 arg2 res)   ; int plusresult = plusarg1 + plusarg2;
-              (deref-assign-ins dest res)     ; *destination = plusresult;
-              (move-ins x 'ans)))             ; ans = x;
-
-(check-match (gen-prog (canonicalize (parse-string  "let var y := 0 in let var x := (y := 2; 7) in y end end")))
-             (list
-              (lim-ins 0 y)                   ; int y := 0
-              (ref-ins dest y)                ; int* destination = &y;
-              (lim-ins 2 val)                 ; int val = 2;
-              (deref-assign-ins dest val)     ; *destination = val;
-              (lim-ins 7 x)                   ; int x = 7;
-              (move-ins y 'ans)))             ; ans = y;
-
-(check-match (gen-prog (canonicalize (parse-string  "int[10] of 15+3"))) ;note that this fails to type check but we don't care
-             (list
-              (lim-ins 10 (temp-loc t0))
-              (lim-ins 15 (temp-loc t3))
-              (lim-ins 3 (temp-loc t4))
-              (binary-ins '+ (temp-loc t3) (temp-loc t4) (temp-loc t2))
-              (ref-ins 'ans (mem-block m1 (temp-loc t0)))
-              (array-allocate-ins (temp-loc t2) (mem-block m1 _))))
-
-(check-match (gen-prog (canonicalize (parse-string  "if 3 then ()")))
-             (list
-              (lim-ins 3 (temp-loc t5))
-              (cond-jump-ins (temp-loc t5) (label l4))
-              (label l4)))
-
-(check-match (gen-prog (canonicalize (parse-string  "if 3 then (5;())")))
-             (list
-              (lim-ins 3 (temp-loc t5))
-              (cond-jump-ins (temp-loc t5) (label l4))
-              (lim-ins 5 (temp-loc t6))
-              (label l4)))
-
-
-(check-match (gen-prog (canonicalize (parse-string  "let var x : int := 26 in if 3 then x := 7 end")))
-             (list
-              (lim-ins 26 (temp-loc t3))
-              (lim-ins 3 (temp-loc t5))
-              (cond-jump-ins (temp-loc t5) (label l4))
-              (lim-ins 7 (temp-loc t3))
-              (label l4)))
-
-(check-match (gen-prog (canonicalize (parse-string  "if 3 then 4 else 5")))
-             (list
-              (lim-ins 3 (temp-loc t5))
-              (cond-jump-ins (temp-loc t5) (label l4))
-              (lim-ins 4 (temp-loc t2))
-              (move-ins (temp-loc t2) 'ans)
-              (uncond-jump-ins (label l1))
-              (label l4)
-              (lim-ins 5 (temp-loc t3))
-              (move-ins (temp-loc t3) 'ans)
-              (label l1)))
-
-(check-match (gen-prog (canonicalize (parse-string  "let var a := int[10] of 1 in a[5] := 6 end")))
-             (list
-              (lim-ins 10 (temp-loc t0))
-              (lim-ins 1 (temp-loc t2))
-              (ref-ins (temp-loc t9) (mem-block m1 (temp-loc t0)))
-              (array-allocate-ins (temp-loc t2) (mem-block m1 _))
-              (lim-ins 5 (temp-loc t4))
-              (lim-ins 6 (temp-loc t3))
-              (deref-ins (mem-loc (temp-loc t9) (temp-loc t4)) (temp-loc t3))))
-
-(check-match (gen-prog (canonicalize (parse-string  "if 4>1 then 0 else 16")))
-             (list
-              (lim-ins 4 (temp-loc t0))
-              (lim-ins 1 (temp-loc t1))
-              (cond-jump-relop-ins '> (temp-loc t0) (temp-loc t1) (label l9))
-              (lim-ins 0 (temp-loc t7))
-              (move-ins (temp-loc t7) 'ans)
-              (uncond-jump-ins (label l6))
-              (label l9)
-              (lim-ins 16 (temp-loc t8))
-              (move-ins (temp-loc t8) 'ans)
-              (label l6)))
-
-(check-match (gen-prog (canonicalize (parse-string  "let type a = {x:int} var z : a := nil in z := a{x=5} end")))
-             (list
-              (lim-ins 0 (temp-loc t1))
-              (lim-ins 1 (temp-loc t2))
-              (ref-ins (temp-loc t1) (mem-block m3 (temp-loc t2)))
-              (lim-ins 5 (mem-loc (mem-block m3 _) 0))))
-
-(check-match (gen-prog (canonicalize (parse-string  "while 3 do (7;())")))
-             (list
-              (label l2)
-              (lim-ins 3 (temp-loc t4))
-              (cond-jump-ins (temp-loc t4) (label l3))
-              (lim-ins 7 (temp-loc t5))
-              (uncond-jump-ins (label l2))
-              (label l3)))
-
-;(test)
+(test)
