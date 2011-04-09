@@ -68,7 +68,10 @@
        )]
      
     [(move-ins src dest)
-     (ln "move " (get-offset dest temps) "($sp), " (get-offset src temps) "($sp)")
+     ;(ln "move " (get-offset dest temps) "($sp), " (get-offset src temps) "($sp)")
+     (ln "lw $t0, " (get-offset src temps) "($sp)")
+     (ln "sw $t0, " (get-offset dest temps) "($sp)")
+     
      ]
     
     
