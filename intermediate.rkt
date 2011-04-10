@@ -15,6 +15,7 @@
    #t))
 
 
+(struct program (inslist fxnlist) #:transparent)
 
 (struct fxn-block (label ins-list) #:transparent)
 
@@ -111,20 +112,38 @@
         (error (format "internal error: unbound identifier ~a" id)))))
   
 
-; gen ast symbol listof-location-binding -> listof-instruction
-; takes an ast and returns a list of horrible spaghetti instructions with gotos and unreadable garbage and things
+
 (define (gen-prog prog)
   (gen prog 'ans empty))
 
 (define (reset-dag-table!) (set! dag-table (make-hash)))
 
+; gen ast symbol listof-location-binding? -> program
+; takes an ast and returns a list of horrible spaghetti instructions with gotos and unreadable garbage and things
 (define (gen ast result-sym loc-env)
   (reset-dag-table!)
-  (fxn-block 'main (dag-gen ast result-sym loc-env)))
+  (match (dag-gen ast result-sym loc-env)
+    [(and main-prog (program main-inslist funs))
+     (functionize 'main main-prog)]))
 
+(define (functionize name p)
+  (match p
+    [(program inslist fxnlist)
+     (program empty
+              (cons (fxn-block name inslist) fxnlist))]))
+
+(define (ins-combine . args)
+  (program (flatten args) empty))
+
+(define (program-append . plist)
+  ;(displayln plist)
+  (let [(ins-list (apply append (map program-inslist (flatten plist))))
+        (prog-list (apply append (map program-fxnlist (flatten plist))))]
+    (program ins-list prog-list)))
+            
 (define dag-table (make-hash))
 
-; 
+
 (define (dag-gen ast result-sym loc-env)
   ;(displayln dag-table)
   (let [(cached-node (hash-ref dag-table ast #f))]
@@ -134,55 +153,31 @@
           (hash-set! dag-table ast result-sym)
           (gen-helper ast result-sym loc-env)))))
 
-(define (gen-lv ast result-sym loc-env)
-  (displayln ast)
-  (match ast
-    [(id name)
-     (let [(sym (lookup name loc-env))]
-       (displayln loc-env)
-       (if (temp-loc? sym)
-           (list (ref-ins result-sym sym))
-           (error "huge error.")))]
-    [(array-access arr indx)
-     (let* [(indx-temp (gen-temp))
-            (indx-gen-code (gen indx indx-temp loc-env))
-            (arr-temp (gen-temp))
-            (arr-gen-code (gen-lv arr arr-temp loc-env))]
-       (append 
-        indx-gen-code
-        arr-gen-code
-        (list (binary-ins '+ result-sym arr-temp indx-temp))))]
-    [(record-access rec indx offset)
-     (let* [(offset-temp (gen-temp))
-            (rec-temp (gen-temp))
-            (rec-gen-code (gen-lv rec rec-temp loc-env))]
-       (append rec-gen-code
-               (list (lim-ins offset offset-temp)
-                     (binary-ins '+ result-sym rec-temp offset-temp))))]))
-
+; gen-helper ast location? listof-location-binding? -> program
 (define (gen-helper ast result-sym loc-env)
   (match ast
     ;ARITHMETIC
     [(binary-op (op op) arg1 arg2) 
      (let [(sym1 (gen-temp))
            (sym2 (gen-temp))]
-       (append (dag-gen arg1 sym1 loc-env)
-               (dag-gen arg2 sym2 loc-env)
-               (list (binary-ins op sym1 sym2 result-sym))))]
+       (program-append (dag-gen arg1 sym1 loc-env)
+                       (dag-gen arg2 sym2 loc-env)
+                       (program (list (binary-ins op sym1 sym2 result-sym)) empty)))]
     [(unary-op (op op) arg)
      (let [(sym (gen-temp))]
-       (append (dag-gen arg sym loc-env) (list (unary-ins op sym result-sym))))]
+       (program-append (dag-gen arg sym loc-env) 
+                       (program (list (unary-ins op sym result-sym)) empty)))]
     ;LITERAL OR STUPID VALUES
     [(int-literal val)
-     (list (lim-ins val result-sym))]
+     (ins-combine (lim-ins val result-sym))]
     
     [(string-literal val)
-     (list (lim-ins val result-sym))]
+     (ins-combine (lim-ins val result-sym))]
     
     [(id name)
      (let [(sym (lookup name loc-env))]
        (if (or (temp-loc? sym) (param-loc? sym) (label-loc? sym))
-           (list (move-ins sym result-sym))
+           (program (list (move-ins sym result-sym)) empty)
            (error (format "internal error: identifier ~a found in wrong location type ~a" name sym))))]
     
     ; STRUCTURE CREATION
@@ -192,10 +187,11 @@
             (block (gen-mem size-register))
             (initval-register (gen-temp))
             (initval-gen-code (dag-gen initval initval-register loc-env))]
-       (append size-gen-code initval-gen-code
-               (list
-                (ref-ins result-sym block)
-                (array-allocate-ins initval-register block)))
+       (program-append size-gen-code initval-gen-code
+               (program (list
+                         (ref-ins result-sym block)
+                         (array-allocate-ins initval-register block))
+                        empty))
        )]
     
     [(record-creation type-id fieldvals)
@@ -206,8 +202,8 @@
             ]
        ;TODO should there be an malloc instruction that basically generates the code to do this first?
        ;TODO gen-mem is sort of malloc.  we need to make sure that it gets rid of the register it's using when we do register allocation
-       (apply append size-gen-code
-              (list (ref-ins result-sym block))
+       (apply program-append
+              (program (ins-combine size-gen-code (ref-ins result-sym block)) empty)
               (map (λ (field offset)
                      (match field
                        [(fieldval name val)
@@ -243,29 +239,28 @@
             ]
        (reset-dag-table!)
        (if (temp-loc? dest-loc)
-           (append
-            index-gen-code
-            val-gen-code
-            (list (deref-ins (mem-loc dest-loc index-temp) val-temp)))
+           (program-append index-gen-code
+                           val-gen-code
+                           (ins-combine (deref-ins (mem-loc dest-loc index-temp) val-temp)))
            (error (format "internal error: array ~a bound to wrong location type" array-id))))]
     
     
     ; leaving something in ans is ok. the program has already been typechecked.
-    [(expseq exprs) (apply append (map (λ (expr) (dag-gen expr result-sym loc-env )) exprs))]
+    [(expseq exprs) (apply program-append (map (λ (expr) (dag-gen expr result-sym loc-env )) exprs))]
 ;    
 ;    [(record-creation type-id fieldvals)
 ;     (let* [(size-register (gen-temp))
 ;            (size-gen-code (lim-ins (length fieldvals) size-register)
 ;    
-    #;[(assignment lval val)
-     (let* [(lval-temp (gen-temp))
-            (lval-gen-code (gen-lv lval lval-temp loc-env))
-            (val-temp (gen-temp))
-            (val-gen-code (gen val val-temp loc-env))]
-       (append
-        lval-gen-code
-        val-gen-code
-        (list (deref-assign-ins lval-temp val-temp))))] 
+;    #;[(assignment lval val)
+;     (let* [(lval-temp (gen-temp))
+;            (lval-gen-code (gen-lv lval lval-temp loc-env))
+;            (val-temp (gen-temp))
+;            (val-gen-code (gen val val-temp loc-env))]
+;       (append
+;        lval-gen-code
+;        val-gen-code
+;        (list (deref-assign-ins lval-temp val-temp))))] 
     
     
     ; leaving something in ans is (label l)ok. the program has already been typechecked.
@@ -280,38 +275,38 @@
                         (let [(sym (gen-temp))]
                           (values 
                            (cons (location-binding id sym) le)
-                           (append instructions (dag-gen expr sym le))))])))]
-       (append decs-instructions
+                           (program-append instructions (dag-gen expr sym le))))])))]
+       (program-append decs-instructions
                (dag-gen body result-sym inner-loc-env)))]
     
     [(let-types decs body)
-     (gen body result-sym loc-env)]
+     (dag-gen body result-sym loc-env)]
      
     [(if-statement cond then (expseq empty))
      (let* [(end-label (gen-label))
             (then-register (gen-temp))
-            (then-gen-code (append (dag-gen then then-register loc-env) ))
+            (then-gen-code (dag-gen then then-register loc-env))
             (cond-gen-code (create-conditional-jump cond end-label loc-env))]
-       (append cond-gen-code
-               then-gen-code
-               (list end-label)))]
+       (program-append cond-gen-code
+                       then-gen-code
+                       (ins-combine end-label)))]
     
     [(if-statement cond then else)
      (let* [(end-label (gen-label))
             (then-register (gen-temp))
             (else-label (gen-label))
             (else-register (gen-temp))
-            (then-gen-code (append (dag-gen then then-register loc-env )
-                                   (list (move-ins then-register result-sym)
-                                         (uncond-jump-ins end-label)
-                                         else-label)))
+            (then-gen-code (program-append (dag-gen then then-register loc-env )
+                                           (ins-combine (move-ins then-register result-sym)
+                                                        (uncond-jump-ins end-label)
+                                                        else-label)))
             (else-gen-code (dag-gen else else-register loc-env ))
             (cond-gen-code (create-conditional-jump cond else-label loc-env ))]
        (reset-dag-table!)
-       (append cond-gen-code
-               then-gen-code
-               else-gen-code
-               (list (move-ins else-register result-sym) end-label)))]
+       (program-append cond-gen-code
+                       then-gen-code
+                       else-gen-code
+                       (ins-combine (move-ins else-register result-sym) end-label)))]
     
     [(while-statement cond body)
      (begin
@@ -321,10 +316,10 @@
               (cond-gen-code (create-conditional-jump cond end-label loc-env ))
               (dummy-location (gen-temp))
               (body-gen-code (dag-gen body dummy-location loc-env ))]
-         (append (list start-label) cond-gen-code body-gen-code
-                 (list (uncond-jump-ins start-label) end-label))))]
+         (program-append (ins-combine start-label) cond-gen-code body-gen-code
+                         (ins-combine (uncond-jump-ins start-label) end-label))))]
     
-    [(nil) (list (lim-ins 0 result-sym))]
+    [(nil) (ins-combine (lim-ins 0 result-sym))]
     
     
 ;    [(let-funs decs body)
@@ -383,18 +378,22 @@
        ; TODO: this is EXTREMELY SILLY for now
        ; assume that this is the top-level let-standard-library thingy
        (let-values [((inner-loc-env stdlib-instructions)
-                   (for/fold ([le loc-env]
-                              [instructions empty])
-                     [(dec decs)]
-                     (match dec
-                       [(fundec id tyfields type-id (stdlibfxn lbl _))
-                        (let [(sym (gen-label-loc))]
-                          (values 
-                           (cons (location-binding id sym) le)
-                           (cons (lim-ins (label (string->symbol (string-append "lt_" (symbol->string lbl)))) sym) instructions)
-                           ))])))]
-       (append stdlib-instructions
-               (dag-gen body result-sym inner-loc-env)))
+                     (for/fold ([le loc-env]
+                                [instructions empty])
+                       [(dec decs)]
+                       (match dec
+                         [(fundec id tyfields type-id (stdlibfxn lbl _))
+                          (let [(sym (gen-label-loc))]
+                            (values 
+                             (cons (location-binding id sym) le)
+                             (cons (lim-ins (label (string->symbol (string-append "lt_" (symbol->string lbl)))) sym) instructions)
+                             ))]
+                         #;[(fundec id tyfields type-id body) ;todo
+                          
+                          ]
+                         )))]
+         (program-append (ins-combine stdlib-instructions)
+                         (dag-gen body result-sym inner-loc-env)))
        )]
      
     
@@ -404,39 +403,67 @@
             (arg-sym-list (build-list (length args) (λ (ignore) (gen-temp))))
             (label-here (gen-label))
             (label-holder (gen-temp))
-            (param-gen-code (apply append
+            (param-gen-code (apply program-append
                              (map (λ (arg param-sym)
                                     (dag-gen arg param-sym loc-env ))
                                   args arg-sym-list)))
             ]
        (if (label-loc? f)
            
-           (append param-gen-code
+           (program-append param-gen-code
                    ;(map push-ins arg-sym-list)
-                   (list (funcall-ins f arg-sym-list result-sym)
+                   (ins-combine (funcall-ins f arg-sym-list result-sym)
                          ) ; the last argument is the return address
                    )
            
            
            (error (format "internal error: function ~a bound to wrong location type" fun-id f))))]
     
-    [(break) (list (break-ins))]
+    [(break) (ins-combine (break-ins))]
     ))
 
 
-(define (create-conditional-jump condition to-label loc-env )
-  (match condition
-    [(binary-op (op (and op (or '> '< '>= '<=))) arg1 arg2)
-     (let [(arg1-register (gen-temp))
-           (arg2-register (gen-temp))]
-       (append (dag-gen arg1 arg1-register loc-env )
-               (dag-gen arg2 arg2-register loc-env )
-               (list (cond-jump-relop-ins op arg1-register arg2-register to-label))))]
-    [else
-     (let [(cond-register (gen-temp))]
-       (append (dag-gen condition cond-register loc-env )
+#;(define (gen-lv ast result-sym loc-env)
+  (displayln ast)
+  (match ast
+    [(id name)
+     (let [(sym (lookup name loc-env))]
+       (displayln loc-env)
+       (if (temp-loc? sym)
+           (list (ref-ins result-sym sym))
+           (error "huge error.")))]
+    [(array-access arr indx)
+     (let* [(indx-temp (gen-temp))
+            (indx-gen-code (gen indx indx-temp loc-env))
+            (arr-temp (gen-temp))
+            (arr-gen-code (gen-lv arr arr-temp loc-env))]
+       (append 
+        indx-gen-code
+        arr-gen-code
+        (list (binary-ins '+ result-sym arr-temp indx-temp))))]
+    [(record-access rec indx offset)
+     (let* [(offset-temp (gen-temp))
+            (rec-temp (gen-temp))
+            (rec-gen-code (gen-lv rec rec-temp loc-env))]
+       (append rec-gen-code
+               (list (lim-ins offset offset-temp)
+                     (binary-ins '+ result-sym rec-temp offset-temp))))]))
 
-               (list (cond-jump-ins cond-register to-label))))]))
+
+(define (create-conditional-jump condition to-label loc-env )
+  (ins-combine
+   (match condition
+     [(binary-op (op (and op (or '> '< '>= '<=))) arg1 arg2)
+      (let [(arg1-register (gen-temp))
+            (arg2-register (gen-temp))]
+        (append (dag-gen arg1 arg1-register loc-env )
+                (dag-gen arg2 arg2-register loc-env )
+                (list (cond-jump-relop-ins op arg1-register arg2-register to-label))))]
+     [else
+      (let [(cond-register (gen-temp))]
+        (append (dag-gen condition cond-register loc-env )
+                
+                (list (cond-jump-ins cond-register to-label))))])))
 
 
 

@@ -15,6 +15,10 @@
 
 (define (gen-code ir (temps empty))
   (match ir
+    [(program (list) fxnlist)
+     (begin (map gen-code fxnlist) (void))]
+    [(program inslist fxnlist)
+     (error "found a program that failed to functionize")]
     [(fxn-block label inslist)
      (let [(ts (remove-duplicates (apply append (map get-locs inslist))))]
        (begin
@@ -24,16 +28,6 @@
          (ln (stack-teardown ts))
          (ln "jr $ra")
          ))]
-    ; TODO: some of these cases may be overly specific; we need to actually do instruction selection
-    #;[(lim-ins imm dest)
-     (when (not (eq? dest 'ans)) ; hacky! prevents lim into the ans, but instruction selection should actually handle this...
-       (begin
-         ; hacky! we have to do real instruction selection instead of this super-specific bullshit I made!  --dpercy
-         (ln (if (number? imm) "li" "la") " $t0, " imm)
-         (ln "sw $t0, " (get-offset dest temps) "($sp)")
-         )
-       )
-     ]
     
     [(lim-ins imm 'ans) (void)]
     [(lim-ins (label l) dest)
@@ -47,6 +41,37 @@
            (ln "li $t0, " imm)
            (ln "sw $t0, " (get-offset dest temps) "($sp)")) ; TODO: register onionization 
          (error (format "internal error: number assigned to location ~a that cannot hold numbers" dest)))]
+    
+    [(move-ins src dest)
+     (ln "lw $t0, " (get-offset src temps) "($sp)")
+     (ln "sw $t0, " (get-offset dest temps) "($sp)")]
+    
+    [(binary-ins op src1 src2 dest)
+     (ln "lw $t1, " (get-offset src1 temps) "($sp)")
+     (ln "lw $t2, " (get-offset src2 temps) "($sp)")
+     (ln (match op
+           ['+ "add"]
+           ['- "sub"]
+           ['* "mul"]
+           ['/ "div"]
+           ['or "or"]
+           ['and "and"]
+           ;todo '= '<> '<= '>=  
+           )
+         " $t0, $t1, $t2")
+     (ln "sw $t0, " (get-offset dest temps) "($sp)")]
+    
+    [(unary-ins op src dest)
+     (ln "lw $t1, " (get-offset src temps) "($sp)")
+     (match op
+           ['- (ln "sub $t0, $0, $t1")]
+           ; TODO...
+           )
+        
+     (ln "sw $t0, " (get-offset dest temps) "($sp)")]
+    
+    
+         
     
     [(funcall-ins labloc args dest)
      (begin
@@ -66,12 +91,6 @@
          (ln "sw $ra, " (get-offset dest temps) "($sp)")
          )
        )]
-     
-    [(move-ins src dest)
-     ;(ln "move " (get-offset dest temps) "($sp), " (get-offset src temps) "($sp)")
-     (ln "lw $t0, " (get-offset src temps) "($sp)")
-     (ln "sw $t0, " (get-offset dest temps) "($sp)")
-     ]
     
     
     
@@ -147,7 +166,11 @@
 ; ln calls display on each of its arguments,
 ; then displays a new line
 (define (ln . textlist)
-  (map (λ (s) (display s)) textlist)
+  #;(when (ormap void? (flatten textlist)) (error "ln void"))
+  (map (λ (s)
+         (when ((listof void?) s) (error "ln void"))
+         
+         (display s)) textlist)
   (displayln ""))
 
 (define (labelize label)
