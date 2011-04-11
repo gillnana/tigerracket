@@ -7,6 +7,11 @@
 
 (provide (all-defined-out))
 
+(define TEMP0 "$t0")
+(define TEMP1 "$t1")
+(define TEMP2 "$t2")
+(define COMMA ", ")
+
 ; TODO: global stateful variables are evil and we should fix this
 ; possibly using with-output-to
 ; or something 
@@ -15,6 +20,10 @@
 
 (define (gen-code ir (temps empty))
   (match ir
+    [(program (list) fxnlist)
+     (begin (map gen-code fxnlist) (void))]
+    [(program inslist fxnlist)
+     (error "found a program that failed to functionize")]
     [(fxn-block label inslist)
      (let [(ts (remove-duplicates (apply append (map get-locs inslist))))]
        (begin
@@ -24,29 +33,74 @@
          (ln (stack-teardown ts))
          (ln "jr $ra")
          ))]
-    ; TODO: some of these cases may be overly specific; we need to actually do instruction selection
-    #;[(lim-ins imm dest)
-     (when (not (eq? dest 'ans)) ; hacky! prevents lim into the ans, but instruction selection should actually handle this...
-       (begin
-         ; hacky! we have to do real instruction selection instead of this super-specific bullshit I made!  --dpercy
-         (ln (if (number? imm) "li" "la") " $t0, " imm)
-         (ln "sw $t0, " (get-offset dest temps) "($sp)")
-         )
-       )
-     ]
     
     [(lim-ins imm 'ans) (void)]
     [(lim-ins (label l) dest)
      (if (label-loc? dest)
-         (begin (ln "la $t0, " l)
-                (ln "sw $t0, " (get-offset dest temps) "($sp)")) ; TODO: register onionization
+         (begin (ln "la " TEMP0 COMMA l)
+                (ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")) ; TODO: register onionization
          (error (format "internal error: label assigned to location ~a that cannot hold labels" dest)))]
     [(lim-ins (? number? imm) dest)
      (if (number-location? dest)
          (begin
-           (ln "li $t0, " imm)
-           (ln "sw $t0, " (get-offset dest temps) "($sp)")) ; TODO: register onionization 
+           (ln "li " TEMP0 COMMA imm)
+           (ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")) ; TODO: register onionization 
          (error (format "internal error: number assigned to location ~a that cannot hold numbers" dest)))]
+    
+    [(move-ins src 'ans) (void)]
+    [(move-ins src dest)
+     (ln "lw " TEMP0 COMMA (get-offset src temps) "($sp)")
+     (ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")]
+    
+    [(binary-ins op src1 src2 'ans) (void)]
+    [(binary-ins op src1 src2 dest)
+     (ln "lw " TEMP1 COMMA (get-offset src1 temps) "($sp)")
+     (ln "lw " TEMP2 COMMA (get-offset src2 temps) "($sp)")
+     (ln (match op
+           ['+ "add"]
+           ['- "sub"]
+           ['* "mul"]
+           ['/ "div"]
+           ['= "seq"]
+           ['< "slt"]
+           ['> "sgt"]
+           ['<= "sle"]
+           ['>= "sge"]
+           ['<> "sne"]
+           ['or "or"] ; maybe unnecessary
+           ['and "and"] ; maybe unnecessary
+           )
+         " " TEMP0 COMMA TEMP1 COMMA TEMP2)
+     (ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")]
+    
+    [(unary-ins op src 'ans) (void)]
+    [(unary-ins op src dest)
+     (ln "lw " TEMP1 COMMA (get-offset src temps) "($sp)")
+     (match op
+           ['- (ln "sub " TEMP0 COMMA "$0" COMMA TEMP1)]
+           ; TODO...
+           )
+        
+     (ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")]
+    
+    [(label lbl) (ln lbl ":")]
+    [(uncond-jump-ins (label lbl)) (ln "j " lbl)]
+    [(cond-jump-ins src (label lbl))
+     (ln "lw " TEMP1 COMMA (get-offset src temps) "($sp)")
+     (ln "beqz " TEMP1 COMMA lbl)]
+    [(cond-jump-relop-ins op src1 src2 (label lbl))
+     (ln "lw " TEMP1 COMMA (get-offset src1 temps) "($sp)")
+     (ln "lw " TEMP2 COMMA (get-offset src2 temps) "($sp)")
+     (ln
+      (match op ;note that cond-jump relop ALWAYS inverts the comparator -- means jump if false
+        ['= "bneq"]
+        ['< "bge"]
+        ['> "ble"]
+        ['<> "beq"]
+        ['<= "bgt"]
+        ['>= "blt"])
+      " " TEMP1 COMMA TEMP2 COMMA lbl)]
+         
     
     [(funcall-ins labloc args dest)
      (begin
@@ -63,15 +117,9 @@
        (ln "jalr $t0")
        ; retrieve return val
        (when (not (eq? dest 'ans))
-         (ln "sw $ra, " (get-offset dest temps) "($sp)")
+         (ln "sw $v0, " (get-offset dest temps) "($sp)")
          )
        )]
-     
-    [(move-ins src dest)
-     ;(ln "move " (get-offset dest temps) "($sp), " (get-offset src temps) "($sp)")
-     (ln "lw $t0, " (get-offset src temps) "($sp)")
-     (ln "sw $t0, " (get-offset dest temps) "($sp)")
-     ]
     
     
     
@@ -147,20 +195,14 @@
 ; ln calls display on each of its arguments,
 ; then displays a new line
 (define (ln . textlist)
-  (map (λ (s) (display s)) textlist)
+  #;(when (ormap void? (flatten textlist)) (error "ln void"))
+  (map (λ (s)
+         (when ((listof void?) s) (error "ln void"))
+         
+         (display s)) textlist)
   (displayln ""))
 
 (define (labelize label)
   (string-append (symbol->string label) ":"))
-  
-
-#;(define (stack-allocate item)
-  ;first put the item in t0 - how?
-  ; do that
-  ;then move the contents of t0 onto the stack
-  (ln "sub 4, $sp")
-  (ln "sw $t0, 4($sp)")
-  
-  )
 
 (check-expect (begin (ln "wossar") (ln "foop") (get-output-string)) "wossar\nfoop\n")

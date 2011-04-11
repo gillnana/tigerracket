@@ -105,7 +105,7 @@
    ; reserved words (like keywords, but no meaning)
    ["and" (token-invalid)]
    ["or" (token-invalid)]
-   ;["not" (token-invalid)] ;uh this is a call in the stdlib.  this causes it to not parse.
+   ;["not" (token-invalid)] ;uh this is a call in the stdlib.  this causes it to not parse.  this is bad.
    ["goto" (token-invalid)]
    
    ; arithmetic 
