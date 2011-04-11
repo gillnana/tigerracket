@@ -1,0 +1,5 @@
+(
+	print_int(not(0));
+	print_int(not(not(0)));
+	print_int(not(not(not(7))))
+)
