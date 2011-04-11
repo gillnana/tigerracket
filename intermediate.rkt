@@ -451,19 +451,18 @@
 
 
 (define (create-conditional-jump condition to-label loc-env )
-  (ins-combine
    (match condition
      [(binary-op (op (and op (or '> '< '>= '<=))) arg1 arg2)
       (let [(arg1-register (gen-temp))
             (arg2-register (gen-temp))]
-        (append (dag-gen arg1 arg1-register loc-env )
+        (program-append (dag-gen arg1 arg1-register loc-env )
                 (dag-gen arg2 arg2-register loc-env )
-                (list (cond-jump-relop-ins op arg1-register arg2-register to-label))))]
+                (ins-combine (cond-jump-relop-ins op arg1-register arg2-register to-label))))]
      [else
       (let [(cond-register (gen-temp))]
-        (append (dag-gen condition cond-register loc-env )
+        (program-append (dag-gen condition cond-register loc-env )
                 
-                (list (cond-jump-ins cond-register to-label))))])))
+                (ins-combine (cond-jump-ins cond-register to-label))))]))
 
 
 

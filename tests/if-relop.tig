@@ -1,0 +1,1 @@
+print_int(if 5 > 81 then 4 else 99)
