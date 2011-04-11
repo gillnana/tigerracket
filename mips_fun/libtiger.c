@@ -124,7 +124,11 @@ extern string_t* lt_concat(string_t* s1, string_t* s2) {
 }
 
 extern int lt_not(int b) {
-  return !b;
+  if (b) {
+    return 0;
+  } else {
+    return 1;
+  }
 }
 
 extern void lt_exit(int code) {
