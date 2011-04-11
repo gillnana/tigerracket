@@ -11,6 +11,7 @@
 (define TEMP1 "$t1")
 (define TEMP2 "$t2")
 (define COMMA ", ")
+(define RETURN_REGISTER "$v0")
 
 ; TODO: global stateful variables are evil and we should fix this
 ; possibly using with-output-to
@@ -24,10 +25,10 @@
      (begin (map gen-code fxnlist) (void))]
     [(program inslist fxnlist)
      (error "found a program that failed to functionize")]
-    [(fxn-block label inslist)
+    [(fxn-block (label lbl) inslist)
      (let [(ts (remove-duplicates (apply append (map get-locs inslist))))]
        (begin
-         (ln (labelize label))
+         (ln (labelize lbl))
          (ln (stack-setup ts))
          (map (λ (ins) (gen-code ins ts)) inslist)
          (ln (stack-teardown ts))
@@ -38,24 +39,43 @@
     [(lim-ins (label l) dest)
      (if (label-loc? dest)
          (begin (ln "la " TEMP0 COMMA l)
-                (ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")) ; TODO: register onionization
+                ;(ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")
+                (lnstore TEMP0 dest temps)
+                )
+         
+         ; TODO: register onionization
          (error (format "internal error: label assigned to location ~a that cannot hold labels" dest)))]
     [(lim-ins (? number? imm) dest)
      (if (number-location? dest)
          (begin
            (ln "li " TEMP0 COMMA imm)
-           (ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")) ; TODO: register onionization 
+           ;(ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")
+           (lnstore TEMP0 dest temps)
+           )
+         
+         ; TODO: register onionization 
          (error (format "internal error: number assigned to location ~a that cannot hold numbers" dest)))]
     
     [(move-ins src 'ans) (void)]
     [(move-ins src dest)
-     (ln "lw " TEMP0 COMMA (get-offset src temps) "($sp)")
-     (ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")]
+     ;(ln "lw " TEMP0 COMMA (get-offset src temps) "($sp)")
+     ;(ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")
+     (lnload src TEMP0 temps)
+     (lnstore TEMP0 dest temps)
+     ]
+    
+    [(return-ins src)
+     ;(ln "lw " RETURN_REGISTER COMMA (get-offset src temps) "($sp)")
+     (lnload src RETURN_REGISTER temps)
+     ]
+     
     
     [(binary-ins op src1 src2 'ans) (void)]
     [(binary-ins op src1 src2 dest)
-     (ln "lw " TEMP1 COMMA (get-offset src1 temps) "($sp)")
-     (ln "lw " TEMP2 COMMA (get-offset src2 temps) "($sp)")
+     ;(ln "lw " TEMP1 COMMA (get-offset src1 temps) "($sp)")
+     ;(ln "lw " TEMP2 COMMA (get-offset src2 temps) "($sp)")
+     (lnload src1 TEMP1 temps)
+     (lnload src2 TEMP2 temps)
      (ln (match op
            ['+ "add"]
            ['- "sub"]
@@ -71,26 +91,34 @@
            ['and "and"] ; maybe unnecessary
            )
          " " TEMP0 COMMA TEMP1 COMMA TEMP2)
-     (ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")]
+    ; (ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")
+     (lnstore TEMP0 dest temps)
+     ]
     
     [(unary-ins op src 'ans) (void)]
     [(unary-ins op src dest)
-     (ln "lw " TEMP1 COMMA (get-offset src temps) "($sp)")
+     ;(ln "lw " TEMP1 COMMA (get-offset src temps) "($sp)")
+     (lnload src TEMP1 temps)
      (match op
            ['- (ln "sub " TEMP0 COMMA "$0" COMMA TEMP1)]
            ; TODO...
            )
         
-     (ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")]
+     ;(ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")
+     (lnstore TEMP0 dest temps)
+     ]
     
     [(label lbl) (ln lbl ":")]
     [(uncond-jump-ins (label lbl)) (ln "j " lbl)]
     [(cond-jump-ins src (label lbl))
-     (ln "lw " TEMP1 COMMA (get-offset src temps) "($sp)")
+     ;(ln "lw " TEMP1 COMMA (get-offset src temps) "($sp)")
+     (lnload src TEMP1 temps)
      (ln "beqz " TEMP1 COMMA lbl)]
     [(cond-jump-relop-ins op src1 src2 (label lbl))
-     (ln "lw " TEMP1 COMMA (get-offset src1 temps) "($sp)")
-     (ln "lw " TEMP2 COMMA (get-offset src2 temps) "($sp)")
+;     (ln "lw " TEMP1 COMMA (get-offset src1 temps) "($sp)")
+;     (ln "lw " TEMP2 COMMA (get-offset src2 temps) "($sp)")
+     (lnload src1 TEMP1 temps)
+     (lnload src2 TEMP2 temps)
      (ln
       (match op ;note that cond-jump relop ALWAYS inverts the comparator -- means jump if false
         ['= "bneq"]
@@ -101,27 +129,29 @@
         ['>= "blt"])
       " " TEMP1 COMMA TEMP2 COMMA lbl)]
          
-    
+    ;[(funcall-ins labloc args 'ans) (void)]
     [(funcall-ins labloc args dest)
      (begin
        (when (> (length args) 4) 
          (error "TODO more than 4 arguments to function not yet supported"))
        ; load args
        (map (λ (arg num)
-              (ln "lw $a" num ", " (get-offset arg temps) "($sp)")
+              ;(ln "lw $a" num ", " (get-offset arg temps) "($sp)")
+              ; note: a param-loc always refers to the parameters of the *current* function.
+              (lnload arg (string-append "$a" (number->string num)) temps)
               )
             args
             (build-list (length args) values))
        ; jump!
-       (ln "lw $t0, " (get-offset labloc temps) "($sp)")
+       ;(ln "lw $t0, " (get-offset labloc temps) "($sp)")
+       (lnload labloc TEMP0 temps)
        (ln "jalr $t0")
        ; retrieve return val
-       (when (not (eq? dest 'ans))
-         (ln "sw $v0, " (get-offset dest temps) "($sp)")
-         )
+       ;(when (not (eq? dest 'ans))
+       ;  (ln "sw $v0, " (get-offset dest temps) "($sp)")
+       ;  )
+       (lnstore RETURN_REGISTER dest temps)
        )]
-    
-    
     
     ))
   
@@ -146,25 +176,55 @@
    (pop "ra")
    ))
 
-; annoying function that extracts a list of locations from an instruction
-(define (get-locs ins)
-  (match ins
-    [(move-ins src dest) (filter location? (list src dest))]
-    [(lim-ins imm dest) (filter location? (list dest))]
-    [(binary-ins op src1 src2 dest) (filter location? (list src1 src2 dest))]
-    [(unary-ins op src dest) (filter location? (list src dest))]
-    [(uncond-jump-ins dest) (filter location? (list dest))]
-    [(cond-jump-ins src dest) (filter location? (list src dest))]
-    [(cond-jump-relop-ins op src1 src2 dest) (filter location? (list src1 src2 dest))]
-    [(push-ins src) (filter location? (list src))]
-    [(array-allocate-ins src dest) (filter location? (list src dest))]
-    [(deref-ins src1 src2) (filter location? (list src1 src2))]
-    [(ref-ins src1 src2) (filter location? (list src1 src2))]
-    [(deref-assign-ins src1 src2) (filter location? (list src1 src2))]
-    [(funcall-ins labloc params dest) (filter location? (list* labloc dest params))]
-    [(return-ins return-val-loc) (filter location? (list return-val-loc))]
-    [other-ins empty] ; all of the other instructions have no arguments that could possibly be locations
+(define (lnload src-loc dest-reg stack-env)
+  (match src-loc
+    [(? symbol? src-loc) (error "internal error: trying to load value from 'ans")]
+    [(param-loc sym num)
+     (if (<= 0 num 3)
+         (ln "move " dest-reg COMMA "$a" num)
+         (error 'UnsupportedOperationException);(ln "lw " dest-reg COMMA 
+         )
+         ]
+    [(or (temp-loc sym) (label-loc sym))
+     (ln "lw " dest-reg COMMA (get-offset src-loc stack-env) "($sp)")]
   ))
+  
+(define (lnstore src-reg dest-loc stack-env)
+  (match dest-loc
+    [(? symbol? sym) (ln "#ignore store into ans")]
+    [(param-loc sym num)
+     (if (<= 0 num 3)
+         (ln "move " "$a" num COMMA src-reg)
+         (error 'UnsupportedOperationException);(ln "lw " dest-reg COMMA 
+         )
+     ]
+    [(or (temp-loc sym) (label-loc sym))
+     (ln "sw " src-reg COMMA (get-offset dest-loc stack-env) "($sp)")]
+    ))
+
+; annoying function that extracts a list of locations from an instruction
+; called to statically allocate space for local variables
+(define (get-locs ins)
+  (let [(location? (lambda (l)
+                     (and (location? l)
+                          (not (param-loc? l)))))]
+    (match ins
+      [(move-ins src dest) (filter location? (list src dest))]
+      [(lim-ins imm dest) (filter location? (list dest))]
+      [(binary-ins op src1 src2 dest) (filter location? (list src1 src2 dest))]
+      [(unary-ins op src dest) (filter location? (list src dest))]
+      [(uncond-jump-ins dest) (filter location? (list dest))]
+      [(cond-jump-ins src dest) (filter location? (list src dest))]
+      [(cond-jump-relop-ins op src1 src2 dest) (filter location? (list src1 src2 dest))]
+      [(push-ins src) (filter location? (list src))]
+      [(array-allocate-ins src dest) (filter location? (list src dest))]
+      [(deref-ins src1 src2) (filter location? (list src1 src2))]
+      [(ref-ins src1 src2) (filter location? (list src1 src2))]
+      [(deref-assign-ins src1 src2) (filter location? (list src1 src2))]
+      [(funcall-ins labloc params dest) (filter location? (list* labloc dest params))]
+      [(return-ins return-val-loc) (filter location? (list return-val-loc))]
+      [other-ins empty] ; all of the other instructions have no arguments that could possibly be locations
+      )))
 
 (define (index-of item ls (count 0))
   (if (empty? ls)

@@ -1,0 +1,5 @@
+let
+  function iden(x:int) : int = x
+in
+  print_int(iden(42))
+end

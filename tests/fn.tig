@@ -1,0 +1,5 @@
+let
+  function f() : int = 12
+in
+  print_int(f())
+end

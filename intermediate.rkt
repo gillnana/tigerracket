@@ -23,10 +23,10 @@
 ; each instruction also needs to potentially contain a label
 
 (define (location? item)
-  (or (temp-loc? item) (mem-loc? item) (label-loc? item) (param-loc? item) (return-val-loc? item)))
+  (or (temp-loc? item) (mem-loc? item) (label-loc? item) (param-loc? item) #;(return-val-loc? item)))
 
 (define (number-location? item)
-   (or (temp-loc? item) (mem-loc? item) (param-loc? item) (return-val-loc? item)))
+   (or (temp-loc? item) (mem-loc? item) (param-loc? item) #;(return-val-loc? item)))
 
 (struct move-ins (src dest) #:transparent)
 (struct lim-ins (imm dest) #:transparent) ; constant value imm is put into dest
@@ -34,8 +34,8 @@
 (struct unary-ins (op src dest) #:transparent)
 
 (struct uncond-jump-ins (dest) #:transparent)
-(struct cond-jump-ins (src dest) #:transparent) ; conditionally jumps if src is true
-(struct cond-jump-relop-ins (op src1 src2 dest) #:transparent) ; conditionally jumps if (relop src1 src2) is true
+(struct cond-jump-ins (src dest) #:transparent) ; conditionally jumps if src is FALSE
+(struct cond-jump-relop-ins (op src1 src2 dest) #:transparent) ; conditionally jumps if (relop src1 src2) is FALSE
 
 (struct push-ins (src) #:transparent) ; pushes the contents of src onto the stack as a function parameter
 
@@ -79,7 +79,7 @@
 (struct label-loc (l) #:transparent)
 (struct param-loc (p param-number) #:transparent)
 
-(struct return-val-loc () #:transparent) ;location of the return value
+;(struct return-val-loc () #:transparent) ;location of the return value
 
 ;TODO figure out how to hold on to the size for bounds checking
 
@@ -124,7 +124,7 @@
   (reset-dag-table!)
   (match (dag-gen ast result-sym loc-env)
     [(and main-prog (program main-inslist funs))
-     (functionize 'main main-prog)]))
+     (functionize (label 'main) main-prog)]))
 
 (define (functionize name p)
   (match p
@@ -137,6 +137,12 @@
 
 (define (program-append . plist)
   ;(displayln plist)
+  ;ASSERT EVRYTHING A PROGRAM
+  (map (λ (prog) 
+         (when (not (program? prog))
+           (error (format "program-append expected a program but found garbage ~a" prog))))
+       plist)
+  
   (let [(ins-list (apply append (map program-inslist (flatten plist))))
         (prog-list (apply append (map program-fxnlist (flatten plist))))]
     (program ins-list prog-list)))
@@ -148,7 +154,7 @@
   ;(displayln dag-table)
   (let [(cached-node (hash-ref dag-table ast #f))]
     (if cached-node
-        (list (move-ins cached-node result-sym))
+        (ins-combine (move-ins cached-node result-sym))
         (begin
           (hash-set! dag-table ast result-sym)
           (gen-helper ast result-sym loc-env)))))
@@ -246,7 +252,7 @@
     
     
     ; leaving something in ans is ok. the program has already been typechecked.
-    [(expseq exprs) (apply program-append (map (λ (expr) (dag-gen expr result-sym loc-env )) exprs))]
+    [(expseq exprs) (apply program-append (map (λ (expr) (dag-gen expr result-sym loc-env)) exprs))]
 ;    
 ;    [(record-creation type-id fieldvals)
 ;     (let* [(size-register (gen-temp))
@@ -377,27 +383,58 @@
        (reset-dag-table!)
        ; TODO: this is EXTREMELY SILLY for now
        ; assume that this is the top-level let-standard-library thingy
-       (let-values [((inner-loc-env stdlib-instructions)
+       (let-values [((inner-loc-env fn-assign-program)
                      (for/fold ([le loc-env]
-                                [instructions empty])
+                                [prog (program empty empty)] ; the accumulated library of fundefs
+                                )
                        [(dec decs)]
                        (match dec
                          [(fundec id tyfields type-id (stdlibfxn lbl _))
                           (let [(sym (gen-label-loc))]
                             (values 
                              (cons (location-binding id sym) le)
-                             (cons (lim-ins (label (string->symbol (string-append "lt_" (symbol->string lbl)))) sym) instructions)
+                             ;(cons (lim-ins (label (string->symbol (string-append "lt_" (symbol->string lbl)))) sym) instructions)
+                             (program-append (ins-combine (lim-ins (label (string->symbol (string-append "lt_" (symbol->string lbl)))) sym))
+                                             prog)
                              ))]
-                         #;[(fundec id tyfields type-id body) ;todo
+                         
+                         [(fundec id tyfields type-id body);todo
+                         
+                          (let* [(fun-label (gen-label))
+                                 (sym (gen-label-loc)) ; the location that holds the label of this function
+                                 (return-val-loc (gen-temp)) ; the location that the function will put its answer into during the return-ins
+                                 ; add all the parameters into the location environment
+                                 ;TODO: params currently start from 0. is there reason to start from 1?
+                                 (body-le (append (map (λ (tyf param-num)
+                                                         (match tyf
+                                                           [(tyfield ty-name ty-ty)
+                                                            (location-binding ty-name 
+                                                                              (gen-param param-num))]))
+                                                       tyfields
+                                                       (build-list (length tyfields) values))
+                                                  le))
+                                 ; generate the function
+                                 (fn-body-prog 
+                                  (program-append (dag-gen body return-val-loc body-le)
+                                                  (ins-combine (return-ins return-val-loc)))
+                                               ) 
+                                 ]
+                            (values 
+                             (cons (location-binding id sym) le)
+                             (program-append (functionize fun-label fn-body-prog)
+                                             (ins-combine (lim-ins fun-label sym))
+                                             prog)
+                             ))
                           
                           ]
                          )))]
-         (program-append (ins-combine stdlib-instructions)
+         (program-append fn-assign-program
                          (dag-gen body result-sym inner-loc-env)))
        )]
      
     
     [(funcall fun-id args)
+     (reset-dag-table!)
      ;TODO evaluate fun-id which might be any expression
      (let* [(f (lookup (id-name fun-id) loc-env))
             (arg-sym-list (build-list (length args) (λ (ignore) (gen-temp))))
