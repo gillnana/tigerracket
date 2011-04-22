@@ -1,0 +1,8 @@
+let
+   type t = () -> int
+   var x : int := 94
+   function g(): int = x
+   function f(proc:t):int = proc()
+in
+   print_int(f(g))
+end

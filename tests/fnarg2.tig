@@ -1,0 +1,5 @@
+let
+   function f(x:int):int = x+3
+in
+   print_int(f(f(11)))
+end

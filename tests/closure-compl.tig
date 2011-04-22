@@ -1,0 +1,23 @@
+let
+   function f() =
+      let
+         var x : int := 25
+         function g():int = x
+      in
+         g
+      end
+in
+   let
+      var garbage : int := 234
+      var worthless : int := 53
+      var stupid : int := 991
+      var fjsdklafj : int := 94394
+      var djfkljgrui : int := 49534
+      var jgioerha : int := 459325
+      var gioejioagjir : int := 49324329
+      var gjruioegeuagh : int := 58940531249
+      var fdjsofijf : int := 430923583
+   in
+      f()()
+   end
+end

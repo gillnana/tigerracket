@@ -1,0 +1,10 @@
+let
+   function f(x:int):int =
+      let
+        function g():int = x
+      in
+        g()
+      end
+in 
+   print_int(f(25))
+end
