@@ -11,6 +11,10 @@ typedef struct array {
 //   where each character is its own word-sized element of the array
 typedef array_t string_t;
 
+extern int* alloc_block(int num_words, int init_val);
+
+extern array_t* alloc_array(int num_elem, int init_val);
+extern string_t* alloc_string(int num_elem);
 
 extern void lt_flush();
 extern void lt_print(string_t* str);

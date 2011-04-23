@@ -20,17 +20,52 @@ void out_of_memory_fail() {
   abort();
 }
 
-array_t* alloc_array(int num_elem) {
-  array_t* ans = malloc(sizeof(array_t) + num_elem*sizeof(int));
-  if (ans) {
-    return ans;
-  } else {
+
+extern int* alloc_block(int num_words, int initval) {
+  lt_print_int(num_words);
+  lt_print_int(0);
+  lt_print_int(0);
+  lt_print_int(0);
+  lt_print_int(0);
+  lt_print_int(initval);
+  /*
+    int num_words  -  number of elements (words)
+    int initval  -  value that each element should be
+
+    returns an array of that many ints
+    This is not a tiger array!
+   */
+  int* ans = malloc(num_words*sizeof(int));
+  if (!ans) {
     out_of_memory_fail();
   }
+
+  
+  int i;
+  //  for (i=0; i<num_words; i++) {
+  for (i=0; i<num_words; i++) { 
+    ans[i] = initval;
+  }
+  
+
+  return ans;
 }
 
-string_t* alloc_string(int num_elem) {
-  alloc_array(num_elem);
+extern array_t* alloc_array(int num_elem, int initval) {
+  /*
+    int num_elem  -  the number of *tiger* elements in the array
+   */
+  // allocate a block with 1 word more than the number of elements
+  array_t* ans = (array_t*) alloc_block(num_elem+1, initval);
+  ans->length = num_elem;
+  return ans;
+}
+
+extern string_t* alloc_string(int num_elem) {
+  /*
+    int num_elem  -  the number of characters in the string
+   */
+  return (string_t*) alloc_array(num_elem+1, 0);
 }
 
 extern void lt_print(string_t* str) {
