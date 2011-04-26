@@ -9,7 +9,7 @@ main:
 	sw $ra, 4($sp)
 	sw $s0, 8($sp)
 
-	li $a0, 35
+   li $a0, 35
 	li $a1, 33  # the letter 'N'
 	sub $sp, $sp, 20 # just to be safe
 	jal alloc_block
@@ -41,8 +41,6 @@ main:
 	sub $sp, $sp, 20 # just to be safe
 	jal lt_print
 	add $sp, $sp, 20 # just to be safe
-
-
 	
 	
 	lw $s0, 8($sp)
