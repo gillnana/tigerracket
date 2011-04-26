@@ -36,9 +36,18 @@ extern int* alloc_block(int num_words, int initval) {
     This is not a tiger array!
    */
   int* ans = malloc(num_words*sizeof(int));
+  //int* ans = 0;
+  
+  lt_print_int(666);
+
+  
   if (!ans) {
     out_of_memory_fail();
   }
+  
+  
+  lt_print_int(777);
+
 
   
   int i;
@@ -47,6 +56,7 @@ extern int* alloc_block(int num_words, int initval) {
     ans[i] = initval;
   }
   
+  lt_print_int(888);
 
   return ans;
 }
@@ -173,4 +183,26 @@ extern void lt_exit(int code) {
 extern void lt_flush() {
   // lol who cares about buffered IO?
   // especially considering our garbage collection strategy
+}
+
+extern void call_test(int a0, int a1, int a2, int a3, int a4, int a5) {
+  char* newline = "\n";
+  
+  write(1, newline, 1);
+  lt_print_int(a0);
+  
+  write(1, newline, 1);
+  lt_print_int(a1);
+  
+  write(1, newline, 1);
+  lt_print_int(a2);
+  
+  write(1, newline, 1);
+  lt_print_int(a3);
+  
+  write(1, newline, 1);
+  lt_print_int(a4);
+  
+  write(1, newline, 1);
+  lt_print_int(a5);
 }

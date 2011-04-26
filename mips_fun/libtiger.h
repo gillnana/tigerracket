@@ -28,4 +28,6 @@ extern string_t* lt_concat(string_t* s1, string_t* s2);
 extern int lt_not(int b);
 extern void lt_exit(int code);
 
+extern void call_test(int a0, int a1, int a2, int a3, int a4, int a5);
+
 #endif
