@@ -5,36 +5,46 @@
 
 	.text
 main:
-	sub $sp, $sp, 4
+	sub $sp, $sp, 8
 	sw $ra, 4($sp)
+	sw $s0, 8($sp)
 
    li $a0, 35
 	li $a1, 33  # the letter 'N'
-#	jal alloc_block
-   sub $sp, $sp, 16
-	jal alloc_array
-   add $sp, $sp, 16
-	move $s0, $v0
-	
+	sub $sp, $sp, 20 # just to be safe
+	jal alloc_block
+#	jal alloc_array
+	add $sp, $sp, 20 # just to be safe
+ 	move $s0, $v0
 
-	add $t0, $s0, 0
-	lw $a0, ($t0)
-	jal lt_print_int
+	# DEBUG: print the stack pointer...
+#	move $a0, $sp
+#	sub $sp, $sp, 20 # just to be safe
+#	jal lt_print_int
+#	add $sp, $sp, 20 # just to be safe
 	
-	add $t0, $s0, 4
-	lw $a0, ($t0)
-	jal lt_print_int
+#	add $t0, $s0, 0
+#	lw $a0, ($t0)
+#	sub $sp, $sp, 20 # just to be safe
+#	jal lt_print_int
+#	add $sp, $sp, 20 # just to be safe
+	
+#	add $t0, $s0, 4
+#	lw $a0, ($t0)
+#	sub $sp, $sp, 20 # just to be safe
+#	jal lt_print_int
+#	add $sp, $sp, 20 # just to be safe
 	
 	
 	# $s0 is pointer to block of 7 letter 'N'
 	move $a0, $s0
+	sub $sp, $sp, 20 # just to be safe
 	jal lt_print
-
-
+	add $sp, $sp, 20 # just to be safe
 	
 	
-
+	lw $s0, 8($sp)
 	lw $ra, 4($sp)
-	add $sp, $sp, 4
+	add $sp, $sp, 8
 	jr $ra
 

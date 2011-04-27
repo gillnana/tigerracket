@@ -22,12 +22,6 @@ void out_of_memory_fail() {
 
 
 extern int* alloc_block(int num_words, int initval) {
-  lt_print_int(num_words);
-  lt_print_int(0);
-  lt_print_int(0);
-  lt_print_int(0);
-  lt_print_int(0);
-  lt_print_int(initval);
   /*
     int num_words  -  number of elements (words)
     int initval  -  value that each element should be
@@ -39,14 +33,12 @@ extern int* alloc_block(int num_words, int initval) {
   if (!ans) {
     out_of_memory_fail();
   }
-
   
   int i;
   //  for (i=0; i<num_words; i++) {
   for (i=0; i<num_words; i++) { 
     ans[i] = initval;
   }
-  
 
   return ans;
 }
@@ -66,6 +58,16 @@ extern string_t* alloc_string(int num_elem) {
     int num_elem  -  the number of characters in the string
    */
   return (string_t*) alloc_array(num_elem+1, 0);
+}
+
+extern pair_t* alloc_closure(void* code, void* ar) {
+  pair_t* ans = malloc(sizeof(pair_t));
+  if (!ans) {
+    out_of_memory_fail();
+  }
+  ans->left = code;
+  ans->right = ar;
+  return ans;
 }
 
 extern void lt_print(string_t* str) {
@@ -173,4 +175,26 @@ extern void lt_exit(int code) {
 extern void lt_flush() {
   // lol who cares about buffered IO?
   // especially considering our garbage collection strategy
+}
+
+extern void call_test(int a0, int a1, int a2, int a3, int a4, int a5) {
+  char* newline = "\n";
+  
+  write(1, newline, 1);
+  lt_print_int(a0);
+  
+  write(1, newline, 1);
+  lt_print_int(a1);
+  
+  write(1, newline, 1);
+  lt_print_int(a2);
+  
+  write(1, newline, 1);
+  lt_print_int(a3);
+  
+  write(1, newline, 1);
+  lt_print_int(a4);
+  
+  write(1, newline, 1);
+  lt_print_int(a5);
 }
