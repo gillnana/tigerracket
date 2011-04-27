@@ -13,6 +13,8 @@
 (define COMMA ", ")
 (define RETURN_REGISTER "$v0")
 (define SP "$sp")
+(define CURRENT_AR "$s0")
+(define AR_CURRENT CURRENT_AR)
 (define ☃ "$at")
 
 ; TODO: global stateful variables are evil and we should fix this
@@ -31,6 +33,7 @@
      (begin
        (ln (labelize lbl))
        (ln (stack-setup locals))
+       (create-activation-record locals) ; assume the variables this function has access to are sorted, including parameters to this fxn 
        (map (λ (ins) (gen-code ins cb)) inslist)
        (ln (stack-teardown locals))
        (ln "jr $ra")
@@ -58,6 +61,14 @@
          
          ; TODO: register onionization 
          (error (format "internal error: number assigned to location ~a that cannot hold numbers" dest)))]
+    [(closure-ins (label l) dest)
+     (begin (ln "la $a0" COMMA l)
+            (ln "move $a1" COMMA AR_CURRENT) ;lscd
+            (ln "sub $sp, $sp, 16")
+            (ln "jal alloc_closure") ; assume alloc_closure exists, works
+            (ln "add $sp, $sp, 16")
+            (ln "move " dest COMMA RETURN_REGISTER)
+            )]
     
     [(move-ins src 'ans) (void)]
     [(move-ins src dest)
@@ -132,53 +143,88 @@
         ['>= "blt"])
       " " TEMP1 COMMA TEMP2 COMMA lbl)]
          
-    ;[(funcall-ins labloc args 'ans) (void)]
+;    [(funcall-ins labloc args dest)
+;     (begin
+;       (ln "#BEGIN FUNCALL")
+;       (when (> (length args) 4) 
+;         (error "TODO more than 4 arguments to function not yet supported"))
+;       ; load args
+;       (map (λ (arg num)
+;              ;(ln "lw $a" num ", " (get-offset arg temps) "($sp)")
+;              ; note: a param-loc always refers to the parameters of the *current* function.
+;              (ln "  #BEGIN PUT ARG " num)
+;              (lnload arg (string-append "$a" (number->string num)) cur-block)
+;              (ln "  #END PUT ARG " num)
+;              )
+;            args
+;            (build-list (length args) values))
+;       
+;       ; jump!
+;       ;(ln "lw $t0, " (get-offset labloc cur-block) "($sp)")    
+;       (lnload labloc TEMP2 cur-block)
+;       
+;       (ln "move " TEMP0 COMMA SP)
+;       (ln (push TEMP0)) ; can't push sp directly because it would change the sp
+;       
+;       (ln "jalr " TEMP2)
+;       
+;       (ln "add " SP COMMA SP COMMA "4")
+;       
+;       ; retrieve return val
+;       ;(when (not (eq? dest 'ans))
+;       ;  (ln "sw $v0, " (get-offset dest cur-block) "($sp)")
+;       ;  )
+;       (lnstore RETURN_REGISTER dest cur-block)
+;       (ln "#END FUNCALL")
+;       )]
+    
     [(funcall-ins labloc args dest)
      (begin
-       (ln "#BEGIN FUNCALL")
+       #;(ln "#BEGIN FUNCALL")
+       
        (when (> (length args) 4) 
          (error "TODO more than 4 arguments to function not yet supported"))
        ; load args
        (map (λ (arg num)
               ;(ln "lw $a" num ", " (get-offset arg temps) "($sp)")
               ; note: a param-loc always refers to the parameters of the *current* function.
-              (ln "  #BEGIN PUT ARG " num)
+              #;(ln "  #BEGIN PUT ARG " num)
               (lnload arg (string-append "$a" (number->string num)) cur-block)
-              (ln "  #END PUT ARG " num)
+              #;(ln "  #END PUT ARG " num)
               )
             args
             (build-list (length args) values))
        
        ; jump!
-       ;(ln "lw $t0, " (get-offset labloc cur-block) "($sp)")
-       (ln "  #BEGIN LOAD THING TO JALR LATER")
+       ;(ln "lw $t0, " (get-offset labloc cur-block) "($sp)")    
        (lnload labloc TEMP2 cur-block)
-       (ln "  #END LOAD THING TO JALR LATER")
-       
-       (ln "  #BEGIN PUSH ACCESS LINK")
-       (ln "move " TEMP0 COMMA SP)
-       (ln (push TEMP0)) ; can't push sp directly because it would change the sp
-       (ln "  #END PUSH ACCESS LINK")
-       
-       (ln "  #BEGIN ACTUALLY JALR")
+       (ln "sub $sp, $sp, 16") ; todo more than 4 args
        (ln "jalr " TEMP2)
-       (ln "  #END ACTUALLY JALR")
+       (ln "add $sp, $sp, 16") ; todo more than 4 args
        
-       (ln "  #BEGIN POP STATIC LINK")
-       (ln "add " SP COMMA SP COMMA "4")
-       (ln "  #END POP STATIC LINK")
+       #;(ln "add " SP COMMA SP COMMA "4")
        
-       ; retrieve return val
-       ;(when (not (eq? dest 'ans))
-       ;  (ln "sw $v0, " (get-offset dest cur-block) "($sp)")
-       ;  )
-       (lnstore RETURN_REGISTER dest cur-block)
-       (ln "#END FUNCALL")
        )]
-    
+       
+       
     
     ))
-  
+
+
+;; DUMB IDIOT HELPER FUNCTIONS
+
+; creates a new activation record for this function.  this code goes inside the function block.
+; puts the current activation record ( $s0 ) in the activation record to be created.
+; assumes that the parent AR is already pushed on the stack but still is in $s0
+(define (create-activation-record local-vars)
+  (begin 
+    (ln ("li $a0, " (+ 1 (length local-vars))))
+    (ln ("li $a1, 0"))
+    (ln ("sub $sp, $sp, 16"))
+    (ln ("jal alloc_block"))
+    (ln ("add $sp, $sp, 16"))
+    (ln ("sw " AR_CURRENT COMMA "(" RETURN_REGISTER ")")) ; TODO remember to add one on every access.  you will obviously look at this extremely obviously placed comment to understand this.
+    (ln ("move " AR_CURRENT COMMA RETURN_REGISTER))))
 
 ; takes a predicate and a list
 ; returns (values index item) where (eq? (list-ref ls index) item)
@@ -217,27 +263,17 @@
 
 (define (stack-setup temps)
   (appendln
+   (push CURRENT_AR)
    (push "$ra")
-   (string-append "sub $sp, $sp, " (number->string (* 4 (length temps))))
+   (string-append "sub $sp, $sp, 8")
    ))
 
 (define (stack-teardown temps)
   (appendln
-   (string-append "add $sp, $sp, " (number->string (* 4 (length temps))))
+   (string-append "add $sp, $sp, ")
    (pop "$ra")
+   (pop CURRENT_AR)
    ))
-
-;(define (lnload src-loc dest-reg stack-env)
-;  (match src-loc
-;    [(? symbol? src-loc) (error "internal error: trying to load value from 'ans")]
-;    [(param-loc sym num)
-;     (if (<= 0 num 3)
-;         (ln "move " dest-reg COMMA "$a" num)
-;         (error 'UnsupportedOperationException);(ln "lw " dest-reg COMMA)
-;         ]
-;    [(or (temp-loc sym) (label-loc sym))
-;     (ln "lw " dest-reg COMMA (get-offset src-loc stack-env) "($sp)")]
-;  ))
 
 (define (lnload src-loc dest-reg cur-block)
   (match src-loc
@@ -284,30 +320,6 @@
          (begin
            (ln "lw " TEMP1 COMMA (get-fp-offset cb) "(" TEMP1 ")")
            (jump-back-one (- n 1) parent))]))))
-
-      ; annoying function that extracts a list of locations from an instruction
-      ; called to statically allocate space for local variables
-;(define (get-locs ins)
-;  (let [(location? (lambda (l)
-;                     (and (location? l)
-;                          (not (param-loc? l)))))]
-;    (match ins
-;      [(move-ins src dest) (filter location? (list src dest))]
-;      [(lim-ins imm dest) (filter location? (list dest))]
-;      [(binary-ins op src1 src2 dest) (filter location? (list src1 src2 dest))]
-;      [(unary-ins op src dest) (filter location? (list src dest))]
-;      [(uncond-jump-ins dest) (filter location? (list dest))]
-;      [(cond-jump-ins src dest) (filter location? (list src dest))]
-;      [(cond-jump-relop-ins op src1 src2 dest) (filter location? (list src1 src2 dest))]
-;      [(push-ins src) (filter location? (list src))]
-;      [(array-allocate-ins src dest) (filter location? (list src dest))]
-;      [(deref-ins src1 src2) (filter location? (list src1 src2))]
-;      [(ref-ins src1 src2) (filter location? (list src1 src2))]
-;      [(deref-assign-ins src1 src2) (filter location? (list src1 src2))]
-;      [(funcall-ins labloc params dest) (filter location? (list* labloc dest params))]
-;      [(return-ins return-val-loc) (filter location? (list return-val-loc))]
-;      [other-ins empty] ; all of the other instructions have no arguments that could possibly be locations
-;      )))
 
 (define (index-of item ls (count 0))
   (if (empty? ls)

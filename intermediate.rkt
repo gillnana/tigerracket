@@ -69,6 +69,8 @@
 
 (struct return-ins (return-val-loc) #:transparent) ;represents an instruction that puts the return value of a function in the location it should go, wherever that may be
 
+(struct closure-ins (label dest) #:transparent) ; creates a closure over the specified label (function pointer) and puts it in the dest register.  in MIPS code, lim.
+
 
 ; LOCATIONS
 
@@ -448,9 +450,9 @@
                              ;(cons (lim-ins (label (string->symbol (string-append "lt_" (symbol->string lbl)))) sym) instructions)
                              (program-append (ins-combine 
                                               (allocation sym)
-                                              (lim-ins (label (string->symbol (string-append "lt_" 
-                                                                                             (symbol->string lbl))))
-                                                       sym))
+                                              (closure-ins (label (string->symbol (string-append "lt_" 
+                                                                                                 (symbol->string lbl))))
+                                                           sym))
                                              prog)
                              ))]
                          ; case for tiger-defined function
@@ -492,10 +494,9 @@
                              (cons (location-binding id sym) le)
                              (program-append (ins-combine (allocation sym))
                                              fn-body-prog
-                                             (ins-combine (lim-ins fun-label sym))
+                                             (ins-combine (closure-ins fun-label sym))
                                              prog)
                              ))
-                          
                           ]
                          )))]
          ;(displayln fn-assign-program)
