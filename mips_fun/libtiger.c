@@ -22,12 +22,6 @@ void out_of_memory_fail() {
 
 
 extern int* alloc_block(int num_words, int initval) {
-  lt_print_int(num_words);
-  lt_print_int(0);
-  lt_print_int(0);
-  lt_print_int(0);
-  lt_print_int(0);
-  lt_print_int(initval);
   /*
     int num_words  -  number of elements (words)
     int initval  -  value that each element should be
@@ -36,27 +30,15 @@ extern int* alloc_block(int num_words, int initval) {
     This is not a tiger array!
    */
   int* ans = malloc(num_words*sizeof(int));
-  //int* ans = 0;
-  
-  lt_print_int(666);
-
-  
   if (!ans) {
     out_of_memory_fail();
   }
-  
-  
-  lt_print_int(777);
-
-
   
   int i;
   //  for (i=0; i<num_words; i++) {
   for (i=0; i<num_words; i++) { 
     ans[i] = initval;
   }
-  
-  lt_print_int(888);
 
   return ans;
 }
@@ -76,6 +58,16 @@ extern string_t* alloc_string(int num_elem) {
     int num_elem  -  the number of characters in the string
    */
   return (string_t*) alloc_array(num_elem+1, 0);
+}
+
+extern pair_t* alloc_closure(void* code, void* ar) {
+  pair_t* ans = malloc(sizeof(pair_t));
+  if (!ans) {
+    out_of_memory_fail();
+  }
+  ans->left = code;
+  ans->right = ar;
+  return ans;
 }
 
 extern void lt_print(string_t* str) {
