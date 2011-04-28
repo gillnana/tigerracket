@@ -52,6 +52,13 @@
        )]
     
     ; below here i demand you have a cur-block
+    [(allocation (mem-block sym size))
+     (begin
+       (lnload size "$a0" cur-block)
+       (ln "li $a1, 0")
+       (ln "sub $sp, $sp, 16")
+       (ln "jal alloc_block")
+       (ln "add $sp, $sp, 16"))]
     [(allocation _) (void)]
     [(lim-ins imm 'ans) (void)]
     [(lim-ins (label l) dest)
@@ -90,6 +97,27 @@
      (lnload src TEMP0 cur-block)
      (lnstore TEMP0 dest cur-block)
      ]
+    
+    ; this instruction corresponds to x=&y, putting the l-value of y into the r-value of x
+    [(ref-ins src1 src2)
+     (lnload src2 TEMP0 cur-block)
+     (lnload src1 TEMP1 cur-block)
+     (ln "sw " TEMP0 COMMA "(" TEMP1 ")")] ; TODO is this right?  because
+    ; this and the next pointer instruction don't involve l-value manipulation, we don't care about
+    ; lnstore.
+    
+    ; this instruction corresponds to x=*y, putting the r-value of y into the r-value of x
+    [(deref-ins src1 src2)
+     (lnload src2 TEMP0 cur-block)
+     (lnload src1 TEMP1 cur-block)
+     (ln "lw " TEMP0 COMMA "(" TEMP0 ")")
+     (ln "sw " TEMP0 COMMA "(" TEMP1 ")")] ; TODO is this right?  see above
+    
+    ; this instruction is x*=y, putting the r-value of y into the l-value of x
+    [(deref-assign-ins src1 src2) (error "never used in intermediate code")]
+    ; (lnload src2 T0)
+    ; lw T0, (T0)
+    ; (lnstore src1 T0)
     
     [(return-ins src)
      ;(ln "lw " RETURN_REGISTER COMMA (get-offset src temps) "($sp)")
@@ -321,7 +349,9 @@
      (let-values ([(nest-depth offset) (find-static src-loc cur-block)])
        (ln "move " TEMP3 COMMA AR_CURRENT " # loading variable at nest-depth " nest-depth " and offset " offset)
        (jump-back-one nest-depth cur-block)
-       (ln "lw " dest-reg COMMA (* 4 (+ 1 offset)) "(" TEMP3 ")"))])
+       (ln "lw " dest-reg COMMA (* 4 (+ 1 offset)) "(" TEMP3 ")"))]
+    [(mem-loc sym size) (TODO: this)] ; we will need an environment to keep track of all the random stuff on the heap
+    )
   (ln (format "#            end (lnload ~a ~a ~a)" src-loc dest-reg (fxn-block-label cur-block))))
 
 (define (lnstore src-reg dest-loc cur-block)

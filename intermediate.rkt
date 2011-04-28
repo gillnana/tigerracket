@@ -244,13 +244,13 @@
        (apply program-append
               (ins-combine
                (allocation size-register)
-               (allocation block)
                size-gen-code 
                 ; TODO malloc the relevant memory here
                ; (let ([block (gen-mem size-register)]) ...) creates a location
                ; but what we really need is an instruction that:
                ;  - mallocs and 
                ;  - assigns to a temp  a pointer to the memory
+               (allocation block)
                (ref-ins result-sym block)
               
                )
