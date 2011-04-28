@@ -59,30 +59,6 @@ alloc_block:
 	move	$fp,$sp
 	sw	$4,32($fp)
 	sw	$5,36($fp)
-	lw	$4,32($fp)
-	jal	lt_print_int
-	nop
-
-	move	$4,$0
-	jal	lt_print_int
-	nop
-
-	move	$4,$0
-	jal	lt_print_int
-	nop
-
-	move	$4,$0
-	jal	lt_print_int
-	nop
-
-	move	$4,$0
-	jal	lt_print_int
-	nop
-
-	lw	$4,36($fp)
-	jal	lt_print_int
-	nop
-
 	lw	$2,32($fp)
 	nop
 	sll	$2,$2,2
@@ -91,10 +67,6 @@ alloc_block:
 	nop
 
 	sw	$2,20($fp)
-	li	$4,666			# 0x29a
-	jal	lt_print_int
-	nop
-
 	lw	$2,20($fp)
 	nop
 	bne	$2,$0,$L4
@@ -104,10 +76,6 @@ alloc_block:
 	nop
 
 $L4:
-	li	$4,777			# 0x309
-	jal	lt_print_int
-	nop
-
 	sw	$0,16($fp)
 	j	$L5
 	nop
@@ -132,10 +100,6 @@ $L5:
 	nop
 	slt	$2,$3,$2
 	bne	$2,$0,$L6
-	nop
-
-	li	$4,888			# 0x378
-	jal	lt_print_int
 	nop
 
 	lw	$2,20($fp)
@@ -230,6 +194,58 @@ alloc_string:
 	.end	alloc_string
 	.size	alloc_string, .-alloc_string
 	.align	2
+	.globl	alloc_closure
+	.set	nomips16
+	.ent	alloc_closure
+	.type	alloc_closure, @function
+alloc_closure:
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, gp= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
+	move	$fp,$sp
+	sw	$4,32($fp)
+	sw	$5,36($fp)
+	li	$4,8			# 0x8
+	jal	malloc
+	nop
+
+	sw	$2,16($fp)
+	lw	$2,16($fp)
+	nop
+	bne	$2,$0,$L13
+	nop
+
+	jal	out_of_memory_fail
+	nop
+
+$L13:
+	lw	$2,16($fp)
+	lw	$3,32($fp)
+	nop
+	sw	$3,0($2)
+	lw	$2,16($fp)
+	lw	$3,36($fp)
+	nop
+	sw	$3,4($2)
+	lw	$2,16($fp)
+	move	$sp,$fp
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addiu	$sp,$sp,32
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	alloc_closure
+	.size	alloc_closure, .-alloc_closure
+	.align	2
 	.globl	lt_print
 	.set	nomips16
 	.ent	lt_print
@@ -253,10 +269,10 @@ lt_print:
 	sw	$2,20($fp)
 	sw	$0,16($fp)
 	sw	$0,16($fp)
-	j	$L13
+	j	$L16
 	nop
 
-$L14:
+$L17:
 	lw	$2,16($fp)
 	lw	$3,40($fp)
 	sll	$2,$2,2
@@ -276,12 +292,12 @@ $L14:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L13:
+$L16:
 	lw	$3,16($fp)
 	lw	$2,20($fp)
 	nop
 	slt	$2,$3,$2
-	bne	$2,$0,$L14
+	bne	$2,$0,$L17
 	nop
 
 	move	$sp,$fp
@@ -319,34 +335,34 @@ lt_print_int:
 	sw	$2,20($fp)
 	lw	$2,20($fp)
 	nop
-	bgez	$2,$L18
+	bgez	$2,$L21
 	nop
 
 	lw	$2,20($fp)
 	nop
 	subu	$2,$0,$2
 	sw	$2,20($fp)
-	j	$L18
+	j	$L21
 	nop
 
-$L19:
+$L22:
 	lw	$2,24($fp)
 	nop
 	sll	$2,$2,1
 	sll	$3,$2,2
 	addu	$2,$2,$3
 	sw	$2,24($fp)
-$L18:
+$L21:
 	lw	$3,24($fp)
 	lw	$2,20($fp)
 	nop
 	slt	$2,$2,$3
-	beq	$2,$0,$L19
+	beq	$2,$0,$L22
 	nop
 
 	lw	$2,20($fp)
 	nop
-	beq	$2,$0,$L20
+	beq	$2,$0,$L23
 	nop
 
 	lw	$3,24($fp)
@@ -358,11 +374,11 @@ $L18:
 	mfhi	$3
 	mflo	$2
 	sw	$2,24($fp)
-$L20:
+$L23:
 	sw	$0,16($fp)
 	lw	$2,48($fp)
 	nop
-	bgez	$2,$L21
+	bgez	$2,$L24
 	nop
 
 	lw	$2,16($fp)
@@ -374,7 +390,7 @@ $L20:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L21:
+$L24:
 	lw	$2,16($fp)
 	lw	$4,20($fp)
 	lw	$3,24($fp)
@@ -417,7 +433,7 @@ $L21:
 	sw	$2,16($fp)
 	lw	$2,24($fp)
 	nop
-	bne	$2,$0,$L21
+	bne	$2,$0,$L24
 	nop
 
 	addiu	$2,$fp,28
@@ -504,18 +520,18 @@ lt_ord:
 	nop
 	lw	$2,0($2)
 	nop
-	beq	$2,$0,$L26
+	beq	$2,$0,$L29
 	nop
 
 	lw	$2,8($fp)
 	nop
 	lw	$2,4($2)
-	j	$L27
+	j	$L30
 	nop
 
-$L26:
+$L29:
 	li	$2,-1			# 0xffffffffffffffff
-$L27:
+$L30:
 	move	$sp,$fp
 	lw	$fp,4($sp)
 	addiu	$sp,$sp,8
@@ -617,10 +633,10 @@ lt_substring:
 
 	sw	$2,20($fp)
 	sw	$0,16($fp)
-	j	$L34
+	j	$L37
 	nop
 
-$L35:
+$L38:
 	lw	$5,16($fp)
 	lw	$3,40($fp)
 	lw	$2,16($fp)
@@ -638,12 +654,12 @@ $L35:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L34:
+$L37:
 	lw	$3,16($fp)
 	lw	$2,40($fp)
 	nop
 	slt	$2,$3,$2
-	bne	$2,$0,$L35
+	bne	$2,$0,$L38
 	nop
 
 	lw	$2,20($fp)
@@ -697,10 +713,10 @@ lt_concat:
 
 	sw	$2,20($fp)
 	sw	$0,16($fp)
-	j	$L38
+	j	$L41
 	nop
 
-$L39:
+$L42:
 	lw	$5,16($fp)
 	lw	$2,16($fp)
 	lw	$3,48($fp)
@@ -715,19 +731,19 @@ $L39:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L38:
+$L41:
 	lw	$3,16($fp)
 	lw	$2,32($fp)
 	nop
 	slt	$2,$3,$2
-	bne	$2,$0,$L39
+	bne	$2,$0,$L42
 	nop
 
 	sw	$0,16($fp)
-	j	$L40
+	j	$L43
 	nop
 
-$L41:
+$L44:
 	lw	$3,16($fp)
 	lw	$2,32($fp)
 	nop
@@ -745,12 +761,12 @@ $L41:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L40:
+$L43:
 	lw	$3,16($fp)
 	lw	$2,28($fp)
 	nop
 	slt	$2,$3,$2
-	bne	$2,$0,$L41
+	bne	$2,$0,$L44
 	nop
 
 	lw	$2,20($fp)
@@ -783,16 +799,16 @@ lt_not:
 	sw	$4,8($fp)
 	lw	$2,8($fp)
 	nop
-	beq	$2,$0,$L44
+	beq	$2,$0,$L47
 	nop
 
 	move	$2,$0
-	j	$L45
+	j	$L48
 	nop
 
-$L44:
+$L47:
 	li	$2,1			# 0x1
-$L45:
+$L48:
 	move	$sp,$fp
 	lw	$fp,4($sp)
 	addiu	$sp,$sp,8

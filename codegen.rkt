@@ -10,6 +10,7 @@
 (define TEMP0 "$t0")
 (define TEMP1 "$t1")
 (define TEMP2 "$t2")
+(define TEMP3 "$t3")
 (define COMMA ", ")
 (define RETURN_REGISTER "$v0")
 (define SP "$sp")
@@ -31,12 +32,23 @@
      (error "found a program that failed to functionize")]
     [(and cb (fxn-block (label lbl) inslist static-link locals))
      (begin
+       (ln)
+       (ln)
+       (ln "#      begin def " lbl)
        (ln (labelize lbl))
        (ln (stack-setup locals))
-       (create-activation-record locals) ; assume the variables this function has access to are sorted, including parameters to this fxn 
+       (create-activation-record locals cur-block)
+       (ln "#      done setting up activation record")
+       ; assume the variables this function has access to are sorted (?), including parameters to this fxn 
+       
+       
+
+       
        (map (λ (ins) (gen-code ins cb)) inslist)
        (ln (stack-teardown locals))
        (ln "jr $ra")
+       (ln "#     end def " lbl)
+       (ln)
        )]
     
     ; below here i demand you have a cur-block
@@ -61,13 +73,14 @@
          
          ; TODO: register onionization 
          (error (format "internal error: number assigned to location ~a that cannot hold numbers" dest)))]
-    [(closure-ins (label l) dest)
+    [(closure-ins (label l) dest-loc)
      (begin (ln "la $a0" COMMA l)
             (ln "move $a1" COMMA AR_CURRENT) ;lscd
             (ln "sub $sp, $sp, 16")
-            (ln "jal alloc_closure") ; assume alloc_closure exists, works
+            (ln "jal alloc_closure")
             (ln "add $sp, $sp, 16")
-            (ln "move " dest COMMA RETURN_REGISTER)
+            ;(ln "move " TEMP0 COMMA RETURN_REGISTER)
+            (lnstore RETURN_REGISTER dest-loc cur-block)
             )]
     
     [(move-ins src 'ans) (void)]
@@ -86,6 +99,7 @@
     
     [(binary-ins op src1 src2 'ans) (void)]
     [(binary-ins op src1 src2 dest)
+     (ln "#   BEGIN binop op="op", src1="src1", src2="src2", dest="dest)
      ;(ln "lw " TEMP1 COMMA (get-offset src1 temps) "($sp)")
      ;(ln "lw " TEMP2 COMMA (get-offset src2 temps) "($sp)")
      (lnload src1 TEMP1 cur-block)
@@ -107,7 +121,8 @@
          " " TEMP0 COMMA TEMP1 COMMA TEMP2)
     ; (ln "sw " TEMP0 COMMA (get-offset dest temps) "($sp)")
      (lnstore TEMP0 dest cur-block)
-     ]
+     (ln "#   END   binop op="op", src1="src1", src2="src2", dest="dest)
+]
     
     [(unary-ins op src 'ans) (void)]
     [(unary-ins op src dest)
@@ -180,30 +195,34 @@
     
     [(funcall-ins labloc args dest)
      (begin
-       #;(ln "#BEGIN FUNCALL")
-       
-       (when (> (length args) 4) 
-         (error "TODO more than 4 arguments to function not yet supported"))
-       ; load args
+       (ln "#     BEGIN FUNCALL labloc="labloc", args="args", dest="dest)
+       (ln (push AR_CURRENT))
+       (ln "sub $sp, $sp, " (* 4 (max (length args) 4)))
        (map (λ (arg num)
-              ;(ln "lw $a" num ", " (get-offset arg temps) "($sp)")
               ; note: a param-loc always refers to the parameters of the *current* function.
-              #;(ln "  #BEGIN PUT ARG " num)
-              (lnload arg (string-append "$a" (number->string num)) cur-block)
-              #;(ln "  #END PUT ARG " num)
+              (when (< 4 num) 
+                (lnload arg (string-append "$a" (number->string num)) cur-block))
+              
+              (lnload arg TEMP0 cur-block)
+              (ln "sw " TEMP0 COMMA (* 4 num) "($sp)")
               )
             args
             (build-list (length args) values))
        
-       ; jump!
-       ;(ln "lw $t0, " (get-offset labloc cur-block) "($sp)")    
        (lnload labloc TEMP2 cur-block)
-       (ln "sub $sp, $sp, 16") ; todo more than 4 args
+
+       
+       ; need to get the static closure in order to pass it to the callee in AR
+       ; this closure is labloc
+       (ln "lw " AR_CURRENT COMMA "4(" TEMP2 ")")
+       ; get the code pointer out of the closure
+       (ln "lw " TEMP2 COMMA "(" TEMP2 ")")
+       
        (ln "jalr " TEMP2)
-       (ln "add $sp, $sp, 16") ; todo more than 4 args
-       
-       #;(ln "add " SP COMMA SP COMMA "4")
-       
+       (ln "add $sp, $sp, " (* 4 (max (length args) 4))) 
+       (ln (pop AR_CURRENT))
+       (lnstore RETURN_REGISTER dest cur-block)
+       (ln "#     END   FUNCALL labloc="labloc", args=" args ", dest="dest)
        )]
        
        
@@ -216,16 +235,30 @@
 ; creates a new activation record for this function.  this code goes inside the function block.
 ; puts the current activation record ( $s0 ) in the activation record to be created.
 ; assumes that the parent AR is already pushed on the stack but still is in $s0
-(define (create-activation-record local-vars)
+(define (create-activation-record local-vars cur-block)
   (begin 
-    (ln ("li $a0, " (+ 1 (length local-vars))))
-    (ln ("li $a1, 0"))
-    (ln ("sub $sp, $sp, 16"))
-    (ln ("jal alloc_block"))
-    (ln ("add $sp, $sp, 16"))
-    (ln ("sw " AR_CURRENT COMMA "(" RETURN_REGISTER ")")) ; TODO remember to add one on every access.  you will obviously look at this extremely obviously placed comment to understand this.
-    (ln ("move " AR_CURRENT COMMA RETURN_REGISTER))))
-
+    (ln "li $a0, " (+ 1 (length local-vars)))
+    (ln "li $a1, 0")
+    ;(ln "li $a1, 15") ; TODO FIXBACK
+    (ln "sub $sp, $sp, 16")
+    (ln "jal alloc_block")
+    (ln "add $sp, $sp, 16")
+    (ln "sw " AR_CURRENT COMMA "(" RETURN_REGISTER ") # put the static parent's activation record in the first slot of the new activation record")
+    (ln "move " AR_CURRENT COMMA RETURN_REGISTER " # set the current activation record to be the new one")
+    
+    ; now we have a blank AR linked to previous
+    ; now copy params in from stack
+    (let* ([params (filter param-loc? local-vars)]
+           [nums (build-list (length params) values)])
+      (map (λ (loc num) 
+             (ln "lw " TEMP0 COMMA (* 4 (+ 2 num)) "($sp)")
+             (lnstore TEMP0 loc cur-block)
+             )
+           params
+           nums)
+      )
+    )
+  )
 ; takes a predicate and a list
 ; returns (values index item) where (eq? (list-ref ls index) item)
 ;      or (values #f #f) if no such item is found
@@ -263,19 +296,20 @@
 
 (define (stack-setup temps)
   (appendln
-   (push CURRENT_AR)
+   ;(push CURRENT_AR)
    (push "$ra")
-   (string-append "sub $sp, $sp, 8")
+   ;(string-append "sub $sp, $sp, 4")
    ))
 
 (define (stack-teardown temps)
   (appendln
-   (string-append "add $sp, $sp, ")
+   ;(string-append "add $sp, $sp, 4")
    (pop "$ra")
-   (pop CURRENT_AR)
+   ;(pop CURRENT_AR)
    ))
 
 (define (lnload src-loc dest-reg cur-block)
+  (ln (format "#            begin (lnload ~a ~a ~a)" src-loc dest-reg (fxn-block-label cur-block)))
   (match src-loc
     [(? symbol? src-loc) (error "internal error: trying to load value from 'ans")]
     [(param-loc sym num)
@@ -285,12 +319,14 @@
          )]
     [(or (temp-loc sym) (label-loc sym))
      (let-values ([(nest-depth offset) (find-static src-loc cur-block)])
-       (ln "move " TEMP1 COMMA SP)
+       (ln "move " TEMP3 COMMA AR_CURRENT " # loading variable at nest-depth " nest-depth " and offset " offset)
        (jump-back-one nest-depth cur-block)
-       (ln "lw " dest-reg COMMA (* 4 (+ 1 offset)) "(" TEMP1 ")"))]))
+       (ln "lw " dest-reg COMMA (* 4 (+ 1 offset)) "(" TEMP3 ")"))])
+  (ln (format "#            end (lnload ~a ~a ~a)" src-loc dest-reg (fxn-block-label cur-block))))
 
 (define (lnstore src-reg dest-loc cur-block)
   ;(displayln cur-block)
+  (ln (format "#             begin (lnstore ~a ~a ~a)" src-reg dest-loc (fxn-block-label cur-block)))
   (match dest-loc
     [(? symbol? sym) (ln "#ignore store into ans")]
     [(param-loc sym num)
@@ -302,24 +338,27 @@
     [(or (temp-loc sym) (label-loc sym))
      (let-values ([(nest-depth offset) (find-static dest-loc cur-block)])
        ; this named let jumps back
-       (ln "move " TEMP1 COMMA SP)
+       (ln "move " TEMP3 COMMA AR_CURRENT)
        (jump-back-one nest-depth cur-block)
-       (ln "sw " src-reg COMMA (* 4 (+ 1 offset)) "(" TEMP1 ")"))]))
+       (ln "sw " src-reg COMMA (* 4 (+ 1 offset)) "(" TEMP3 ")"))])
+  (ln (format "#             end   (lnstore ~a ~a ~a)" src-reg dest-loc (fxn-block-label cur-block))))
 
 (define (get-fp-offset block)
   (match block
     [(fxn-block _ _ _ temps)
      (* 4 (+ 2 (length temps)))]))
 
+; follows links between activation records until TEMP1 holds a pointer to the AR of the desired temp
 (define (jump-back-one n cb)
-  (when (> 0 n)
-    (begin
-      (get-fp-offset cb)
-      (match cb
+  (when (> n 0)
+    (match cb
         [(fxn-block _ _ (list* parent _) _)
          (begin
-           (ln "lw " TEMP1 COMMA (get-fp-offset cb) "(" TEMP1 ")")
-           (jump-back-one (- n 1) parent))]))))
+           (ln "lw " TEMP3 COMMA   #;(get-fp-offset cb) #|no longer necessary|#   "(" TEMP3 ")")
+           ; get-fp-offset was being called because static link pointed to bottom of frame,
+           ; but static link was stored at top of frame, 
+           ; now just deref a whole bunch of times
+           (jump-back-one (- n 1) parent))])))
 
 (define (index-of item ls (count 0))
   (if (empty? ls)
@@ -332,15 +371,15 @@
 
   
 (define (push name)
-  (string-append "sub $sp, $sp, 4"
+  (string-append (format "sub $sp, $sp, 4  #push ~a" name)
                  "\n"
-                 "sw " name ", 4($sp)"
+                 "sw " name ", ($sp)" ; GCC convention
                  ))
 
 (define (pop name)
-  (string-append "lw " name ", 4($sp)"
+  (string-append "lw " name ", ($sp)" ; GCC convention
                  "\n"
-                 "add $sp, $sp, 4"
+                 (format "add $sp, $sp, 4  #pop ~a" name)
                  ))
 
 (define (appendln . lines)
@@ -350,11 +389,13 @@
 ; ln calls display on each of its arguments,
 ; then displays a new line
 (define (ln . textlist)
-  #;(when (ormap void? (flatten textlist)) (error "ln void"))
   (map (λ (s)
-         (when ((listof void?) s) (error "ln void"))
+         (when (and (not (empty? s)) 
+                    ((listof void?) s))
+           (error "ln void"))
          
-         (display s)) textlist)
+         (display s))
+       textlist)
   (displayln ""))
 
 (define (labelize label)

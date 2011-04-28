@@ -521,7 +521,7 @@
                                                           (dag-gen arg param-sym loc-env )))
                                         args arg-sym-list)))
             ]
-       (if (label-loc? f)
+       (if (or (param-loc? f) (label-loc? f)) #;(label-loc? f) ; TODO a function can be passed as a parameter in which case this will be a param-loc
            
            (program-append param-gen-code
                    ;(map push-ins arg-sym-list)
@@ -530,7 +530,7 @@
                    )
            
            
-           (error (format "internal error: function ~a bound to wrong location type" fun-id f))))]
+           (error (format "internal error: function ~a bound to wrong location type ~a" fun-id f))))]
     
     [(break) (ins-combine (break-ins))]
     ))
