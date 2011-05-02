@@ -96,8 +96,8 @@
         (vls initval in-loop? env))]
      
      [(id name) (void)]
-     [(record-access rec-id field-id offset) (void)]
-     [(array-access id index) (vls index in-loop? env)]
+     [(record-access rec-id field-id offset return-t) (void)]
+     [(array-access id index return-t) (vls index in-loop? env)]
     
     [(if-statement c t e)
        (begin

@@ -54,7 +54,7 @@
 
 (struct deref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=*y, putting the r-value of y into the r-value of x
 (struct ref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=&y, putting the l-value of y into the r-value of x
-(struct deref-assign-ins (src1 src2) #:transparent) ; this instruction is x*=y, putting the r-value of y into the l-value of x
+(struct deref-assign-ins (src1 src2) #:transparent) ; this instruction is *x=y, putting the r-value of y into the l-value of x
 
 
 
@@ -71,6 +71,8 @@
 
 (struct closure-ins (label dest) #:transparent) ; creates a closure over the specified label (function pointer) and puts it in the dest register.  in MIPS code, lim.
 
+(struct malloc-ins (size dest) #:transparent #:extra-constructor-name gen-malloc-ins/☃)
+(struct array-malloc-ins (size initval dest) #:transparent #:extra-constructor-name stfu-dave)
 
 ; LOCATIONS
 
@@ -84,7 +86,9 @@
 ;   m is a gensym to uniquely identify the block
 ;   size is a location that (at runtime) holds the size of the block to be allocated
 (struct mem-block (m size) #:transparent) ; the size is the location of the register or temporary holding the size of this block, which is itself an expression that must be computed at runtime
-(struct mem-loc (block offset) #:transparent) ; the offset of a mem-loc is the location within the block, described as the number of words from the beginning, indexed from 0.  the block is represented by a location holding the address of that block.
+; the offset of a mem-loc is the location within the block, described as the number of words from the beginning, indexed from 0.  the block is represented by a location holding the address of that block.
+
+(struct mem-loc (m) #:transparent) ; currently a mem-loc only refers to an element of memory on the heap.  pointer arithmetic does the rest.
 
 
 (struct label-loc (l) #:transparent)
@@ -106,8 +110,9 @@
 (define (gen-temp) (temp-loc (gensym 't)))
 (define (gen-label-loc) (label-loc (gensym 'lt)))
 (define (gen-param param-num) (param-loc (gensym 'p) param-num))
-(define (gen-mem size) (mem-block (gensym 'm) size)) ; we decided that size refers to the number of words this takes in the machine.  for
+(define (gen-mem-block size) (mem-block (gensym 'm) size)) ; we decided that size refers to the number of words this takes in the machine.  for
 ;most purposes a single word will hold one item, be that a pointer or integer.
+(define (gen-mem) (mem-loc (gensym 'm)))
 
 (define (gen-label) (label (gensym 'l)))
 
@@ -220,54 +225,58 @@
            (program-append (ins-combine #;(allocation sym) (move-ins sym result-sym)))
            (error (format "internal error: identifier ~a found in wrong location type ~a" name sym))))]
     
-    ; STRUCTURE CREATION
     [(array-creation type-id size-expr initval)
-     (let* [(size-register (gen-temp)) 
-            (size-gen-code (dag-gen size-expr size-register loc-env))
-            (block (gen-mem size-register))
-            ; TODO: WTF MALLOC WHAT DO
-            (initval-register (gen-temp))
-            (initval-gen-code (dag-gen initval initval-register loc-env))]
-       (program-append (ins-combine (allocation size-register)
-                                    (allocation initval-register)
-                                    (allocation block) ; SEE GIANT SCREAMING COMMENT <-- not a joke <-- seriously
-                                    )
-                       size-gen-code initval-gen-code
-                       (program (list
-                                 (ref-ins result-sym block)
-                                 (array-allocate-ins initval-register block))
-                                empty))
-       )]
+     (let* [(size-loc (gen-temp))
+            (size-gen-code (dag-gen size-expr size-loc loc-env))
+            (initval-loc (gen-temp))
+            (initval-gen-code (dag-gen initval initval-loc loc-env)) 
+            (array-malloc-gen-code (ins-combine (array-malloc-ins size-loc initval-loc result-sym)))]
+       (program-append (ins-combine (allocation size-loc) (allocation initval-loc) (list (list (list))))
+                       size-gen-code
+                       initval-gen-code
+                       array-malloc-gen-code))]
+   
     
     [(record-creation type-id fieldvals)
      (let* [(size-register (gen-temp))
-            (size-gen-code (list (lim-ins (length fieldvals) size-register)))
-            (block (gen-mem size-register))]
-       ;TODO gen-mem is sort of malloc.  we need to make sure that it gets rid of the register it's using when we do register allocation
-       (apply program-append
-              (ins-combine
-               (allocation size-register)
-               size-gen-code 
-                ; TODO malloc the relevant memory here
-               ; (let ([block (gen-mem size-register)]) ...) creates a location
-               ; but what we really need is an instruction that:
-               ;  - mallocs and 
-               ;  - assigns to a temp  a pointer to the memory
-               (allocation block)
-               (ref-ins result-sym block)
-              
-               )
-              (map (λ (field offset)
-                     (match field
-                       [(fieldval name val)
-                        (dag-gen val (mem-loc block offset) loc-env )]))
-                   fieldvals
-                   (build-list (length fieldvals) values))))]
-    ;    
-    ;    [(record-creation type-id fieldvals)
-    ;     (let* [(size-register (gen-temp))
-    ;            (size-gen-code (lim-ins (length fieldvals) size-fregister)
-    ;    
+            (size-gen-code (ins-combine (lim-ins (length fieldvals) size-register)))
+            (result-holder (gen-mem))
+            (malloc-gen-code (ins-combine (malloc-ins size-register result-holder)))
+            (cur-element-loc (gen-mem))
+            (fieldval-loc (gen-temp))
+            ]
+       
+       (program-append (ins-combine (allocation result-holder) 
+                                    (allocation size-register) 
+                                    (allocation cur-element-loc)
+                                    (allocation fieldval-loc)
+                                    (malloc-ins size-register result-holder))
+                       
+                       (apply 
+                        program-append 
+                        (map (λ (field offset)
+                               (match field
+                                 [(fieldval name val)
+                                  (program-append 
+                                   (dag-gen val fieldval-loc loc-env)
+                                   (ins-combine
+                                    (lim-ins offset cur-element-loc)
+                                    (binary-ins '+ result-holder cur-element-loc cur-element-loc)
+                                    (deref-assign-ins cur-element-loc fieldval-loc)))]))
+                             fieldvals
+                             (build-list (length fieldvals) values)))
+                       (ins-combine 
+                        (move-ins result-holder result-sym))
+                       ))]
+    
+
+    [(and accessor (or (array-access _ _ _) (record-access _ _ _ _)))
+     (let* [(worker-loc (gen-mem))
+            (gen-lval-code (gen-lval accessor worker-loc loc-env))]
+       (program-append (ins-combine (allocation worker-loc))
+                       gen-lval-code
+                       (ins-combine (deref-ins result-sym worker-loc))))]
+      
     ; assignment doesn't overwrite ans. this is ok.
     [(assignment (id name) expr)
      (let* [(dest-loc (lookup name loc-env)) 
@@ -278,26 +287,39 @@
            (error (format "internal error: identifier ~a or bound to wrong location type" name)))
        )]
     
+    [(assignment lvalue expr)
+     (let* [(dest-loc (gen-mem))
+            (lval-gen-code (gen-lval lvalue dest-loc loc-env))
+            (rval-loc (gen-temp))
+            (rval-gen-code (dag-gen expr rval-loc loc-env))]
+       (reset-dag-table!)
+       (program-append
+        (ins-combine (allocation dest-loc) (allocation rval-loc))
+        lval-gen-code
+        rval-gen-code
+        (ins-combine (deref-assign-ins dest-loc rval-loc))))
+     ]
+    
     ;    [(assignment (record-access rec-id field-id) val) ; TODO: but depends on record declarations
     ;     ...]
     
-    [(assignment (and ast-node (array-access (id array-id) index)) val)
-     ;(displayln ast-node)
-     ;(displayln loc-env)
-     (let* [(dest-loc (lookup array-id loc-env))
-            (val-temp (gen-temp))
-            (val-gen-code (dag-gen val val-temp loc-env ))
-            (index-temp (gen-temp))
-            (index-gen-code (dag-gen index index-temp loc-env ))
-            ]
-       (reset-dag-table!)
-       (if (temp-loc? dest-loc)
-           (program-append (ins-combine (allocation val-temp)
-                                        (allocation index-temp))
-                           index-gen-code
-                           val-gen-code
-                           (ins-combine (deref-ins (mem-loc dest-loc index-temp) val-temp)))
-           (error (format "internal error: array ~a bound to wrong location type" array-id))))]
+;    [(assignment (and ast-node (array-access (id array-id) index)) val)
+;     ;(displayln ast-node)
+;     ;(displayln loc-env)
+;     (let* [(dest-loc (lookup array-id loc-env))
+;            (val-temp (gen-temp))
+;            (val-gen-code (dag-gen val val-temp loc-env ))
+;            (index-temp (gen-temp))
+;            (index-gen-code (dag-gen index index-temp loc-env ))
+;            ]
+;       (reset-dag-table!)
+;       (if (temp-loc? dest-loc)
+;           (program-append (ins-combine (allocation val-temp)
+;                                        (allocation index-temp))
+;                           index-gen-code
+;                           val-gen-code
+;                           (ins-combine (deref-ins (mem-loc dest-loc index-temp) val-temp)))
+;           (error (format "internal error: array ~a bound to wrong location type" array-id))))]
     
     
     ; leaving something in ans is ok. the program has already been typechecked.
@@ -307,16 +329,7 @@
 ;     (let* [(size-register (gen-temp))
 ;            (size-gen-code (lim-ins (length fieldvals) size-register)
 ;    
-;    #;[(assignment lval val)
-;     (let* [(lval-temp (gen-temp))
-;            (lval-gen-code (gen-lv lval lval-temp loc-env))
-;            (val-temp (gen-temp))
-;            (val-gen-code (gen val val-temp loc-env))]
-;       (append
-;        lval-gen-code
-;        val-gen-code
-;        (list (deref-assign-ins lval-temp val-temp))))] 
-    
+   
     
     ; leaving something in ans is (label l)ok. the program has already been typechecked.
     
@@ -382,57 +395,6 @@
                          (ins-combine (uncond-jump-ins start-label) end-label))))]
     
     [(nil) (ins-combine (lim-ins 0 result-sym))]
-    
-    
-;    [(let-funs decs body)
-;     (begin
-;       (reset-dag-table!)
-;       (let [(skip-label (gen-label))
-;             (fun-labels (build-list (length decs) (λ (ignore) (gen-label))))
-;             (loc-of-labels (build-list (length decs) (λ (ignore) (gen-label-loc))))
-;             
-;             ]
-;         
-;         (let-values 
-;             [((inner-loc-env fun-instructions )
-;               (for/fold ([le loc-env]
-;                          [instructions empty])
-;                 [(dec decs)
-;                  (fun-label fun-labels)
-;                  (loc-of-label loc-of-labels)]
-;                 
-;                 (match dec
-;                   [(fundec id tyfields type-id fun-body)
-;                    (let [;(fun-id-sym (gen-temp))
-;                          ;(fun-label (gen-label))
-;                          ;(loc-of-label (gen-label-temp))
-;                          (loc-of-result (gen-temp))] ; TODO: maybe return-val-loc??
-;                      
-;                      (values 
-;                       (cons (location-binding id loc-of-label) le)
-;                       (append instructions 
-;                               (list fun-label (stack-setup-ins))
-;                               (dag-gen fun-body
-;                                        loc-of-result
-;                                        (append
-;                                         (map (λ (tyf param-num)
-;                                                (match tyf
-;                                                  [(tyfield ty-name ty-ty)
-;                                                   (location-binding ty-name 
-;                                                                     (gen-param param-num))]))
-;                                              tyfields
-;                                              (build-list (length tyfields) add1))
-;                                         le)
-;                                       
-;                                        )
-;                               (list (return-ins loc-of-result)
-;                                     (stack-teardown-ins)
-;                                     (jump-to-return-address-ins)))))])))]
-;           (append (map (λ (fun-label loc-of-label) (lim-ins fun-label loc-of-label)) fun-labels loc-of-labels)
-;                   ;(list (uncond-jump-ins skip-label))
-;                   fun-instructions
-;                   ;(list skip-label)
-;                   (dag-gen body result-sym inner-loc-env )))))]
     
     [(let-funs decs body)
      (begin
@@ -544,32 +506,35 @@
     [(break) (ins-combine (break-ins))]
     ))
 
-
-;#;(define (gen-lv ast result-sym loc-env)
-;  (displayln ast)
-;  (match ast
-;    [(id name)
-;     (let [(sym (lookup name loc-env))]
-;       (displayln loc-env)
-;       (if (temp-loc? sym)
-;           (list (ref-ins result-sym sym))
-;           (error "huge error.")))]
-;    [(array-access arr indx)
-;     (let* [(indx-temp (gen-temp))
-;            (indx-gen-code (gen indx indx-temp loc-env))
-;            (arr-temp (gen-temp))
-;            (arr-gen-code (gen-lv arr arr-temp loc-env))]
-;       (append 
-;        indx-gen-code
-;        arr-gen-code
-;        (list (binary-ins '+ result-sym arr-temp indx-temp))))]
-;    [(record-access rec indx offset)
-;     (let* [(offset-temp (gen-temp))
-;            (rec-temp (gen-temp))
-;            (rec-gen-code (gen-lv rec rec-temp loc-env))]
-;       (append rec-gen-code
-;               (list (lim-ins offset offset-temp)
-;                     (binary-ins '+ result-sym rec-temp offset-temp))))]))
+; TODO: make gen-lval dag things correctly?
+(define (gen-lval ast result-sym loc-env)
+  (match ast
+    [(id name)
+     (let [(sym (lookup name loc-env))]
+       (if (or (param-loc? sym) (temp-loc? sym) (mem-loc? sym))
+           (program-append (ins-combine (ref-ins result-sym sym)))
+           (error (format "internal error: lvalue id ~a bound to wrong location type" ast))))]
+    ["captain kirk is climbing a mountain. why is he climbing a mountain?" (void)]
+    [(array-access lval index return-t)
+     (let* [(lval-loc (gen-mem))
+            (lval-gen-code (gen-lval lval lval-loc loc-env)) ; I win at dominoes
+            (index-loc (gen-temp))
+            (index-gen-code (dag-gen index index-loc loc-env))]
+       (program-append (ins-combine (allocation lval-loc) (allocation index-loc))
+                       lval-gen-code
+                       index-gen-code
+                       (ins-combine (lim-ins 1 result-sym)
+                                    (binary-ins '+ lval-loc result-sym result-sym)
+                                    (binary-ins '+ index-loc result-sym result-sym))))]  
+    [(record-access lval field-id offset return-t)
+     (let* [(lval-loc (gen-mem))
+            (lval-gen-code (gen-lval lval lval-loc loc-env)) ; pickles
+            ]
+       (program-append (ins-combine (allocation lval-loc))
+                       lval-gen-code
+                       (ins-combine (lim-ins offset result-sym)
+                                    (binary-ins '+ lval-loc result-sym result-sym))))]
+       ))
 
 
 (define (create-conditional-jump condition to-label loc-env )

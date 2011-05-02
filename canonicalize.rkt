@@ -40,7 +40,7 @@
     [(binary-op other a b) (binary-op other (canonicalize a) (canonicalize b))]
     [(unary-op op a) (unary-op op (canonicalize a))]
     [(expseq seq) (expseq (map canonicalize seq))] 
-    [(array-access id index) (array-access (canonicalize id) (canonicalize index))]
+    [(array-access id index return-t) (array-access (canonicalize id) (canonicalize index) return-t)]
     
     [(funcall fun-id args) (funcall fun-id (map canonicalize args))]
     [(record-creation type-id fieldvals) (record-creation type-id 
@@ -65,7 +65,7 @@
         (list (vardec array #f (array-creation #f (int-literal (string-length val)) (int-literal 0)))) ;TODO: type information?
         (expseq
          (append (map (λ (char offset)
-                       (assignment (array-access (id array) (int-literal offset)) (int-literal char)))
+                       (assignment (array-access (id array) (int-literal offset) (t-int)) (int-literal char)))
                      (map char->integer (string->list val))
                      (build-list (string-length val) values))
                  (list (id array)))
@@ -76,7 +76,7 @@
     [(nil) (nil)]
     [(id a) (id a)]
     [(break) (break)]
-    [(record-access rec-id field-id offset) (record-access rec-id field-id offset)]
+    [(record-access rec-id field-id offset return-t) (record-access rec-id field-id offset return-t)]
     [(tydec type-id ty) (tydec type-id ty)]
     
     [else else]))

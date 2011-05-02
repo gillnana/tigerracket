@@ -230,9 +230,9 @@
 ; see struct lvalue
 (struct id (name) #:transparent)
 ; rec-id is an lvalue
-(struct record-access (rec-id field-id offset) #:transparent #:mutable)
+(struct record-access (rec-id field-id offset return-t) #:transparent #:mutable)
 ; id is an lvalue
-(struct array-access (id index) #:transparent)
+(struct array-access (id index return-t) #:transparent #:mutable)
 
 
 ; declarations
@@ -314,8 +314,8 @@
                       ; lval-suf is the first suffix in the suffix list
                       ; sub-lval is the new lvalue constructed so far
                       (match lval-suf
-                        [(lvalue-record-access field-name) (record-access sub-lval field-name #f)]
-                        [(lvalue-array-access index) (array-access sub-lval index)]))
+                        [(lvalue-record-access field-name) (record-access sub-lval field-name #f #f)]
+                        [(lvalue-array-access index) (array-access sub-lval index #f)]))
                     (id $1)
                     $2)])
     (lvalue-rest [() empty]
@@ -532,13 +532,13 @@
 
 ;lvalue testing including array accesses and declarations
 #;(check-expect (parse-string "drugs.f")
-              (record-access (id 'drugs) 'f))
+              (record-access (id 'drugs) 'f #f))
 (check-expect (parse-string "bears[philip] of 7")
               (array-creation (type-id 'bears) (id 'philip) (int-literal 7)))
 (check-expect (parse-string "int[philip] of 7")
               (array-creation (type-id 'int) (id 'philip) (int-literal 7)))
 (check-expect (parse-string "a[b]")
-              (array-access (id 'a) (id 'b)))
+              (array-access (id 'a) (id 'b) #f))
 
 ;; let in sequence
 (check-expect (parse-string "let in 1 end") (expseq (list (int-literal 1))))

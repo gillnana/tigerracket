@@ -1,0 +1,7 @@
+let
+  type a={x:int,y:int}
+  var p := a{x=5,y=7}
+in
+  print_int(p.x);
+  print_int(p.y);
+end

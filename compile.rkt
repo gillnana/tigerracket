@@ -15,14 +15,12 @@
 (gen-code 
  (gen-prog
   (canonicalize
-   (wrapstdlib 
     
     (let [(ast (wrapstdlib (parse-stdin)))]
       (type-of ast)
       (verify-loop-semantics ast)
       ast)
     
-   )
   )
  )
 )

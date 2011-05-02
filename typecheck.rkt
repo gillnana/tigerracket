@@ -96,10 +96,12 @@
                                            initval-type declared-type))
                             declared-type))))))]
     
-    [(array-access sub-node index)
+    [(and node (array-access sub-node index return-t))
      (match (type-of-env sub-node te ve)
        [(t-array (box type)) (if (t-int? (type-of-env index te ve))
-                                 type
+                                 (begin 
+                                   (set-array-access-return-t! node type) ; ASDF
+                                   type)
                                  (error (format "type error: attempted to access array ~a with non-integer index" sub-node)))]
        [else (error (format "type error: illegal access of non-array variable ~a" sub-node))])]
           
@@ -122,10 +124,11 @@
              ;TODO: improve this error message by telling which field was specified incorrectly -- actually, is this in order?
              [else (error (format "type error: wrong field types specified for instance record type ~a" type))]))]
     
-    [(and (record-access rec field-id offset) node)
+    [(and (record-access rec field-id offset return-t) node)
      (or (ormap (λ (field) (if (equal? (field-name field) field-id)
                                (begin
                                  (set-record-access-offset! node (field-offset field))
+                                 (set-record-access-return-t! node (unbox (field-ty field)))
                                  (unbox (field-ty field)))
                                #f))
                 (t-record-fields (type-of-env rec te ve)))
