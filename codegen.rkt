@@ -232,7 +232,7 @@
        (ln "sub $sp, $sp, " (* 4 (max (length args) 4)))
        (map (λ (arg num)
               ; note: a param-loc always refers to the parameters of the *current* function.
-              (when (< 4 num) 
+              (when (> 4 num) 
                 (lnload arg (string-append "$a" (number->string num)) cur-block))
               
               (lnload arg TEMP0 cur-block)

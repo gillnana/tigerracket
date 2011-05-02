@@ -49,10 +49,11 @@ then
 	exit 1
 fi
 
-malfile=$(mktemp -t mips_malfile.XXXXXX)
-trap "rm -f $malfile" EXIT
+#malfile=$(mktemp -t mips_malfile.XXXXXX)
+malfile=tmp.s
+#trap "rm -f $malfile" EXIT
 ofile=$(mktemp -t mips_ofile.XXXXXX)
-trap "rm -f $malfile $ofile" EXIT
+#trap "rm -f $malfile $ofile" EXIT
 
 echo "compiling $infile to $malfile..."
 compile "$infile" "$malfile"
