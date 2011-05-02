@@ -1,0 +1,5 @@
+let
+  type a={x:int,y:int}
+in
+  a{x=5,y=7}
+end

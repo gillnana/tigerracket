@@ -4,3 +4,4 @@
 .\#
 compiled
 a.out
+.tmp*
