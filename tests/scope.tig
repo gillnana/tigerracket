@@ -1,0 +1,15 @@
+let
+   var x : int := 13
+in
+   let  
+      var y : int := x
+      var z : int := 44
+      function f(x:int,y:int):int=x+y+z
+   in
+      let
+         var x : int := 15
+      in
+         print_int(f(x,y))
+      end
+   end
+end
