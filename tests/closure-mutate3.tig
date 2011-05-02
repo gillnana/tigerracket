@@ -1,0 +1,6 @@
+let
+   var x : int := 24
+   function f():int = x
+in
+   print_int(x)
+end

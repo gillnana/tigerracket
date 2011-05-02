@@ -1,5 +1,6 @@
 let
-   function f() =
+   type a = () -> int
+   function f() : a =
       let
          var x : int := 25
          function g():int = x
@@ -14,10 +15,10 @@ in
       var fjsdklafj : int := 94394
       var djfkljgrui : int := 49534
       var jgioerha : int := 459325
-      var gioejioagjir : int := 49324329
-      var gjruioegeuagh : int := 58940531249
-      var fdjsofijf : int := 430923583
+      var gioejioagjir : int := 493243
+      var gjruioegeuagh : int := 589405
+      var fdjsofijf : int := 4309235
    in
-      f()()
+      print_int(f()())
    end
 end

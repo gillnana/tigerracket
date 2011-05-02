@@ -37,7 +37,7 @@
        (ln "#      begin def " lbl)
        (ln (labelize lbl))
        (ln (stack-setup locals))
-       (create-activation-record locals cur-block)
+       (create-activation-record locals cb)
        (ln "#      done setting up activation record")
        ; assume the variables this function has access to are sorted (?), including parameters to this fxn 
        
@@ -283,7 +283,7 @@
     (let* ([params (filter param-loc? local-vars)]
            [nums (build-list (length params) values)])
       (map (λ (loc num) 
-             (ln "lw " TEMP0 COMMA (* 4 (+ 2 num)) "($sp)")
+             (ln "lw " TEMP0 COMMA (* 4 (+ 1 #|TODO MAGIC MAGIC|# num)) "($sp) # copy arg " num)
              (lnstore TEMP0 loc cur-block)
              )
            params
@@ -344,13 +344,15 @@
   (ln (format "#            begin (lnload ~a ~a ~a)" src-loc dest-reg (fxn-block-label cur-block)))
   (match src-loc
     [(? symbol? src-loc) (error "internal error: trying to load value from 'ans")]
-    [(param-loc sym num)
+   #; [(param-loc sym num)
      (if (<= 0 num 3)
          (ln "move " dest-reg COMMA "$a" num)
          (error 'UnsupportedOperationException);(ln "lw " dest-reg COMMA)
          )]
-    [(or (temp-loc sym) (label-loc sym))
+    [(or (temp-loc sym) (label-loc sym) (param-loc sym _))
      (let-values ([(nest-depth offset) (find-static src-loc cur-block)])
+       ;(displayln (fxn-block-local-vars cur-block)) ; MESS
+       ;(displayln src-loc)
        (ln "move " TEMP3 COMMA AR_CURRENT " # loading variable at nest-depth " nest-depth " and offset " offset)
        (jump-back-one nest-depth cur-block)
        (ln "lw " dest-reg COMMA (* 4 (+ 1 offset)) "(" TEMP3 ")"))]
@@ -363,13 +365,13 @@
   (ln (format "#             begin (lnstore ~a ~a ~a)" src-reg dest-loc (fxn-block-label cur-block)))
   (match dest-loc
     [(? symbol? sym) (ln "#ignore store into ans")]
-    [(param-loc sym num)
+   #; [(param-loc sym num)
      (if (<= 0 num 3)
          (ln "move " "$a" num COMMA src-reg)
          (error 'UnsupportedOperationException);(ln "lw " dest-reg COMMA 
          )
      ]
-    [(or (temp-loc sym) (label-loc sym))
+    [(or (temp-loc sym) (label-loc sym) (param-loc sym _))
      (let-values ([(nest-depth offset) (find-static dest-loc cur-block)])
        ; this named let jumps back
        (ln "move " TEMP3 COMMA AR_CURRENT)

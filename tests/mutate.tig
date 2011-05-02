@@ -1,0 +1,6 @@
+let
+   var x : int := 14
+in
+   x := 33;
+   print_int(x);
+end

@@ -351,7 +351,8 @@
     
     
     [(funcall fun-id caller-args)
-     (let* [(f (var-lookup (id-name fun-id) ve))
+     (let* [#;(f (var-lookup (id-name fun-id) ve))
+            (f (type-of-env fun-id te ve))
             (fundef-args (t-fun-args f))]
        ;(displayln f)
        ;TODO make sure the funcall and the fundef have the same number of arguments

@@ -182,7 +182,7 @@
 (define (dag-gen ast result-sym loc-env)
   ;(displayln dag-table)
   (let [(cached-node (hash-ref dag-table ast #f))]
-    (if cached-node
+    (if cached-node #;false
         (ins-combine (move-ins cached-node result-sym))
         (begin
           (hash-set! dag-table ast result-sym)
@@ -212,9 +212,12 @@
      (ins-combine (lim-ins val result-sym))]
     
     [(id name)
+     #;(displayln loc-env)
+     #;(displayln name)
      (let [(sym (lookup name loc-env))]
+       #;(displayln sym)
        (if (or (temp-loc? sym) (param-loc? sym) (label-loc? sym))
-           (program (list #;(allocation sym) (move-ins sym result-sym)) empty)
+           (program-append (ins-combine #;(allocation sym) (move-ins sym result-sym)))
            (error (format "internal error: identifier ~a found in wrong location type ~a" name sym))))]
     
     ; STRUCTURE CREATION
@@ -263,11 +266,11 @@
     ;    
     ;    [(record-creation type-id fieldvals)
     ;     (let* [(size-register (gen-temp))
-    ;            (size-gen-code (lim-ins (length fieldvals) size-register)
+    ;            (size-gen-code (lim-ins (length fieldvals) size-fregister)
     ;    
     ; assignment doesn't overwrite ans. this is ok.
     [(assignment (id name) expr)
-     (let* [(dest-loc (lookup name loc-env))
+     (let* [(dest-loc (lookup name loc-env)) 
             (rval-gen-code (dag-gen expr dest-loc loc-env ))]
        (reset-dag-table!)
        (if (temp-loc? dest-loc)
@@ -479,6 +482,7 @@
                                   
                                   
                                   (parameterize [(parent-fxn (cons sub-fxn-ph (parent-fxn)))]
+                                    (reset-dag-table!)
                                     (functionize fun-label 
                                                  (program-append
                                                   (ins-combine (allocation return-val-loc)
@@ -500,6 +504,7 @@
                           ]
                          )))]
          ;(displayln fn-assign-program)
+         (reset-dag-table!)
          (program-append fn-assign-program
                          (dag-gen body result-sym inner-loc-env)))
        )]
@@ -508,7 +513,9 @@
     [(funcall fun-id args)
      (reset-dag-table!)
      ;TODO evaluate fun-id which might be any expression
-     (let* [(f (lookup (id-name fun-id) loc-env))
+     (let* [;(f (lookup (id-name fun-id) loc-env))
+            (f-loc (gen-label-loc))
+            (f-load-prog (dag-gen fun-id f-loc loc-env))
             (arg-sym-list (build-list (length args) (λ (ignore) (gen-temp))))
             (label-here (gen-label))
             (label-holder (gen-temp))
@@ -521,16 +528,18 @@
                                                           (dag-gen arg param-sym loc-env )))
                                         args arg-sym-list)))
             ]
-       (if (or (param-loc? f) (label-loc? f)) #;(label-loc? f) ; TODO a function can be passed as a parameter in which case this will be a param-loc
+       (if (or (param-loc? f-loc) (label-loc? f-loc)) #;(label-loc? f) ; TODO a function can be passed as a parameter in which case this will be a param-loc
            
-           (program-append param-gen-code
-                   ;(map push-ins arg-sym-list)
-                   (ins-combine (funcall-ins f arg-sym-list result-sym)
-                         ) ; the last argument is the return address
-                   )
+           (program-append (ins-combine (allocation f-loc))
+                           f-load-prog 
+                           param-gen-code
+                           ;(map push-ins arg-sym-list)
+                           (ins-combine (funcall-ins f-loc arg-sym-list result-sym)
+                                        ) ; the last argument is the return address
+                           )
            
            
-           (error (format "internal error: function ~a bound to wrong location type ~a" fun-id f))))]
+           (error (format "internal error: function ~a bound to wrong location type ~a" fun-id f-loc))))]
     
     [(break) (ins-combine (break-ins))]
     ))

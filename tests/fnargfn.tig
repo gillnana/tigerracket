@@ -1,0 +1,7 @@
+let
+   type a = int -> int
+   function f(proc:a):int = proc(5)
+   function h(x:int):int = x+27
+in
+   print_int(f(h))
+end
