@@ -1,0 +1,6 @@
+let
+  function id(x:int):int = x
+  function g(z:int):int = id(z)
+in
+  print_int(g(123))
+end
