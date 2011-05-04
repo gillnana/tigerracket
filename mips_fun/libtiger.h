@@ -23,6 +23,10 @@ extern string_t* alloc_string(int num_elem);
 
 extern pair_t* alloc_closure(void* code, void* ar);
 
+extern void assert_nonnil(void* thing);
+
+extern void assert_inbounds(array_t* arr, int index);
+
 
 extern void lt_flush();
 extern void lt_print(string_t* str);

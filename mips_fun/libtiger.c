@@ -70,6 +70,15 @@ extern pair_t* alloc_closure(void* code, void* ar) {
   return ans;
 }
 
+extern void assert_nonnil(void* thing) {
+  if (!thing) {
+    char* msg = "Null pointer: tried to read or write a field of nil\n"; 
+    int len = 52;
+    write(2, msg, len);
+    abort();
+  }
+}
+
 extern void lt_print(string_t* str) {
   int len = str->length;
   int i=0;
