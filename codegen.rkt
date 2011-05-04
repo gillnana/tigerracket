@@ -88,8 +88,8 @@
             (ln "add $sp, $sp, 16")
             (lnstore RETURN_REGISTER dest-loc cur-block)
             )]
-    [(malloc-ins size-loc dest-loc)
-     (lnload size-loc "$a0" cur-block)
+    [(malloc-ins size dest-loc)
+     (ln "li $a0, " size)
      (ln "li $a1, 0")
      (ln "sub $sp, $sp, 16")
      (ln "jal alloc_block")

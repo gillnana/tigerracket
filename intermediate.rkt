@@ -2,6 +2,7 @@
 (require "parser.rkt")
 (require "typecheck.rkt")
 (require "canonicalize.rkt")
+(require "semantic-loop.rkt")
 ;(require "dag.rkt")
 (require test-engine/racket-tests)
 
@@ -238,20 +239,15 @@
    
     
     [(record-creation type-id fieldvals)
-     (let* [(size-register (gen-temp))
-            (size-gen-code (ins-combine (lim-ins (length fieldvals) size-register)))
-            (result-holder (gen-mem))
-            (malloc-gen-code (ins-combine (malloc-ins size-register result-holder)))
+     (let* [(result-holder (gen-mem))
             (cur-element-loc (gen-mem))
             (fieldval-loc (gen-temp))
             ]
        
        (program-append (ins-combine (allocation result-holder) 
-                                    (allocation size-register) 
                                     (allocation cur-element-loc)
                                     (allocation fieldval-loc)
-                                    (malloc-ins size-register result-holder))
-                       
+                                    (malloc-ins (length fieldvals) result-holder))
                        (apply 
                         program-append 
                         (map (λ (field offset)
@@ -260,7 +256,7 @@
                                   (program-append 
                                    (dag-gen val fieldval-loc loc-env)
                                    (ins-combine
-                                    (lim-ins offset cur-element-loc)
+                                    (lim-ins (* 4 offset) cur-element-loc)
                                     (binary-ins '+ result-holder cur-element-loc cur-element-loc)
                                     (deref-assign-ins cur-element-loc fieldval-loc)))]))
                              fieldvals
@@ -521,18 +517,21 @@
             (index-loc (gen-temp))
             (index-gen-code (dag-gen index index-loc loc-env))]
        (program-append (ins-combine (allocation lval-loc) (allocation index-loc))
-                       lval-gen-code
+                       lval-gen-code ; puts a pointer to arr into lval-loc
+                       (ins-combine (deref-ins lval-loc lval-loc)) ; puts the arr itself into lval-loc
                        index-gen-code
-                       (ins-combine (lim-ins 1 result-sym)
+                       (ins-combine (lim-ins 4 result-sym) ; offset by 1 word
+                                    (binary-ins '* index-loc result-sym index-loc) ; multiply index by 4
                                     (binary-ins '+ lval-loc result-sym result-sym)
-                                    (binary-ins '+ index-loc result-sym result-sym))))]  
+                                    (binary-ins '+ index-loc result-sym result-sym))))]
     [(record-access lval field-id offset return-t)
      (let* [(lval-loc (gen-mem))
             (lval-gen-code (gen-lval lval lval-loc loc-env)) ; pickles
             ]
        (program-append (ins-combine (allocation lval-loc))
                        lval-gen-code
-                       (ins-combine (lim-ins offset result-sym)
+                       (ins-combine (deref-ins lval-loc lval-loc)
+                                    (lim-ins (* 4 offset) result-sym)
                                     (binary-ins '+ lval-loc result-sym result-sym))))]
        ))
 

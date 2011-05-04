@@ -1,0 +1,6 @@
+let
+   type a = array of int
+   var k := a[10] of 7
+in
+   print_int(k[5])
+end
