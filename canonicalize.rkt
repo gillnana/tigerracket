@@ -5,23 +5,37 @@
 
 (provide (all-defined-out))
 
+; translates a tiger arithmetic operator
+; into the corresponding Racket operator
+(define (op-lookup op-sym)
+  (match op-sym
+    ['+ +]
+    ['- -]
+    ['* *]
+    ['/ quotient]
+    ['= =]
+    ['<> (λ (a b) (not (= a b)))]
+    ['< <]
+    ['> >]
+    ['<= <=]
+    ['>= >=]))
+
 (define (canonicalize ast)
   
   ; TODO make sure that fields are specified in the same order as declared for record creation
   ; do this by alphabetizing the field order at canonicalization
   ; note type checking must follow canonicalization in this case
   (match ast
-    
     #;[(for-statement index start end body)
-     (let-vars
-      (list (vardec index #f start))
-      (expseq
-       (list
-        (while-statement (binary-op (op '<=) (id index) end) 
-                         (expseq
-                          (list
-                           (canonicalize body)
-                           (binary-op (op '+) (id index) (int-literal 1))))))))]
+       (let-vars
+        (list (vardec index #f start))
+        (expseq
+         (list
+          (while-statement (binary-op (op '<=) (id index) end) 
+                           (expseq
+                            (list
+                             (canonicalize body)
+                             (binary-op (op '+) (id index) (int-literal 1))))))))]
     
     [(for-statement index start end body)
      (let-vars
@@ -49,19 +63,41 @@
                                   (expseq empty))))
       (expseq (list (funcall (id 'f) empty))))]
     
-    [(if-statement c t e) (if-statement (canonicalize c) (canonicalize t) (canonicalize e))]
+    ; an if-statement of a literal value can have one branch eliminated
+    [(if-statement c t e)
+     (let ([c (canonicalize c)]
+           [t (canonicalize t)]
+           [e (canonicalize e)])
+       (match c
+         [(int-literal 0) e]
+         [(int-literal _) t]
+         [_ (if-statement c t e)]))]
+    
     
     [(binary-op (op '&) a b)
-     (if-statement (canonicalize a)
-                   (if-statement (canonicalize b) (int-literal 1) (int-literal 0))
-                   (int-literal 0))]
+     (canonicalize (if-statement a
+                                 (if-statement b
+                                               (int-literal 1)
+                                               (int-literal 0))
+                                 (int-literal 0)))]
     
     [(binary-op (op 'or) a b)
-     (if-statement (canonicalize a)
-                   (int-literal 1)
-                   (if-statement (canonicalize b) (int-literal 1) (int-literal 0)))]
+     (canonicalize (if-statement a
+                                 (int-literal 1)
+                                 (if-statement b
+                                               (int-literal 1)
+                                               (int-literal 0))))]
     
-    [(binary-op other a b) (binary-op other (canonicalize a) (canonicalize b))]
+    ; evaluate constant arithmetic expressions
+    [(binary-op (op arith) a b)
+     (let ([a (canonicalize a)]
+           [b (canonicalize b)])
+       (if (and (int-literal? a)
+                (int-literal? b))
+           (int-literal ((op-lookup arith) (int-literal-value a)
+                                           (int-literal-value b)))
+           (binary-op (op arith) a b)))]
+    
     [(unary-op op a) (unary-op op (canonicalize a))]
     [(expseq seq) (expseq (map canonicalize seq))] 
     [(array-access id index return-t) (array-access (canonicalize id) (canonicalize index) return-t)]
