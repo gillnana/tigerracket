@@ -20,6 +20,10 @@
     ['<= <=]
     ['>= >=]))
 
+(define (op-lookup-unary op-sym)
+  (match op-sym
+    ['- -]))
+
 (define (canonicalize ast)
   
   ; TODO make sure that fields are specified in the same order as declared for record creation
@@ -37,31 +41,33 @@
                              (canonicalize body)
                              (binary-op (op '+) (id index) (int-literal 1))))))))]
     
+    ; turning (canon (for ...)) into (canon (let ...)) is ok, because (let ...) is "simpler" than (for ...)
+    ; so the compiler will definitely not infinite loop
     [(for-statement index start end body)
-     (let-vars
-      (list (vardec 'startval 'int (canonicalize start))
-            (vardec 'endval 'int (canonicalize end)))
-      (expseq (list (let-funs
-               (list (fundec 'f 
-                             (list (tyfield index (type-id 'int)))
-                             #f
-                             (if-statement
-                              (binary-op (op '<=) (id index) (id 'endval))
-                              (expseq
-                               (list
-                                (canonicalize body)
-                                (funcall (id 'f) (list (binary-op (op '+) (id index) (int-literal 1))))))
-                              (expseq empty))))
-               (expseq (list (funcall (id 'f) (list (id 'startval)))))))))]
-                                
+     (canonicalize (let-vars
+                    (list (vardec 'startval 'int start)
+                          (vardec 'endval 'int end))
+                    (expseq (list (let-funs
+                                   (list (fundec 'f
+                                                 (list (tyfield index (type-id 'int)))
+                                                 #f
+                                                 (if-statement
+                                                  (binary-op (op '<=) (id index) (id 'endval))
+                                                  (expseq
+                                                   (list
+                                                    body
+                                                    (funcall (id 'f) (list (binary-op (op '+) (id index) (int-literal 1))))))
+                                                  (expseq empty))))
+                                   (expseq (list (funcall (id 'f) (list (id 'startval))))))))))]
     
+    ; like for-loops, while loops should turn into a (let ...), which should in turn be canonicalized
     [(while-statement cond body)
-     (let-funs
-      (list (fundec 'f empty #f
-                    (if-statement (canonicalize cond)
-                                  (expseq (list (canonicalize body) (funcall (id 'f) empty)))
-                                  (expseq empty))))
-      (expseq (list (funcall (id 'f) empty))))]
+     (canonicalize (let-funs
+                    (list (fundec 'f empty #f
+                                  (if-statement cond
+                                                (expseq (list body (funcall (id 'f) empty)))
+                                                (expseq empty))))
+                    (expseq (list (funcall (id 'f) empty)))))]
     
     ; an if-statement of a literal value can have one branch eliminated
     [(if-statement c t e)
@@ -98,12 +104,23 @@
                                            (int-literal-value b)))
            (binary-op (op arith) a b)))]
     
-    [(unary-op op a) (unary-op op (canonicalize a))]
-    [(expseq seq) (expseq (map canonicalize seq))] 
+    [(unary-op op a)
+     (let ([a (canonicalize a)])
+       (match a
+         [(int-literal val) (int-literal ((op-lookup-unary (op-op op)) val))]
+         [_ (unary-op op a)]))]
+    
+    [(expseq seq) 
+     (let ([seq (map canonicalize seq)])
+       (if (= 1 (length seq))
+           (first seq)
+           (expseq seq)))]
+    
     [(array-access id index return-t) (array-access (canonicalize id) (canonicalize index) return-t)]
     
     [(funcall fun-id args) (funcall fun-id (map canonicalize args))]
-    [(record-creation type-id fieldvals) (record-creation type-id 
+    
+    [(record-creation type-id fieldvals) (record-creation type-id
                                                           (map
                                                            (match-lambda
                                                              [(fieldval name val)
@@ -125,11 +142,11 @@
         (list (vardec array #f (array-creation #f (int-literal (string-length val)) (int-literal 0)))) ;TODO: type information?
         (expseq
          (append (map (λ (char offset)
-                       (assignment (array-access (id array) (int-literal offset) (t-int)) (int-literal char)))
-                     (map char->integer (string->list val))
-                     (build-list (string-length val) values))
+                        (assignment (array-access (id array) (int-literal offset) (t-int)) (int-literal char)))
+                      (map char->integer (string->list val))
+                      (build-list (string-length val) values))
                  (list (id array)))
-                 )))]
+         )))]
     
     
     [(int-literal val) (int-literal val)]
