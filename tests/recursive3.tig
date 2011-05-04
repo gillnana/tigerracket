@@ -1,0 +1,4 @@
+let
+   function f():int = f()
+in
+end

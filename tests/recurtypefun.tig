@@ -1,7 +1,0 @@
-let
-  type a = int -> a
-  function f(x:int):a = (print_int(x); f)
-in
-  f(4)(2)
-end
-

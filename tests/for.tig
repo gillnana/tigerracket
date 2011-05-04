@@ -1,0 +1,5 @@
+for q := 2 to 7 do
+  (print_int(q);
+   print("\n");
+  )
+

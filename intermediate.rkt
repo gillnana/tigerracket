@@ -34,67 +34,67 @@
 
 ; allocation represents allocating space for a variable
 ; it is completely internal to intermediate.rkt and should be ignored by later phases
-(struct allocation (loc) #:transparent)
+(struct allocation (loc) #:prefab)
 ; this struct is completely generic and includes all types of locs.  later (at codegen time) these locs should be
 ; unpacked and put into the right part of the stack frame depending on their type
 
-(struct move-ins (src dest) #:transparent)
-(struct lim-ins (imm dest) #:transparent) ; constant value imm is put into dest
-(struct binary-ins (op src1 src2 dest) #:transparent)
-(struct unary-ins (op src dest) #:transparent)
+(struct move-ins (src dest) #:prefab)
+(struct lim-ins (imm dest) #:prefab) ; constant value imm is put into dest
+(struct binary-ins (op src1 src2 dest) #:prefab)
+(struct unary-ins (op src dest) #:prefab)
 
-(struct uncond-jump-ins (dest) #:transparent)
-(struct cond-jump-ins (src dest) #:transparent) ; conditionally jumps if src is FALSE
-(struct cond-jump-relop-ins (op src1 src2 dest) #:transparent) ; conditionally jumps if (relop src1 src2) is FALSE
+(struct uncond-jump-ins (dest) #:prefab)
+(struct cond-jump-ins (src dest) #:prefab) ; conditionally jumps if src is FALSE
+(struct cond-jump-relop-ins (op src1 src2 dest) #:prefab) ; conditionally jumps if (relop src1 src2) is FALSE
 
-(struct push-ins (src) #:transparent) ; pushes the contents of src onto the stack as a function parameter
+(struct push-ins (src) #:prefab) ; pushes the contents of src onto the stack as a function parameter
 
-(struct break-ins () #:transparent) ;breaks out of a current for loop.  expects loops to be implemented as tail-recursive functions
+(struct break-ins () #:prefab) ;breaks out of a current for loop.  expects loops to be implemented as tail-recursive functions
 
-(struct array-allocate-ins (src1 dest) #:transparent) ;this instruction allocates an array to some initial value, which most backends will do for free. src1 is the address of the expression to be inserted into the array.  dest is the mem-block struct which is the location of the array.
+(struct array-allocate-ins (src1 dest) #:prefab) ;this instruction allocates an array to some initial value, which most backends will do for free. src1 is the address of the expression to be inserted into the array.  dest is the mem-block struct which is the location of the array.
 
-(struct deref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=*y, putting the r-value of y into the r-value of x
-(struct ref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=&y, putting the l-value of y into the r-value of x
-(struct deref-assign-ins (src1 src2) #:transparent) ; this instruction is *x=y, putting the r-value of y into the l-value of x
+(struct deref-ins (src1 src2) #:prefab) ; this instruction corresponds to x=*y, putting the r-value of y into the r-value of x
+(struct ref-ins (src1 src2) #:prefab) ; this instruction corresponds to x=&y, putting the l-value of y into the r-value of x
+(struct deref-assign-ins (src1 src2) #:prefab) ; this instruction is *x=y, putting the r-value of y into the l-value of x
 
-(struct array-bounds-check-ins (array-loc index-loc) #:transparent)
+(struct array-bounds-check-ins (array-loc index-loc) #:prefab)
 
 
-(struct stack-setup-ins () #:transparent) ; in MIPS, push ra and fp onto stack, sets new fp to current value of sp
-(struct stack-teardown-ins () #:transparent) ; pops fp and ra from stack into registers, sets stack to old value of sp
-(struct jump-to-return-address-ins () #:transparent)
+(struct stack-setup-ins () #:prefab) ; in MIPS, push ra and fp onto stack, sets new fp to current value of sp
+(struct stack-teardown-ins () #:prefab) ; pops fp and ra from stack into registers, sets stack to old value of sp
+(struct jump-to-return-address-ins () #:prefab)
 
 ;(struct funcall-ins (labloc num-params return-val) #:transparent) ;num-params is a statically determined integer.  the return value of the funcall is placed in the return-val location
 
 ; this is a better representation; you don't always put arguments on the stack. you sometimes use $a0-$a3
-(struct funcall-ins (labloc params dest) #:transparent)
+(struct funcall-ins (labloc params dest) #:prefab)
 
-(struct return-ins (return-val-loc) #:transparent) ;represents an instruction that puts the return value of a function in the location it should go, wherever that may be
+(struct return-ins (return-val-loc) #:prefab) ;represents an instruction that puts the return value of a function in the location it should go, wherever that may be
 
-(struct closure-ins (label dest) #:transparent) ; creates a closure over the specified label (function pointer) and puts it in the dest register.  in MIPS code, lim.
+(struct closure-ins (label dest) #:prefab) ; creates a closure over the specified label (function pointer) and puts it in the dest register.  in MIPS code, lim.
 
-(struct malloc-ins (size dest) #:transparent #:extra-constructor-name gen-malloc-ins/☃)
-(struct array-malloc-ins (size initval dest) #:transparent #:extra-constructor-name stfu-dave)
+(struct malloc-ins (size dest) #:prefab)
+(struct array-malloc-ins (size initval dest) #:prefab)
 
 ; LOCATIONS
 
-(struct location-binding (var loc) #:transparent)
+(struct location-binding (var loc) #:prefab)
 
 ; a word-sized loc is either:
 ;   - a temp-loc, which may be either a register or a word in memory
-(struct temp-loc (t) #:transparent)
+(struct temp-loc (t) #:prefab)
 
 ; a malloc'd block of memory is:
 ;   m is a gensym to uniquely identify the block
 ;   size is a location that (at runtime) holds the size of the block to be allocated
-(struct mem-block (m size) #:transparent) ; the size is the location of the register or temporary holding the size of this block, which is itself an expression that must be computed at runtime
+(struct mem-block (m size) #:prefab) ; the size is the location of the register or temporary holding the size of this block, which is itself an expression that must be computed at runtime
 ; the offset of a mem-loc is the location within the block, described as the number of words from the beginning, indexed from 0.  the block is represented by a location holding the address of that block.
 
-(struct mem-loc (m) #:transparent) ; currently a mem-loc only refers to an element of memory on the heap.  pointer arithmetic does the rest.
+(struct mem-loc (m) #:prefab) ; currently a mem-loc only refers to an element of memory on the heap.  pointer arithmetic does the rest.
 
 
-(struct label-loc (l) #:transparent)
-(struct param-loc (p param-number) #:transparent)
+(struct label-loc (l) #:prefab)
+(struct param-loc (p param-number) #:prefab)
 
 ;(struct return-val-loc () #:transparent) ;location of the return value
 
@@ -103,7 +103,7 @@
 
 ;(struct record-table-entry (name pointer? offset) #:transparent) ; the pointer? of a record-table-entry is a boolean describing whether or not this word of the record is a pointer or if the bits of the word actually contain the desired data.  this is #t for integers and #f otherwise.  the offset is given as number of words indexed from 0.
 
-(struct label (l) #:transparent)
+(struct label (l) #:prefab)
 
 
 
@@ -157,7 +157,7 @@
                                    inslist 
                                    (rest (parent-fxn))
                                    (filter-map (match-lambda
-                                                 ; TODO: mem-loc wtf what do?
+                                                ; TODO: mem-loc wtf what do?
                                                  ; TODO: IMPL
                                                  [(allocation loc) loc]
                                                  [_ #f])
@@ -218,15 +218,8 @@
     [(string-literal val)
      (ins-combine (lim-ins val result-sym))]
     
-    [(id name)
-     #;(displayln loc-env)
-     #;(displayln name)
-     (let [(sym (lookup name loc-env))]
-       #;(displayln sym)
-       (if (or (temp-loc? sym) (param-loc? sym) (label-loc? sym))
-           (program-append (ins-combine #;(allocation sym) (move-ins sym result-sym)))
-           (error (format "internal error: identifier ~a found in wrong location type ~a" name sym))))]
-    
+    [(id name) (program-append (ins-combine (move-ins (lookup name loc-env) result-sym)))]
+
     [(array-creation type-id size-expr initval)
      (let* [(size-loc (gen-temp))
             (size-gen-code (dag-gen size-expr size-loc loc-env))
@@ -279,9 +272,7 @@
      (let* [(dest-loc (lookup name loc-env)) 
             (rval-gen-code (dag-gen expr dest-loc loc-env ))]
        (reset-dag-table!)
-       (if (temp-loc? dest-loc)
-           rval-gen-code
-           (error (format "internal error: identifier ~a or bound to wrong location type" name)))
+       rval-gen-code  
        )]
     
     [(assignment lvalue expr)
@@ -352,8 +343,11 @@
     [(if-statement cond then (expseq empty))
      (let* [(end-label (gen-label))
             (then-register (gen-temp))
+            (cond-gen-code (create-conditional-jump cond end-label loc-env))
+            ; the conditional code always executes so doesnt need to drop the dag table
             (then-gen-code (dag-gen then then-register loc-env))
-            (cond-gen-code (create-conditional-jump cond end-label loc-env))]
+            ]
+       (reset-dag-table!)
        (program-append (ins-combine (allocation then-register))
                        cond-gen-code
                        then-gen-code
@@ -364,14 +358,16 @@
             (then-register (gen-temp))
             (else-label (gen-label))
             (else-register (gen-temp))
+            (cond-gen-code (create-conditional-jump cond else-label loc-env))
             (then-gen-code (program-append (ins-combine (allocation then-register)
                                                         (allocation else-register))
                                            (dag-gen then then-register loc-env )
                                            (ins-combine (move-ins then-register result-sym)
                                                         (uncond-jump-ins end-label)
                                                         else-label)))
-            (else-gen-code (dag-gen else else-register loc-env ))
-            (cond-gen-code (create-conditional-jump cond else-label loc-env ))]
+            (else-gen-code (begin 
+                             (reset-dag-table!)
+                             (dag-gen else else-register loc-env )))]
        (reset-dag-table!)
        (program-append cond-gen-code
                        then-gen-code
@@ -396,77 +392,88 @@
     [(let-funs decs body)
      (begin
        (reset-dag-table!)
-       ; TODO: this is EXTREMELY SILLY for now
-       ; assume that this is the top-level let-standard-library thingy
-       (let-values [((inner-loc-env fn-assign-program)
-                     (for/fold ([le loc-env]
-                                [prog (program empty empty)] ; the accumulated library of fundefs
-                                )
-                       [(dec decs)]
+       (let [(fn-placeholder-locs
+              (foldl (λ (dec placeholder-bindings)
                        (match dec
-                         ; case for external compiled function
-                         [(fundec id tyfields type-id (stdlibfxn lbl _))
-                          (let [(sym (gen-label-loc))]
-                            (values 
-                             (cons (location-binding id sym) le)
-                             ;(cons (lim-ins (label (string->symbol (string-append "lt_" (symbol->string lbl)))) sym) instructions)
-                             (program-append (ins-combine 
-                                              (allocation sym)
-                                              (closure-ins (label (string->symbol (string-append "lt_" 
-                                                                                                 (symbol->string lbl))))
-                                                           sym))
-                                             prog)
-                             ))]
-                         ; case for tiger-defined function
-                         [(fundec id tyfields type-id body)
-                          (let* ([fun-label (gen-label)]
-                                 [sym (gen-label-loc)] ; the location that holds the label of this function
-                                 [return-val-loc (gen-temp)] ; the location that the function will put its answer into 
-                                 ;during the return-ins
-                                 ; add all the parameters into the location environment
-                                 ;TODO: params currently start from 0. is there reason to start from 1?
-                                 [body-new-le (map (λ (tyf param-num)
-                                                     (match tyf
-                                                       [(tyfield ty-name ty-ty)
-                                                        (location-binding ty-name 
-                                                                          (gen-param param-num))]))
-                                                   tyfields
-                                                   (build-list (length tyfields) values))]
-                                 [body-le (append body-new-le
-                                                  le)]
-                                 ; generate the function
-                                 [sub-fxn-ph (make-placeholder 'dummy)]
-                                 [fn-body-prog 
-                                   
-                                  
-                                  
-                                  (parameterize [(parent-fxn (cons sub-fxn-ph (parent-fxn)))]
-                                    (reset-dag-table!)
-                                    (functionize fun-label 
-                                                 (program-append
-                                                  (ins-combine (allocation return-val-loc)
-                                                               (map (match-lambda
-                                                                      [(location-binding _ param)
-                                                                       (allocation param)])
-                                                                    body-new-le))
-                                                  (dag-gen body return-val-loc body-le)
-                                                  (ins-combine (return-ins return-val-loc))) sub-fxn-ph)
-                                    )
-                                  ])
-                            (values 
-                             (cons (location-binding id sym) le)
-                             (program-append (ins-combine (allocation sym))
-                                             fn-body-prog
-                                             (ins-combine (closure-ins fun-label sym))
-                                             prog)
-                             ))
-                          ]
-                         )))]
+                         [(fundec _ _ _ (stdlibfxn _ _)) placeholder-bindings]
+                         [(fundec id _ _ _)
+                          (cons (location-binding id (make-placeholder 'fish)) placeholder-bindings)
+                          ]))
+                     empty
+                     decs)
+              )]
+         ; TODO: this is EXTREMELY SILLY for now
+         ; assume that this is the top-level let-standard-library thingy
+         (let-values [((inner-loc-env fn-assign-program)
+                       (for/fold ([le (append fn-placeholder-locs loc-env)]
+                                  [prog (program empty empty)] ; the accumulated library of fundefs
+                                  )
+                         [(dec decs)]
+                         (match dec
+                           ; case for external compiled function
+                           [(fundec id tyfields type-id (stdlibfxn lbl _))
+                            (let [(sym (gen-label-loc))]
+                              (values 
+                               (cons (location-binding id sym) le)
+                               ;(cons (lim-ins (label (string->symbol (string-append "lt_" (symbol->string lbl)))) sym) instructions)
+                               (program-append (ins-combine 
+                                                (allocation sym)
+                                                (closure-ins (label (string->symbol (string-append "lt_" 
+                                                                                                   (symbol->string lbl))))
+                                                             sym))
+                                               prog)
+                               ))]
+                           ; case for tiger-defined function
+                           [(fundec id tyfields type-id body)
+                            (let* ([fun-label (gen-label)]
+                                   [sym (gen-label-loc)] ; the location that holds the label of this function
+                                   [return-val-loc (gen-temp)] ; the location that the function will put its answer into 
+                                   ;during the return-ins
+                                   ; add all the parameters into the location environment
+                                   ;TODO: params currently start from 0. is there reason to start from 1?
+                                   [body-new-le (map (λ (tyf param-num)
+                                                       (match tyf
+                                                         [(tyfield ty-name ty-ty)
+                                                          (location-binding ty-name 
+                                                                            (gen-param param-num))]))
+                                                     tyfields
+                                                     (build-list (length tyfields) values))]
+                                   [body-le (append body-new-le
+                                                    le)]
+                                   ; generate the function
+                                   [sub-fxn-ph (make-placeholder 'dummy)]
+                                   [fn-body-prog 
+                                    
+                                    
+                                    
+                                    (parameterize [(parent-fxn (cons sub-fxn-ph (parent-fxn)))]
+                                      (reset-dag-table!)
+                                      (functionize fun-label 
+                                                   (program-append
+                                                    (ins-combine (allocation return-val-loc)
+                                                                 (map (match-lambda
+                                                                        [(location-binding _ param)
+                                                                         (allocation param)])
+                                                                      body-new-le))
+                                                    (dag-gen body return-val-loc body-le)
+                                                    (ins-combine (return-ins return-val-loc))) sub-fxn-ph)
+                                      )
+                                    ])
+                              (begin
+                                (placeholder-set! (lookup id le) sym)
+                                (values 
+                                 (cons (location-binding id sym) le)
+                                 (program-append (ins-combine (allocation sym))
+                                                 fn-body-prog
+                                                 (ins-combine (closure-ins fun-label sym))
+                                                 prog)
+                                 )))
+                            ]
+                           )))]
          ;(displayln fn-assign-program)
          (reset-dag-table!)
          (program-append fn-assign-program
-                         (dag-gen body result-sym inner-loc-env)))
-       )]
+                         (dag-gen body result-sym inner-loc-env)))))]
      
     
     [(funcall fun-id args)
@@ -487,7 +494,6 @@
                                                           (dag-gen arg param-sym loc-env )))
                                         args arg-sym-list)))
             ]
-       (if (or (param-loc? f-loc) (label-loc? f-loc)) #;(label-loc? f) ; TODO a function can be passed as a parameter in which case this will be a param-loc
            
            (program-append (ins-combine (allocation f-loc))
                            f-load-prog 
@@ -495,10 +501,7 @@
                            ;(map push-ins arg-sym-list)
                            (ins-combine (funcall-ins f-loc arg-sym-list result-sym)
                                         ) ; the last argument is the return address
-                           )
-           
-           
-           (error (format "internal error: function ~a bound to wrong location type ~a" fun-id f-loc))))]
+                           ))]
     
     [(break) (ins-combine (break-ins))]
     ))
@@ -506,11 +509,7 @@
 ; TODO: make gen-lval dag things correctly?
 (define (gen-lval ast result-sym loc-env)
   (match ast
-    [(id name)
-     (let [(sym (lookup name loc-env))]
-       (if (or (param-loc? sym) (temp-loc? sym) (mem-loc? sym))
-           (program-append (ins-combine (ref-ins result-sym sym)))
-           (error (format "internal error: lvalue id ~a bound to wrong location type" ast))))]
+    [(id name) (program-append (ins-combine (ref-ins result-sym (lookup name loc-env))))]
     ["captain kirk is climbing a mountain. why is he climbing a mountain?" (void)]
     [(array-access lval index return-t)
      (let* [(lval-loc (gen-mem))

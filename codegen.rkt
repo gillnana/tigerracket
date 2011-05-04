@@ -3,6 +3,7 @@
 #;(require rnrs/io/ports-6)
 (require test-engine/racket-tests)
 (require "intermediate.rkt")
+(require "canonicalize.rkt")
 (require "parser.rkt")
 
 (provide (all-defined-out))
@@ -321,11 +322,15 @@
 (define (find-static loc block)
   (match block
     [(fxn-block _ _ static-links temp-list)
-     (ormap-index (λ (x) ; x is a fxn-block, either itself or a static parent
+     (let-values [((a b) (ormap-index (λ (x) ; x is a fxn-block, either itself or a static parent
                    (let-values ([(offset fb) (find-local loc x)])
                      offset)
                    )
-                 (cons block static-links))]))
+                 (cons block static-links)))]
+       (if a
+           (values a b)
+           (error (format "failed to find location ~a" loc))))
+       ]))
 
 
 (define (get-offset temp temp-list)

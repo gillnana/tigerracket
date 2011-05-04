@@ -1,0 +1,10 @@
+let
+  type intlist = {hd:int, tl:intlist}
+  var l := intlist{hd=3, tl=intlist{hd=7, tl=intlist{hd=-1, tl=nil}}}
+in
+  while not(l = nil) do
+    (print_int(l.hd);
+     print("\n");
+     l := l.tl)
+end
+  

@@ -5,5 +5,5 @@ let
     else
        1
 in
-  print_int(fact(0))
+  print_int(fact(3))
 end

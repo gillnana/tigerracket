@@ -12,7 +12,7 @@
   ; note type checking must follow canonicalization in this case
   (match ast
     
-    [(for-statement index start end body)
+    #;[(for-statement index start end body)
      (let-vars
       (list (vardec index #f start))
       (expseq
@@ -23,7 +23,31 @@
                            (canonicalize body)
                            (binary-op (op '+) (id index) (int-literal 1))))))))]
     
-    [(while-statement cond body) (while-statement (canonicalize cond) (canonicalize body))]
+    [(for-statement index start end body)
+     (let-vars
+      (list (vardec 'startval 'int (canonicalize start))
+            (vardec 'endval 'int (canonicalize end)))
+      (expseq (list (let-funs
+               (list (fundec 'f 
+                             (list (tyfield index (type-id 'int)))
+                             #f
+                             (if-statement
+                              (binary-op (op '<=) (id index) (id 'endval))
+                              (expseq
+                               (list
+                                (canonicalize body)
+                                (funcall (id 'f) (list (binary-op (op '+) (id index) (int-literal 1))))))
+                              (expseq empty))))
+               (expseq (list (funcall (id 'f) (list (id 'startval)))))))))]
+                                
+    
+    [(while-statement cond body)
+     (let-funs
+      (list (fundec 'f empty #f
+                    (if-statement (canonicalize cond)
+                                  (expseq (list (canonicalize body) (funcall (id 'f) empty)))
+                                  (expseq empty))))
+      (expseq (list (funcall (id 'f) empty))))]
     
     [(if-statement c t e) (if-statement (canonicalize c) (canonicalize t) (canonicalize e))]
     

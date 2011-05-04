@@ -1,0 +1,1 @@
+print_int(if 0 then 6 else 22)
