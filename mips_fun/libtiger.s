@@ -245,6 +245,138 @@ $L13:
 	.set	reorder
 	.end	alloc_closure
 	.size	alloc_closure, .-alloc_closure
+	.rdata
+	.align	2
+$LC1:
+	.ascii	"Null pointer: tried to read or write a field of nil\012\000"
+	.text
+	.align	2
+	.globl	assert_nonnil
+	.set	nomips16
+	.ent	assert_nonnil
+	.type	assert_nonnil, @function
+assert_nonnil:
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, gp= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
+	move	$fp,$sp
+	sw	$4,32($fp)
+	lw	$2,32($fp)
+	nop
+	bne	$2,$0,$L17
+	nop
+
+	lui	$2,%hi($LC1)
+	addiu	$2,$2,%lo($LC1)
+	sw	$2,20($fp)
+	li	$2,52			# 0x34
+	sw	$2,16($fp)
+	li	$4,2			# 0x2
+	lw	$5,20($fp)
+	lw	$6,16($fp)
+	jal	write
+	nop
+
+	jal	abort
+	nop
+
+$L17:
+	move	$sp,$fp
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addiu	$sp,$sp,32
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	assert_nonnil
+	.size	assert_nonnil, .-assert_nonnil
+	.rdata
+	.align	2
+$LC2:
+	.ascii	"Array index: out of bounds\012\000"
+	.text
+	.align	2
+	.globl	assert_inbounds
+	.set	nomips16
+	.ent	assert_inbounds
+	.type	assert_inbounds, @function
+assert_inbounds:
+	.frame	$fp,40,$31		# vars= 16, regs= 2/0, args= 16, gp= 0
+	.mask	0xc0000000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-40
+	sw	$31,36($sp)
+	sw	$fp,32($sp)
+	move	$fp,$sp
+	sw	$4,40($fp)
+	sw	$5,44($fp)
+	lw	$3,44($fp)
+	lw	$2,40($fp)
+	nop
+	subu	$2,$3,$2
+	bgez	$2,$L19
+	nop
+
+	addiu	$2,$2,3
+$L19:
+	sra	$2,$2,2
+	addiu	$2,$2,-1
+	sw	$2,28($fp)
+	lw	$2,40($fp)
+	nop
+	lw	$2,0($2)
+	nop
+	sw	$2,24($fp)
+	lw	$2,28($fp)
+	nop
+	bltz	$2,$L20
+	nop
+
+	lw	$3,28($fp)
+	lw	$2,24($fp)
+	nop
+	slt	$2,$3,$2
+	bne	$2,$0,$L22
+	nop
+
+$L20:
+	lui	$2,%hi($LC2)
+	addiu	$2,$2,%lo($LC2)
+	sw	$2,20($fp)
+	li	$2,27			# 0x1b
+	sw	$2,16($fp)
+	li	$4,2			# 0x2
+	lw	$5,20($fp)
+	lw	$6,16($fp)
+	jal	write
+	nop
+
+	jal	abort
+	nop
+
+$L22:
+	move	$sp,$fp
+	lw	$31,36($sp)
+	lw	$fp,32($sp)
+	addiu	$sp,$sp,40
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	assert_inbounds
+	.size	assert_inbounds, .-assert_inbounds
 	.align	2
 	.globl	lt_print
 	.set	nomips16
@@ -269,10 +401,10 @@ lt_print:
 	sw	$2,20($fp)
 	sw	$0,16($fp)
 	sw	$0,16($fp)
-	j	$L16
+	j	$L24
 	nop
 
-$L17:
+$L25:
 	lw	$2,16($fp)
 	lw	$3,40($fp)
 	sll	$2,$2,2
@@ -292,12 +424,12 @@ $L17:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L16:
+$L24:
 	lw	$3,16($fp)
 	lw	$2,20($fp)
 	nop
 	slt	$2,$3,$2
-	bne	$2,$0,$L17
+	bne	$2,$0,$L25
 	nop
 
 	move	$sp,$fp
@@ -335,34 +467,34 @@ lt_print_int:
 	sw	$2,20($fp)
 	lw	$2,20($fp)
 	nop
-	bgez	$2,$L21
+	bgez	$2,$L29
 	nop
 
 	lw	$2,20($fp)
 	nop
 	subu	$2,$0,$2
 	sw	$2,20($fp)
-	j	$L21
+	j	$L29
 	nop
 
-$L22:
+$L30:
 	lw	$2,24($fp)
 	nop
 	sll	$2,$2,1
 	sll	$3,$2,2
 	addu	$2,$2,$3
 	sw	$2,24($fp)
-$L21:
+$L29:
 	lw	$3,24($fp)
 	lw	$2,20($fp)
 	nop
 	slt	$2,$2,$3
-	beq	$2,$0,$L22
+	beq	$2,$0,$L30
 	nop
 
 	lw	$2,20($fp)
 	nop
-	beq	$2,$0,$L23
+	beq	$2,$0,$L31
 	nop
 
 	lw	$3,24($fp)
@@ -374,11 +506,11 @@ $L21:
 	mfhi	$3
 	mflo	$2
 	sw	$2,24($fp)
-$L23:
+$L31:
 	sw	$0,16($fp)
 	lw	$2,48($fp)
 	nop
-	bgez	$2,$L24
+	bgez	$2,$L32
 	nop
 
 	lw	$2,16($fp)
@@ -390,7 +522,7 @@ $L23:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L24:
+$L32:
 	lw	$2,16($fp)
 	lw	$4,20($fp)
 	lw	$3,24($fp)
@@ -433,7 +565,7 @@ $L24:
 	sw	$2,16($fp)
 	lw	$2,24($fp)
 	nop
-	bne	$2,$0,$L24
+	bne	$2,$0,$L32
 	nop
 
 	addiu	$2,$fp,28
@@ -520,18 +652,18 @@ lt_ord:
 	nop
 	lw	$2,0($2)
 	nop
-	beq	$2,$0,$L29
+	beq	$2,$0,$L37
 	nop
 
 	lw	$2,8($fp)
 	nop
 	lw	$2,4($2)
-	j	$L30
+	j	$L38
 	nop
 
-$L29:
+$L37:
 	li	$2,-1			# 0xffffffffffffffff
-$L30:
+$L38:
 	move	$sp,$fp
 	lw	$fp,4($sp)
 	addiu	$sp,$sp,8
@@ -633,10 +765,10 @@ lt_substring:
 
 	sw	$2,20($fp)
 	sw	$0,16($fp)
-	j	$L37
+	j	$L45
 	nop
 
-$L38:
+$L46:
 	lw	$5,16($fp)
 	lw	$3,40($fp)
 	lw	$2,16($fp)
@@ -654,12 +786,12 @@ $L38:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L37:
+$L45:
 	lw	$3,16($fp)
 	lw	$2,40($fp)
 	nop
 	slt	$2,$3,$2
-	bne	$2,$0,$L38
+	bne	$2,$0,$L46
 	nop
 
 	lw	$2,20($fp)
@@ -713,10 +845,10 @@ lt_concat:
 
 	sw	$2,20($fp)
 	sw	$0,16($fp)
-	j	$L41
+	j	$L49
 	nop
 
-$L42:
+$L50:
 	lw	$5,16($fp)
 	lw	$2,16($fp)
 	lw	$3,48($fp)
@@ -731,19 +863,19 @@ $L42:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L41:
+$L49:
 	lw	$3,16($fp)
 	lw	$2,32($fp)
 	nop
 	slt	$2,$3,$2
-	bne	$2,$0,$L42
+	bne	$2,$0,$L50
 	nop
 
 	sw	$0,16($fp)
-	j	$L43
+	j	$L51
 	nop
 
-$L44:
+$L52:
 	lw	$3,16($fp)
 	lw	$2,32($fp)
 	nop
@@ -761,12 +893,12 @@ $L44:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L43:
+$L51:
 	lw	$3,16($fp)
 	lw	$2,28($fp)
 	nop
 	slt	$2,$3,$2
-	bne	$2,$0,$L44
+	bne	$2,$0,$L52
 	nop
 
 	lw	$2,20($fp)
@@ -799,16 +931,16 @@ lt_not:
 	sw	$4,8($fp)
 	lw	$2,8($fp)
 	nop
-	beq	$2,$0,$L47
+	beq	$2,$0,$L55
 	nop
 
 	move	$2,$0
-	j	$L48
+	j	$L56
 	nop
 
-$L47:
+$L55:
 	li	$2,1			# 0x1
-$L48:
+$L56:
 	move	$sp,$fp
 	lw	$fp,4($sp)
 	addiu	$sp,$sp,8
@@ -871,7 +1003,7 @@ lt_flush:
 	.size	lt_flush, .-lt_flush
 	.rdata
 	.align	2
-$LC1:
+$LC3:
 	.ascii	"\012\000"
 	.text
 	.align	2
@@ -894,8 +1026,8 @@ call_test:
 	sw	$5,36($fp)
 	sw	$6,40($fp)
 	sw	$7,44($fp)
-	lui	$2,%hi($LC1)
-	addiu	$2,$2,%lo($LC1)
+	lui	$2,%hi($LC3)
+	addiu	$2,$2,%lo($LC3)
 	sw	$2,16($fp)
 	li	$4,1			# 0x1
 	lw	$5,16($fp)

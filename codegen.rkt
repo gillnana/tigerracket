@@ -130,6 +130,10 @@
     
     ; this instruction corresponds to x=*y, putting the r-value of y into the r-value of x
     [(deref-ins src1 src2)
+     (lnload src2 "$a0" cur-block)
+     (ln "sub $sp, $sp, 16")
+     (ln "jal assert_nonnil")
+     (ln "add $sp, $sp, 16")
      (lnload src2 TEMP0 cur-block)
      (ln "lw " TEMP0 COMMA "(" TEMP0 ")")
      (lnstore TEMP0 src1 cur-block)]
@@ -137,15 +141,26 @@
     ; this instruction is x*=y, putting the r-value of y into the l-value of x
     [(deref-assign-ins src1 src2) 
      (ln (format "#  DEREF ASSIGN INS ~a ~a" src1 src2))
+     (ln "#    first check non-nil")
+     (lnload src1 "$a0" cur-block)
+     (ln "sub $sp, $sp, 16")
+     (ln "jal assert_nonnil")
+     (ln "add $sp, $sp, 16")
+     (ln "#    end check non-nil")
      (lnload src1 TEMP1 cur-block)
      (lnload src2 TEMP2 cur-block)
-     (ln "sw " TEMP2 COMMA "(" TEMP1 ")")
-     
-     #;(error "never used in intermediate code")]
-    ; (lnload src2 T0)
-    ; lw T0, (T0)
-    ; (lnstore src1 T0)
+     (ln "sw " TEMP2 COMMA "(" TEMP1 ")")]
     
+    [(array-bounds-check-ins array-loc index-loc)
+     (ln "#        start array bounds check")
+     (lnload array-loc "$a0" cur-block)
+     (lnload index-loc "$a1" cur-block)
+     (ln "sub $sp, $sp, 16")
+     (ln "jal assert_inbounds")
+     (ln "add $sp, $sp, 16")
+     (ln "#        end array bounds check")
+     ]
+   
     [(return-ins src)
      ;(ln "lw " RETURN_REGISTER COMMA (get-offset src temps) "($sp)")
      (lnload src RETURN_REGISTER cur-block)

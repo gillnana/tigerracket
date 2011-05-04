@@ -25,7 +25,7 @@ extern pair_t* alloc_closure(void* code, void* ar);
 
 extern void assert_nonnil(void* thing);
 
-extern void assert_inbounds(array_t* arr, int index);
+extern void assert_inbounds(array_t* arr_ptr, void* elem_ptr);
 
 
 extern void lt_flush();

@@ -79,6 +79,19 @@ extern void assert_nonnil(void* thing) {
   }
 }
 
+extern void assert_inbounds(array_t* arr_ptr, void* elem_ptr) {
+  int i = ((int)elem_ptr-(int)arr_ptr)/4 - 1;
+  // i is the original tiger index
+  int size = arr_ptr->length;
+  // size is the tiger size
+  if (i < 0 || i >= size) {
+    char* msg = "Array index: out of bounds\n";
+    int len = 27;
+    write(2, msg, len);
+    abort();
+  }
+}
+
 extern void lt_print(string_t* str) {
   int len = str->length;
   int i=0;

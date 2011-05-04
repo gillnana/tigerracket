@@ -57,6 +57,7 @@
 (struct ref-ins (src1 src2) #:transparent) ; this instruction corresponds to x=&y, putting the l-value of y into the r-value of x
 (struct deref-assign-ins (src1 src2) #:transparent) ; this instruction is *x=y, putting the r-value of y into the l-value of x
 
+(struct array-bounds-check-ins (array-loc index-loc) #:transparent)
 
 
 (struct stack-setup-ins () #:transparent) ; in MIPS, push ra and fp onto stack, sets new fp to current value of sp
@@ -522,8 +523,12 @@
                        index-gen-code
                        (ins-combine (lim-ins 4 result-sym) ; offset by 1 word
                                     (binary-ins '* index-loc result-sym index-loc) ; multiply index by 4
-                                    (binary-ins '+ lval-loc result-sym result-sym)
-                                    (binary-ins '+ index-loc result-sym result-sym))))]
+                                    (binary-ins '+ lval-loc result-sym result-sym) 
+                                    (binary-ins '+ index-loc result-sym result-sym)
+                                    ; result-sym has pointer to element
+                                    ; lval-loc should still be the array itself (pointer to array's size)
+                                    (array-bounds-check-ins lval-loc result-sym)
+                                    )))]
     [(record-access lval field-id offset return-t)
      (let* [(lval-loc (gen-mem))
             (lval-gen-code (gen-lval lval lval-loc loc-env)) ; pickles

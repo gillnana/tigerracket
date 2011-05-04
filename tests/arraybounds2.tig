@@ -1,0 +1,7 @@
+
+let
+  type a = array of int
+  var arr := a[3] of 444
+in
+  print_int(arr[253])
+end

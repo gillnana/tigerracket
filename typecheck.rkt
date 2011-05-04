@@ -250,7 +250,8 @@
                              ]
                         ;(displayln (format "body-type ~a, return type ~a" body-type type-of-return))
                         (or (same-type? body-type type-of-return)
-                            (error (format "type error: type mismatch, declaration of function ~a was declared as ~a but body returns type ~a"
+                            
+(error (format "type error: type mismatch, declaration of function ~a was declared as ~a but body returns type ~a"
                                            id type-of-return body-type)))))]))
                  
              (define working-env (foldl accumulate-fun-declaration ve decs))
