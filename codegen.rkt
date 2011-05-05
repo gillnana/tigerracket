@@ -46,6 +46,7 @@
 
        
        (map (λ (ins) (gen-code ins cb)) inslist)
+       (ln lbl "break:  # break label for function " lbl)
        (ln (stack-teardown locals))
        (ln "jr $ra")
        (ln "#     end def " lbl)
@@ -166,6 +167,10 @@
      ;(ln "lw " RETURN_REGISTER COMMA (get-offset src temps) "($sp)")
      (lnload src RETURN_REGISTER cur-block)
      ]
+    
+    [(break-ins)
+     (match cur-block
+       [(fxn-block (label lbl) _ _ _) (ln "j " lbl "break # jump to break-label")])]
      
     
     [(binary-ins op src1 src2 'ans) (void)]

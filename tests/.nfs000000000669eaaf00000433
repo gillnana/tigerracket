@@ -1,9 +1,0 @@
-for i := 1 to 10 do
-   let
-      function f() =
-         if i==3
-         then i := 5
-         else print_int(i);
-   in
-      f()
-   end
