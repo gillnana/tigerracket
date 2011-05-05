@@ -1,0 +1,3858 @@
+compiling erictest/endobson/hard/ex7.tiger to /tmp/mips_malfile.SuZnUt...
+.globl main
+.text
+i dagged 
+#s(temp-loc t675)i dagged 
+#s(temp-loc t695)i dagged 
+#s(temp-loc t694)i dagged 
+#s(temp-loc t695)i dagged 
+#s(temp-loc t712)i dagged 
+#s(temp-loc t729)i dagged 
+#s(temp-loc t789)i dagged 
+#s(temp-loc t816)i dagged 
+#s(temp-loc t830)i dagged 
+#s(temp-loc t851)i dagged 
+#s(temp-loc t874)
+
+#      begin def main
+main:
+sub $sp, $sp, 4  #push $ra
+sw $ra, ($sp)
+li $a0, 49
+li $a1, 0
+sub $sp, $sp, 16
+jal alloc_block
+add $sp, $sp, 16
+sw $s0, ($v0) # put the static parent's activation record in the first slot of the new activation record
+move $s0, $v0 # set the current activation record to be the new one
+#      done setting up activation record
+la $a0, lt_print_int
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt661) #s(label main))
+move $t3, $s0
+sw $v0, 4($t3)
+#             end   (lnstore $v0 #s(label-loc lt661) #s(label main))
+la $a0, lt_exit
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt660) #s(label main))
+move $t3, $s0
+sw $v0, 8($t3)
+#             end   (lnstore $v0 #s(label-loc lt660) #s(label main))
+la $a0, lt_not
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt659) #s(label main))
+move $t3, $s0
+sw $v0, 12($t3)
+#             end   (lnstore $v0 #s(label-loc lt659) #s(label main))
+la $a0, lt_concat
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt658) #s(label main))
+move $t3, $s0
+sw $v0, 16($t3)
+#             end   (lnstore $v0 #s(label-loc lt658) #s(label main))
+la $a0, lt_substring
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt657) #s(label main))
+move $t3, $s0
+sw $v0, 20($t3)
+#             end   (lnstore $v0 #s(label-loc lt657) #s(label main))
+la $a0, lt_size
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt656) #s(label main))
+move $t3, $s0
+sw $v0, 24($t3)
+#             end   (lnstore $v0 #s(label-loc lt656) #s(label main))
+la $a0, lt_chr
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt655) #s(label main))
+move $t3, $s0
+sw $v0, 28($t3)
+#             end   (lnstore $v0 #s(label-loc lt655) #s(label main))
+la $a0, lt_ord
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt654) #s(label main))
+move $t3, $s0
+sw $v0, 32($t3)
+#             end   (lnstore $v0 #s(label-loc lt654) #s(label main))
+la $a0, lt_getchar
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt653) #s(label main))
+move $t3, $s0
+sw $v0, 36($t3)
+#             end   (lnstore $v0 #s(label-loc lt653) #s(label main))
+la $a0, lt_flush
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt652) #s(label main))
+move $t3, $s0
+sw $v0, 40($t3)
+#             end   (lnstore $v0 #s(label-loc lt652) #s(label main))
+la $a0, lt_print
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt651) #s(label main))
+move $t3, $s0
+sw $v0, 44($t3)
+#             end   (lnstore $v0 #s(label-loc lt651) #s(label main))
+la $a0, l778
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt779) #s(label main))
+move $t3, $s0
+sw $v0, 48($t3)
+#             end   (lnstore $v0 #s(label-loc lt779) #s(label main))
+la $a0, l662
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt663) #s(label main))
+move $t3, $s0
+sw $v0, 52($t3)
+#             end   (lnstore $v0 #s(label-loc lt663) #s(label main))
+li $t0, 5
+#             begin (lnstore $t0 #s(temp-loc t856) #s(label main))
+move $t3, $s0
+sw $t0, 60($t3)
+#             end   (lnstore $t0 #s(temp-loc t856) #s(label main))
+#            begin (lnload #s(temp-loc t856) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t0, 60($t3)
+#            end (lnload #s(temp-loc t856) $t0 #s(label main))
+#             begin (lnstore $t0 #s(temp-loc t858) #s(label main))
+move $t3, $s0
+sw $t0, 64($t3)
+#             end   (lnstore $t0 #s(temp-loc t858) #s(label main))
+li $t0, 65
+#             begin (lnstore $t0 #s(temp-loc t859) #s(label main))
+move $t3, $s0
+sw $t0, 68($t3)
+#             end   (lnstore $t0 #s(temp-loc t859) #s(label main))
+#            begin (lnload #s(temp-loc t858) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 15
+lw $a0, 64($t3)
+#            end (lnload #s(temp-loc t858) $a0 #s(label main))
+#            begin (lnload #s(temp-loc t859) $a1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 16
+lw $a1, 68($t3)
+#            end (lnload #s(temp-loc t859) $a1 #s(label main))
+sub $sp, $sp, 16
+jal alloc_array
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(temp-loc t857) #s(label main))
+move $t3, $s0
+sw $v0, 56($t3)
+#             end   (lnstore $v0 #s(temp-loc t857) #s(label main))
+la $a0, l860
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt861) #s(label main))
+move $t3, $s0
+sw $v0, 72($t3)
+#             end   (lnstore $v0 #s(label-loc lt861) #s(label main))
+#            begin (lnload #s(label-loc lt861) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 17
+lw $t0, 72($t3)
+#            end (lnload #s(label-loc lt861) $t0 #s(label main))
+#             begin (lnstore $t0 #s(label-loc lt879) #s(label main))
+move $t3, $s0
+sw $t0, 76($t3)
+#             end   (lnstore $t0 #s(label-loc lt879) #s(label main))
+#     BEGIN FUNCALL labloc=#s(label-loc lt879), args=(), dest=ans
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(label-loc lt879) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 18
+lw $t2, 76($t3)
+#            end (lnload #s(label-loc lt879) $t2 #s(label main))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 ans #s(label main))
+#ignore store into ans
+#             end   (lnstore $v0 ans #s(label main))
+#     END   FUNCALL labloc=#s(label-loc lt879), args=(), dest=ans
+#               begin (lnref #s(temp-loc t857) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+add $t0, $t3, 56
+#             begin (lnstore $t0 #s(mem-loc m883) #s(label main))
+move $t3, $s0
+sw $t0, 92($t3)
+#             end   (lnstore $t0 #s(mem-loc m883) #s(label main))
+#            begin (lnload #s(mem-loc m883) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 22
+lw $a0, 92($t3)
+#            end (lnload #s(mem-loc m883) $a0 #s(label main))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m883) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 22
+lw $t0, 92($t3)
+#            end (lnload #s(mem-loc m883) $t0 #s(label main))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m883) #s(label main))
+move $t3, $s0
+sw $t0, 92($t3)
+#             end   (lnstore $t0 #s(mem-loc m883) #s(label main))
+li $t0, 0
+#             begin (lnstore $t0 #s(temp-loc t884) #s(label main))
+move $t3, $s0
+sw $t0, 96($t3)
+#             end   (lnstore $t0 #s(temp-loc t884) #s(label main))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m882) #s(label main))
+move $t3, $s0
+sw $t0, 84($t3)
+#             end   (lnstore $t0 #s(mem-loc m882) #s(label main))
+#   BEGIN binop op=*, src1=#s(temp-loc t884), src2=#s(mem-loc m882), dest=#s(temp-loc t884)
+#            begin (lnload #s(temp-loc t884) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 23
+lw $t1, 96($t3)
+#            end (lnload #s(temp-loc t884) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m882) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 20
+lw $t2, 84($t3)
+#            end (lnload #s(mem-loc m882) $t2 #s(label main))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t884) #s(label main))
+move $t3, $s0
+sw $t0, 96($t3)
+#             end   (lnstore $t0 #s(temp-loc t884) #s(label main))
+#   END   binop op=*, src1=#s(temp-loc t884), src2=#s(mem-loc m882), dest=#s(temp-loc t884)
+#   BEGIN binop op=+, src1=#s(mem-loc m883), src2=#s(mem-loc m882), dest=#s(mem-loc m882)
+#            begin (lnload #s(mem-loc m883) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 22
+lw $t1, 92($t3)
+#            end (lnload #s(mem-loc m883) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m882) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 20
+lw $t2, 84($t3)
+#            end (lnload #s(mem-loc m882) $t2 #s(label main))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m882) #s(label main))
+move $t3, $s0
+sw $t0, 84($t3)
+#             end   (lnstore $t0 #s(mem-loc m882) #s(label main))
+#   END   binop op=+, src1=#s(mem-loc m883), src2=#s(mem-loc m882), dest=#s(mem-loc m882)
+#   BEGIN binop op=+, src1=#s(temp-loc t884), src2=#s(mem-loc m882), dest=#s(mem-loc m882)
+#            begin (lnload #s(temp-loc t884) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 23
+lw $t1, 96($t3)
+#            end (lnload #s(temp-loc t884) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m882) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 20
+lw $t2, 84($t3)
+#            end (lnload #s(mem-loc m882) $t2 #s(label main))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m882) #s(label main))
+move $t3, $s0
+sw $t0, 84($t3)
+#             end   (lnstore $t0 #s(mem-loc m882) #s(label main))
+#   END   binop op=+, src1=#s(temp-loc t884), src2=#s(mem-loc m882), dest=#s(mem-loc m882)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m883) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 22
+lw $a0, 92($t3)
+#            end (lnload #s(mem-loc m883) $a0 #s(label main))
+#            begin (lnload #s(mem-loc m882) $a1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 20
+lw $a1, 84($t3)
+#            end (lnload #s(mem-loc m882) $a1 #s(label main))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+li $t0, 67
+#             begin (lnstore $t0 #s(temp-loc t885) #s(label main))
+move $t3, $s0
+sw $t0, 88($t3)
+#             end   (lnstore $t0 #s(temp-loc t885) #s(label main))
+#  DEREF ASSIGN INS #s(mem-loc m882) #s(temp-loc t885)
+#    first check non-nil
+#            begin (lnload #s(mem-loc m882) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 20
+lw $a0, 84($t3)
+#            end (lnload #s(mem-loc m882) $a0 #s(label main))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#    end check non-nil
+#            begin (lnload #s(mem-loc m882) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 20
+lw $t1, 84($t3)
+#            end (lnload #s(mem-loc m882) $t1 #s(label main))
+#            begin (lnload #s(temp-loc t885) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 21
+lw $t2, 88($t3)
+#            end (lnload #s(temp-loc t885) $t2 #s(label main))
+sw $t2, ($t1)
+#               begin (lnref #s(temp-loc t857) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+add $t0, $t3, 56
+#             begin (lnstore $t0 #s(mem-loc m887) #s(label main))
+move $t3, $s0
+sw $t0, 108($t3)
+#             end   (lnstore $t0 #s(mem-loc m887) #s(label main))
+#            begin (lnload #s(mem-loc m887) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 26
+lw $a0, 108($t3)
+#            end (lnload #s(mem-loc m887) $a0 #s(label main))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m887) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 26
+lw $t0, 108($t3)
+#            end (lnload #s(mem-loc m887) $t0 #s(label main))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m887) #s(label main))
+move $t3, $s0
+sw $t0, 108($t3)
+#             end   (lnstore $t0 #s(mem-loc m887) #s(label main))
+li $t0, 1
+#             begin (lnstore $t0 #s(temp-loc t888) #s(label main))
+move $t3, $s0
+sw $t0, 112($t3)
+#             end   (lnstore $t0 #s(temp-loc t888) #s(label main))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m886) #s(label main))
+move $t3, $s0
+sw $t0, 100($t3)
+#             end   (lnstore $t0 #s(mem-loc m886) #s(label main))
+#   BEGIN binop op=*, src1=#s(temp-loc t888), src2=#s(mem-loc m886), dest=#s(temp-loc t888)
+#            begin (lnload #s(temp-loc t888) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 27
+lw $t1, 112($t3)
+#            end (lnload #s(temp-loc t888) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m886) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 24
+lw $t2, 100($t3)
+#            end (lnload #s(mem-loc m886) $t2 #s(label main))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t888) #s(label main))
+move $t3, $s0
+sw $t0, 112($t3)
+#             end   (lnstore $t0 #s(temp-loc t888) #s(label main))
+#   END   binop op=*, src1=#s(temp-loc t888), src2=#s(mem-loc m886), dest=#s(temp-loc t888)
+#   BEGIN binop op=+, src1=#s(mem-loc m887), src2=#s(mem-loc m886), dest=#s(mem-loc m886)
+#            begin (lnload #s(mem-loc m887) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 26
+lw $t1, 108($t3)
+#            end (lnload #s(mem-loc m887) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m886) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 24
+lw $t2, 100($t3)
+#            end (lnload #s(mem-loc m886) $t2 #s(label main))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m886) #s(label main))
+move $t3, $s0
+sw $t0, 100($t3)
+#             end   (lnstore $t0 #s(mem-loc m886) #s(label main))
+#   END   binop op=+, src1=#s(mem-loc m887), src2=#s(mem-loc m886), dest=#s(mem-loc m886)
+#   BEGIN binop op=+, src1=#s(temp-loc t888), src2=#s(mem-loc m886), dest=#s(mem-loc m886)
+#            begin (lnload #s(temp-loc t888) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 27
+lw $t1, 112($t3)
+#            end (lnload #s(temp-loc t888) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m886) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 24
+lw $t2, 100($t3)
+#            end (lnload #s(mem-loc m886) $t2 #s(label main))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m886) #s(label main))
+move $t3, $s0
+sw $t0, 100($t3)
+#             end   (lnstore $t0 #s(mem-loc m886) #s(label main))
+#   END   binop op=+, src1=#s(temp-loc t888), src2=#s(mem-loc m886), dest=#s(mem-loc m886)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m887) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 26
+lw $a0, 108($t3)
+#            end (lnload #s(mem-loc m887) $a0 #s(label main))
+#            begin (lnload #s(mem-loc m886) $a1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 24
+lw $a1, 100($t3)
+#            end (lnload #s(mem-loc m886) $a1 #s(label main))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+li $t0, 69
+#             begin (lnstore $t0 #s(temp-loc t889) #s(label main))
+move $t3, $s0
+sw $t0, 104($t3)
+#             end   (lnstore $t0 #s(temp-loc t889) #s(label main))
+#  DEREF ASSIGN INS #s(mem-loc m886) #s(temp-loc t889)
+#    first check non-nil
+#            begin (lnload #s(mem-loc m886) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 24
+lw $a0, 100($t3)
+#            end (lnload #s(mem-loc m886) $a0 #s(label main))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#    end check non-nil
+#            begin (lnload #s(mem-loc m886) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 24
+lw $t1, 100($t3)
+#            end (lnload #s(mem-loc m886) $t1 #s(label main))
+#            begin (lnload #s(temp-loc t889) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 25
+lw $t2, 104($t3)
+#            end (lnload #s(temp-loc t889) $t2 #s(label main))
+sw $t2, ($t1)
+#               begin (lnref #s(temp-loc t857) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+add $t0, $t3, 56
+#             begin (lnstore $t0 #s(mem-loc m891) #s(label main))
+move $t3, $s0
+sw $t0, 124($t3)
+#             end   (lnstore $t0 #s(mem-loc m891) #s(label main))
+#            begin (lnload #s(mem-loc m891) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 30
+lw $a0, 124($t3)
+#            end (lnload #s(mem-loc m891) $a0 #s(label main))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m891) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 30
+lw $t0, 124($t3)
+#            end (lnload #s(mem-loc m891) $t0 #s(label main))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m891) #s(label main))
+move $t3, $s0
+sw $t0, 124($t3)
+#             end   (lnstore $t0 #s(mem-loc m891) #s(label main))
+li $t0, 2
+#             begin (lnstore $t0 #s(temp-loc t892) #s(label main))
+move $t3, $s0
+sw $t0, 128($t3)
+#             end   (lnstore $t0 #s(temp-loc t892) #s(label main))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m890) #s(label main))
+move $t3, $s0
+sw $t0, 116($t3)
+#             end   (lnstore $t0 #s(mem-loc m890) #s(label main))
+#   BEGIN binop op=*, src1=#s(temp-loc t892), src2=#s(mem-loc m890), dest=#s(temp-loc t892)
+#            begin (lnload #s(temp-loc t892) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 31
+lw $t1, 128($t3)
+#            end (lnload #s(temp-loc t892) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m890) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 28
+lw $t2, 116($t3)
+#            end (lnload #s(mem-loc m890) $t2 #s(label main))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t892) #s(label main))
+move $t3, $s0
+sw $t0, 128($t3)
+#             end   (lnstore $t0 #s(temp-loc t892) #s(label main))
+#   END   binop op=*, src1=#s(temp-loc t892), src2=#s(mem-loc m890), dest=#s(temp-loc t892)
+#   BEGIN binop op=+, src1=#s(mem-loc m891), src2=#s(mem-loc m890), dest=#s(mem-loc m890)
+#            begin (lnload #s(mem-loc m891) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 30
+lw $t1, 124($t3)
+#            end (lnload #s(mem-loc m891) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m890) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 28
+lw $t2, 116($t3)
+#            end (lnload #s(mem-loc m890) $t2 #s(label main))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m890) #s(label main))
+move $t3, $s0
+sw $t0, 116($t3)
+#             end   (lnstore $t0 #s(mem-loc m890) #s(label main))
+#   END   binop op=+, src1=#s(mem-loc m891), src2=#s(mem-loc m890), dest=#s(mem-loc m890)
+#   BEGIN binop op=+, src1=#s(temp-loc t892), src2=#s(mem-loc m890), dest=#s(mem-loc m890)
+#            begin (lnload #s(temp-loc t892) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 31
+lw $t1, 128($t3)
+#            end (lnload #s(temp-loc t892) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m890) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 28
+lw $t2, 116($t3)
+#            end (lnload #s(mem-loc m890) $t2 #s(label main))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m890) #s(label main))
+move $t3, $s0
+sw $t0, 116($t3)
+#             end   (lnstore $t0 #s(mem-loc m890) #s(label main))
+#   END   binop op=+, src1=#s(temp-loc t892), src2=#s(mem-loc m890), dest=#s(mem-loc m890)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m891) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 30
+lw $a0, 124($t3)
+#            end (lnload #s(mem-loc m891) $a0 #s(label main))
+#            begin (lnload #s(mem-loc m890) $a1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 28
+lw $a1, 116($t3)
+#            end (lnload #s(mem-loc m890) $a1 #s(label main))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+li $t0, 68
+#             begin (lnstore $t0 #s(temp-loc t893) #s(label main))
+move $t3, $s0
+sw $t0, 120($t3)
+#             end   (lnstore $t0 #s(temp-loc t893) #s(label main))
+#  DEREF ASSIGN INS #s(mem-loc m890) #s(temp-loc t893)
+#    first check non-nil
+#            begin (lnload #s(mem-loc m890) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 28
+lw $a0, 116($t3)
+#            end (lnload #s(mem-loc m890) $a0 #s(label main))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#    end check non-nil
+#            begin (lnload #s(mem-loc m890) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 28
+lw $t1, 116($t3)
+#            end (lnload #s(mem-loc m890) $t1 #s(label main))
+#            begin (lnload #s(temp-loc t893) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 29
+lw $t2, 120($t3)
+#            end (lnload #s(temp-loc t893) $t2 #s(label main))
+sw $t2, ($t1)
+#               begin (lnref #s(temp-loc t857) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+add $t0, $t3, 56
+#             begin (lnstore $t0 #s(mem-loc m895) #s(label main))
+move $t3, $s0
+sw $t0, 140($t3)
+#             end   (lnstore $t0 #s(mem-loc m895) #s(label main))
+#            begin (lnload #s(mem-loc m895) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 34
+lw $a0, 140($t3)
+#            end (lnload #s(mem-loc m895) $a0 #s(label main))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m895) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 34
+lw $t0, 140($t3)
+#            end (lnload #s(mem-loc m895) $t0 #s(label main))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m895) #s(label main))
+move $t3, $s0
+sw $t0, 140($t3)
+#             end   (lnstore $t0 #s(mem-loc m895) #s(label main))
+li $t0, 3
+#             begin (lnstore $t0 #s(temp-loc t896) #s(label main))
+move $t3, $s0
+sw $t0, 144($t3)
+#             end   (lnstore $t0 #s(temp-loc t896) #s(label main))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m894) #s(label main))
+move $t3, $s0
+sw $t0, 132($t3)
+#             end   (lnstore $t0 #s(mem-loc m894) #s(label main))
+#   BEGIN binop op=*, src1=#s(temp-loc t896), src2=#s(mem-loc m894), dest=#s(temp-loc t896)
+#            begin (lnload #s(temp-loc t896) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 35
+lw $t1, 144($t3)
+#            end (lnload #s(temp-loc t896) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m894) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 32
+lw $t2, 132($t3)
+#            end (lnload #s(mem-loc m894) $t2 #s(label main))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t896) #s(label main))
+move $t3, $s0
+sw $t0, 144($t3)
+#             end   (lnstore $t0 #s(temp-loc t896) #s(label main))
+#   END   binop op=*, src1=#s(temp-loc t896), src2=#s(mem-loc m894), dest=#s(temp-loc t896)
+#   BEGIN binop op=+, src1=#s(mem-loc m895), src2=#s(mem-loc m894), dest=#s(mem-loc m894)
+#            begin (lnload #s(mem-loc m895) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 34
+lw $t1, 140($t3)
+#            end (lnload #s(mem-loc m895) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m894) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 32
+lw $t2, 132($t3)
+#            end (lnload #s(mem-loc m894) $t2 #s(label main))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m894) #s(label main))
+move $t3, $s0
+sw $t0, 132($t3)
+#             end   (lnstore $t0 #s(mem-loc m894) #s(label main))
+#   END   binop op=+, src1=#s(mem-loc m895), src2=#s(mem-loc m894), dest=#s(mem-loc m894)
+#   BEGIN binop op=+, src1=#s(temp-loc t896), src2=#s(mem-loc m894), dest=#s(mem-loc m894)
+#            begin (lnload #s(temp-loc t896) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 35
+lw $t1, 144($t3)
+#            end (lnload #s(temp-loc t896) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m894) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 32
+lw $t2, 132($t3)
+#            end (lnload #s(mem-loc m894) $t2 #s(label main))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m894) #s(label main))
+move $t3, $s0
+sw $t0, 132($t3)
+#             end   (lnstore $t0 #s(mem-loc m894) #s(label main))
+#   END   binop op=+, src1=#s(temp-loc t896), src2=#s(mem-loc m894), dest=#s(mem-loc m894)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m895) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 34
+lw $a0, 140($t3)
+#            end (lnload #s(mem-loc m895) $a0 #s(label main))
+#            begin (lnload #s(mem-loc m894) $a1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 32
+lw $a1, 132($t3)
+#            end (lnload #s(mem-loc m894) $a1 #s(label main))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+li $t0, 64
+#             begin (lnstore $t0 #s(temp-loc t897) #s(label main))
+move $t3, $s0
+sw $t0, 136($t3)
+#             end   (lnstore $t0 #s(temp-loc t897) #s(label main))
+#  DEREF ASSIGN INS #s(mem-loc m894) #s(temp-loc t897)
+#    first check non-nil
+#            begin (lnload #s(mem-loc m894) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 32
+lw $a0, 132($t3)
+#            end (lnload #s(mem-loc m894) $a0 #s(label main))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#    end check non-nil
+#            begin (lnload #s(mem-loc m894) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 32
+lw $t1, 132($t3)
+#            end (lnload #s(mem-loc m894) $t1 #s(label main))
+#            begin (lnload #s(temp-loc t897) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 33
+lw $t2, 136($t3)
+#            end (lnload #s(temp-loc t897) $t2 #s(label main))
+sw $t2, ($t1)
+#               begin (lnref #s(temp-loc t857) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+add $t0, $t3, 56
+#             begin (lnstore $t0 #s(mem-loc m899) #s(label main))
+move $t3, $s0
+sw $t0, 156($t3)
+#             end   (lnstore $t0 #s(mem-loc m899) #s(label main))
+#            begin (lnload #s(mem-loc m899) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 38
+lw $a0, 156($t3)
+#            end (lnload #s(mem-loc m899) $a0 #s(label main))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m899) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 38
+lw $t0, 156($t3)
+#            end (lnload #s(mem-loc m899) $t0 #s(label main))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m899) #s(label main))
+move $t3, $s0
+sw $t0, 156($t3)
+#             end   (lnstore $t0 #s(mem-loc m899) #s(label main))
+li $t0, 4
+#             begin (lnstore $t0 #s(temp-loc t900) #s(label main))
+move $t3, $s0
+sw $t0, 160($t3)
+#             end   (lnstore $t0 #s(temp-loc t900) #s(label main))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m898) #s(label main))
+move $t3, $s0
+sw $t0, 148($t3)
+#             end   (lnstore $t0 #s(mem-loc m898) #s(label main))
+#   BEGIN binop op=*, src1=#s(temp-loc t900), src2=#s(mem-loc m898), dest=#s(temp-loc t900)
+#            begin (lnload #s(temp-loc t900) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 39
+lw $t1, 160($t3)
+#            end (lnload #s(temp-loc t900) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m898) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 36
+lw $t2, 148($t3)
+#            end (lnload #s(mem-loc m898) $t2 #s(label main))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t900) #s(label main))
+move $t3, $s0
+sw $t0, 160($t3)
+#             end   (lnstore $t0 #s(temp-loc t900) #s(label main))
+#   END   binop op=*, src1=#s(temp-loc t900), src2=#s(mem-loc m898), dest=#s(temp-loc t900)
+#   BEGIN binop op=+, src1=#s(mem-loc m899), src2=#s(mem-loc m898), dest=#s(mem-loc m898)
+#            begin (lnload #s(mem-loc m899) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 38
+lw $t1, 156($t3)
+#            end (lnload #s(mem-loc m899) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m898) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 36
+lw $t2, 148($t3)
+#            end (lnload #s(mem-loc m898) $t2 #s(label main))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m898) #s(label main))
+move $t3, $s0
+sw $t0, 148($t3)
+#             end   (lnstore $t0 #s(mem-loc m898) #s(label main))
+#   END   binop op=+, src1=#s(mem-loc m899), src2=#s(mem-loc m898), dest=#s(mem-loc m898)
+#   BEGIN binop op=+, src1=#s(temp-loc t900), src2=#s(mem-loc m898), dest=#s(mem-loc m898)
+#            begin (lnload #s(temp-loc t900) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 39
+lw $t1, 160($t3)
+#            end (lnload #s(temp-loc t900) $t1 #s(label main))
+#            begin (lnload #s(mem-loc m898) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 36
+lw $t2, 148($t3)
+#            end (lnload #s(mem-loc m898) $t2 #s(label main))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m898) #s(label main))
+move $t3, $s0
+sw $t0, 148($t3)
+#             end   (lnstore $t0 #s(mem-loc m898) #s(label main))
+#   END   binop op=+, src1=#s(temp-loc t900), src2=#s(mem-loc m898), dest=#s(mem-loc m898)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m899) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 38
+lw $a0, 156($t3)
+#            end (lnload #s(mem-loc m899) $a0 #s(label main))
+#            begin (lnload #s(mem-loc m898) $a1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 36
+lw $a1, 148($t3)
+#            end (lnload #s(mem-loc m898) $a1 #s(label main))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+li $t0, 66
+#             begin (lnstore $t0 #s(temp-loc t901) #s(label main))
+move $t3, $s0
+sw $t0, 152($t3)
+#             end   (lnstore $t0 #s(temp-loc t901) #s(label main))
+#  DEREF ASSIGN INS #s(mem-loc m898) #s(temp-loc t901)
+#    first check non-nil
+#            begin (lnload #s(mem-loc m898) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 36
+lw $a0, 148($t3)
+#            end (lnload #s(mem-loc m898) $a0 #s(label main))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#    end check non-nil
+#            begin (lnload #s(mem-loc m898) $t1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 36
+lw $t1, 148($t3)
+#            end (lnload #s(mem-loc m898) $t1 #s(label main))
+#            begin (lnload #s(temp-loc t901) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 37
+lw $t2, 152($t3)
+#            end (lnload #s(temp-loc t901) $t2 #s(label main))
+sw $t2, ($t1)
+#            begin (lnload #s(label-loc lt861) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 17
+lw $t0, 72($t3)
+#            end (lnload #s(label-loc lt861) $t0 #s(label main))
+#             begin (lnstore $t0 #s(label-loc lt902) #s(label main))
+move $t3, $s0
+sw $t0, 164($t3)
+#             end   (lnstore $t0 #s(label-loc lt902) #s(label main))
+#     BEGIN FUNCALL labloc=#s(label-loc lt902), args=(), dest=ans
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(label-loc lt902) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 40
+lw $t2, 164($t3)
+#            end (lnload #s(label-loc lt902) $t2 #s(label main))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 ans #s(label main))
+#ignore store into ans
+#             end   (lnstore $v0 ans #s(label main))
+#     END   FUNCALL labloc=#s(label-loc lt902), args=(), dest=ans
+#            begin (lnload #s(label-loc lt663) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 12
+lw $t0, 52($t3)
+#            end (lnload #s(label-loc lt663) $t0 #s(label main))
+#             begin (lnstore $t0 #s(label-loc lt905) #s(label main))
+move $t3, $s0
+sw $t0, 172($t3)
+#             end   (lnstore $t0 #s(label-loc lt905) #s(label main))
+#            begin (lnload #s(temp-loc t857) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+lw $t0, 56($t3)
+#            end (lnload #s(temp-loc t857) $t0 #s(label main))
+#             begin (lnstore $t0 #s(temp-loc t906) #s(label main))
+move $t3, $s0
+sw $t0, 180($t3)
+#             end   (lnstore $t0 #s(temp-loc t906) #s(label main))
+#            begin (lnload #s(temp-loc t856) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t0, 60($t3)
+#            end (lnload #s(temp-loc t856) $t0 #s(label main))
+#             begin (lnstore $t0 #s(temp-loc t907) #s(label main))
+move $t3, $s0
+sw $t0, 184($t3)
+#             end   (lnstore $t0 #s(temp-loc t907) #s(label main))
+#     BEGIN FUNCALL labloc=#s(label-loc lt905), args=(#s(temp-loc t906) #s(temp-loc t907)), dest=ans
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t906) $a0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 44
+lw $a0, 180($t3)
+#            end (lnload #s(temp-loc t906) $a0 #s(label main))
+#            begin (lnload #s(temp-loc t906) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 44
+lw $t0, 180($t3)
+#            end (lnload #s(temp-loc t906) $t0 #s(label main))
+sw $t0, 0($sp)
+#            begin (lnload #s(temp-loc t907) $a1 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 45
+lw $a1, 184($t3)
+#            end (lnload #s(temp-loc t907) $a1 #s(label main))
+#            begin (lnload #s(temp-loc t907) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 45
+lw $t0, 184($t3)
+#            end (lnload #s(temp-loc t907) $t0 #s(label main))
+sw $t0, 4($sp)
+#            begin (lnload #s(label-loc lt905) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 42
+lw $t2, 172($t3)
+#            end (lnload #s(label-loc lt905) $t2 #s(label main))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 ans #s(label main))
+#ignore store into ans
+#             end   (lnstore $v0 ans #s(label main))
+#     END   FUNCALL labloc=#s(label-loc lt905), args=(#s(temp-loc t906) #s(temp-loc t907)), dest=ans
+#            begin (lnload #s(label-loc lt861) $t0 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 17
+lw $t0, 72($t3)
+#            end (lnload #s(label-loc lt861) $t0 #s(label main))
+#             begin (lnstore $t0 #s(label-loc lt910) #s(label main))
+move $t3, $s0
+sw $t0, 188($t3)
+#             end   (lnstore $t0 #s(label-loc lt910) #s(label main))
+#     BEGIN FUNCALL labloc=#s(label-loc lt910), args=(), dest=ans
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(label-loc lt910) $t2 #s(label main))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 46
+lw $t2, 188($t3)
+#            end (lnload #s(label-loc lt910) $t2 #s(label main))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 ans #s(label main))
+#ignore store into ans
+#             end   (lnstore $v0 ans #s(label main))
+#     END   FUNCALL labloc=#s(label-loc lt910), args=(), dest=ans
+mainbreak:  # break label for function main
+lw $ra, ($sp)
+add $sp, $sp, 4  #pop $ra
+jr $ra
+#     end def main
+
+
+
+#      begin def l778
+l778:
+sub $sp, $sp, 4  #push $ra
+sw $ra, ($sp)
+li $a0, 32
+li $a1, 0
+sub $sp, $sp, 16
+jal alloc_block
+add $sp, $sp, 16
+sw $s0, ($v0) # put the static parent's activation record in the first slot of the new activation record
+move $s0, $v0 # set the current activation record to be the new one
+lw $t0, 4($sp) # copy arg 0
+#             begin (lnstore $t0 #s(param-loc p781 0) #s(label l778))
+move $t3, $s0
+sw $t0, 8($t3)
+#             end   (lnstore $t0 #s(param-loc p781 0) #s(label l778))
+lw $t0, 8($sp) # copy arg 1
+#             begin (lnstore $t0 #s(param-loc p782 1) #s(label l778))
+move $t3, $s0
+sw $t0, 12($t3)
+#             end   (lnstore $t0 #s(param-loc p782 1) #s(label l778))
+#      done setting up activation record
+#            begin (lnload #s(label-loc lt651) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 10
+lw $t3, ($t3)
+lw $t0, 44($t3)
+#            end (lnload #s(label-loc lt651) $t0 #s(label l778))
+#             begin (lnstore $t0 #s(label-loc lt783) #s(label l778))
+move $t3, $s0
+sw $t0, 16($t3)
+#             end   (lnstore $t0 #s(label-loc lt783) #s(label l778))
+li $t0, 1
+#             begin (lnstore $t0 #s(temp-loc t788) #s(label l778))
+move $t3, $s0
+sw $t0, 32($t3)
+#             end   (lnstore $t0 #s(temp-loc t788) #s(label l778))
+li $t0, 0
+#             begin (lnstore $t0 #s(temp-loc t789) #s(label l778))
+move $t3, $s0
+sw $t0, 36($t3)
+#             end   (lnstore $t0 #s(temp-loc t789) #s(label l778))
+#            begin (lnload #s(temp-loc t788) $a0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $a0, 32($t3)
+#            end (lnload #s(temp-loc t788) $a0 #s(label l778))
+#            begin (lnload #s(temp-loc t789) $a1 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 8
+lw $a1, 36($t3)
+#            end (lnload #s(temp-loc t789) $a1 #s(label l778))
+sub $sp, $sp, 16
+jal alloc_array
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(temp-loc t787) #s(label l778))
+move $t3, $s0
+sw $v0, 28($t3)
+#             end   (lnstore $v0 #s(temp-loc t787) #s(label l778))
+#               begin (lnref #s(temp-loc t787) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 6
+add $t0, $t3, 28
+#             begin (lnstore $t0 #s(mem-loc m791) #s(label l778))
+move $t3, $s0
+sw $t0, 48($t3)
+#             end   (lnstore $t0 #s(mem-loc m791) #s(label l778))
+#            begin (lnload #s(mem-loc m791) $a0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $a0, 48($t3)
+#            end (lnload #s(mem-loc m791) $a0 #s(label l778))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m791) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t0, 48($t3)
+#            end (lnload #s(mem-loc m791) $t0 #s(label l778))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m791) #s(label l778))
+move $t3, $s0
+sw $t0, 48($t3)
+#             end   (lnstore $t0 #s(mem-loc m791) #s(label l778))
+#            begin (lnload #s(temp-loc t789) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 8
+lw $t0, 36($t3)
+#            end (lnload #s(temp-loc t789) $t0 #s(label l778))
+#             begin (lnstore $t0 #s(temp-loc t792) #s(label l778))
+move $t3, $s0
+sw $t0, 52($t3)
+#             end   (lnstore $t0 #s(temp-loc t792) #s(label l778))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m790) #s(label l778))
+move $t3, $s0
+sw $t0, 40($t3)
+#             end   (lnstore $t0 #s(mem-loc m790) #s(label l778))
+#   BEGIN binop op=*, src1=#s(temp-loc t792), src2=#s(mem-loc m790), dest=#s(temp-loc t792)
+#            begin (lnload #s(temp-loc t792) $t1 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 12
+lw $t1, 52($t3)
+#            end (lnload #s(temp-loc t792) $t1 #s(label l778))
+#            begin (lnload #s(mem-loc m790) $t2 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $t2, 40($t3)
+#            end (lnload #s(mem-loc m790) $t2 #s(label l778))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t792) #s(label l778))
+move $t3, $s0
+sw $t0, 52($t3)
+#             end   (lnstore $t0 #s(temp-loc t792) #s(label l778))
+#   END   binop op=*, src1=#s(temp-loc t792), src2=#s(mem-loc m790), dest=#s(temp-loc t792)
+#   BEGIN binop op=+, src1=#s(mem-loc m791), src2=#s(mem-loc m790), dest=#s(mem-loc m790)
+#            begin (lnload #s(mem-loc m791) $t1 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t1, 48($t3)
+#            end (lnload #s(mem-loc m791) $t1 #s(label l778))
+#            begin (lnload #s(mem-loc m790) $t2 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $t2, 40($t3)
+#            end (lnload #s(mem-loc m790) $t2 #s(label l778))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m790) #s(label l778))
+move $t3, $s0
+sw $t0, 40($t3)
+#             end   (lnstore $t0 #s(mem-loc m790) #s(label l778))
+#   END   binop op=+, src1=#s(mem-loc m791), src2=#s(mem-loc m790), dest=#s(mem-loc m790)
+#   BEGIN binop op=+, src1=#s(temp-loc t792), src2=#s(mem-loc m790), dest=#s(mem-loc m790)
+#            begin (lnload #s(temp-loc t792) $t1 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 12
+lw $t1, 52($t3)
+#            end (lnload #s(temp-loc t792) $t1 #s(label l778))
+#            begin (lnload #s(mem-loc m790) $t2 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $t2, 40($t3)
+#            end (lnload #s(mem-loc m790) $t2 #s(label l778))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m790) #s(label l778))
+move $t3, $s0
+sw $t0, 40($t3)
+#             end   (lnstore $t0 #s(mem-loc m790) #s(label l778))
+#   END   binop op=+, src1=#s(temp-loc t792), src2=#s(mem-loc m790), dest=#s(mem-loc m790)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m791) $a0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $a0, 48($t3)
+#            end (lnload #s(mem-loc m791) $a0 #s(label l778))
+#            begin (lnload #s(mem-loc m790) $a1 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $a1, 40($t3)
+#            end (lnload #s(mem-loc m790) $a1 #s(label l778))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+li $t0, 91
+#             begin (lnstore $t0 #s(temp-loc t793) #s(label l778))
+move $t3, $s0
+sw $t0, 44($t3)
+#             end   (lnstore $t0 #s(temp-loc t793) #s(label l778))
+#  DEREF ASSIGN INS #s(mem-loc m790) #s(temp-loc t793)
+#    first check non-nil
+#            begin (lnload #s(mem-loc m790) $a0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $a0, 40($t3)
+#            end (lnload #s(mem-loc m790) $a0 #s(label l778))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#    end check non-nil
+#            begin (lnload #s(mem-loc m790) $t1 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $t1, 40($t3)
+#            end (lnload #s(mem-loc m790) $t1 #s(label l778))
+#            begin (lnload #s(temp-loc t793) $t2 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 10
+lw $t2, 44($t3)
+#            end (lnload #s(temp-loc t793) $t2 #s(label l778))
+sw $t2, ($t1)
+#            begin (lnload #s(temp-loc t787) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 6
+lw $t0, 28($t3)
+#            end (lnload #s(temp-loc t787) $t0 #s(label l778))
+#             begin (lnstore $t0 #s(temp-loc t784) #s(label l778))
+move $t3, $s0
+sw $t0, 24($t3)
+#             end   (lnstore $t0 #s(temp-loc t784) #s(label l778))
+#     BEGIN FUNCALL labloc=#s(label-loc lt783), args=(#s(temp-loc t784)), dest=#s(temp-loc t780)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t784) $a0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 5
+lw $a0, 24($t3)
+#            end (lnload #s(temp-loc t784) $a0 #s(label l778))
+#            begin (lnload #s(temp-loc t784) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 5
+lw $t0, 24($t3)
+#            end (lnload #s(temp-loc t784) $t0 #s(label l778))
+sw $t0, 0($sp)
+#            begin (lnload #s(label-loc lt783) $t2 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 3
+lw $t2, 16($t3)
+#            end (lnload #s(label-loc lt783) $t2 #s(label l778))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t780) #s(label l778))
+move $t3, $s0
+sw $v0, 4($t3)
+#             end   (lnstore $v0 #s(temp-loc t780) #s(label l778))
+#     END   FUNCALL labloc=#s(label-loc lt783), args=(#s(temp-loc t784)), dest=#s(temp-loc t780)
+li $t0, 0
+#             begin (lnstore $t0 #s(temp-loc t794) #s(label l778))
+move $t3, $s0
+sw $t0, 60($t3)
+#             end   (lnstore $t0 #s(temp-loc t794) #s(label l778))
+#            begin (lnload #s(param-loc p782 1) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 2
+lw $t0, 12($t3)
+#            end (lnload #s(param-loc p782 1) $t0 #s(label l778))
+#             begin (lnstore $t0 #s(temp-loc t796) #s(label l778))
+move $t3, $s0
+sw $t0, 64($t3)
+#             end   (lnstore $t0 #s(temp-loc t796) #s(label l778))
+li $t0, 1
+#             begin (lnstore $t0 #s(temp-loc t797) #s(label l778))
+move $t3, $s0
+sw $t0, 68($t3)
+#             end   (lnstore $t0 #s(temp-loc t797) #s(label l778))
+#   BEGIN binop op=-, src1=#s(temp-loc t796), src2=#s(temp-loc t797), dest=#s(temp-loc t795)
+#            begin (lnload #s(temp-loc t796) $t1 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 15
+lw $t1, 64($t3)
+#            end (lnload #s(temp-loc t796) $t1 #s(label l778))
+#            begin (lnload #s(temp-loc t797) $t2 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 16
+lw $t2, 68($t3)
+#            end (lnload #s(temp-loc t797) $t2 #s(label l778))
+sub $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t795) #s(label l778))
+move $t3, $s0
+sw $t0, 56($t3)
+#             end   (lnstore $t0 #s(temp-loc t795) #s(label l778))
+#   END   binop op=-, src1=#s(temp-loc t796), src2=#s(temp-loc t797), dest=#s(temp-loc t795)
+la $a0, l798
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt799) #s(label l778))
+move $t3, $s0
+sw $v0, 72($t3)
+#             end   (lnstore $v0 #s(label-loc lt799) #s(label l778))
+#            begin (lnload #s(label-loc lt799) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 17
+lw $t0, 72($t3)
+#            end (lnload #s(label-loc lt799) $t0 #s(label l778))
+#             begin (lnstore $t0 #s(label-loc lt841) #s(label l778))
+move $t3, $s0
+sw $t0, 76($t3)
+#             end   (lnstore $t0 #s(label-loc lt841) #s(label l778))
+#            begin (lnload #s(temp-loc t794) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t0, 60($t3)
+#            end (lnload #s(temp-loc t794) $t0 #s(label l778))
+#             begin (lnstore $t0 #s(temp-loc t842) #s(label l778))
+move $t3, $s0
+sw $t0, 84($t3)
+#             end   (lnstore $t0 #s(temp-loc t842) #s(label l778))
+#     BEGIN FUNCALL labloc=#s(label-loc lt841), args=(#s(temp-loc t842)), dest=#s(temp-loc t780)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t842) $a0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 20
+lw $a0, 84($t3)
+#            end (lnload #s(temp-loc t842) $a0 #s(label l778))
+#            begin (lnload #s(temp-loc t842) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 20
+lw $t0, 84($t3)
+#            end (lnload #s(temp-loc t842) $t0 #s(label l778))
+sw $t0, 0($sp)
+#            begin (lnload #s(label-loc lt841) $t2 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 18
+lw $t2, 76($t3)
+#            end (lnload #s(label-loc lt841) $t2 #s(label l778))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t780) #s(label l778))
+move $t3, $s0
+sw $v0, 4($t3)
+#             end   (lnstore $v0 #s(temp-loc t780) #s(label l778))
+#     END   FUNCALL labloc=#s(label-loc lt841), args=(#s(temp-loc t842)), dest=#s(temp-loc t780)
+#            begin (lnload #s(label-loc lt651) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 10
+lw $t3, ($t3)
+lw $t0, 44($t3)
+#            end (lnload #s(label-loc lt651) $t0 #s(label l778))
+#             begin (lnstore $t0 #s(label-loc lt845) #s(label l778))
+move $t3, $s0
+sw $t0, 88($t3)
+#             end   (lnstore $t0 #s(label-loc lt845) #s(label l778))
+li $t0, 1
+#             begin (lnstore $t0 #s(temp-loc t850) #s(label l778))
+move $t3, $s0
+sw $t0, 104($t3)
+#             end   (lnstore $t0 #s(temp-loc t850) #s(label l778))
+li $t0, 0
+#             begin (lnstore $t0 #s(temp-loc t851) #s(label l778))
+move $t3, $s0
+sw $t0, 108($t3)
+#             end   (lnstore $t0 #s(temp-loc t851) #s(label l778))
+#            begin (lnload #s(temp-loc t850) $a0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 25
+lw $a0, 104($t3)
+#            end (lnload #s(temp-loc t850) $a0 #s(label l778))
+#            begin (lnload #s(temp-loc t851) $a1 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 26
+lw $a1, 108($t3)
+#            end (lnload #s(temp-loc t851) $a1 #s(label l778))
+sub $sp, $sp, 16
+jal alloc_array
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(temp-loc t849) #s(label l778))
+move $t3, $s0
+sw $v0, 100($t3)
+#             end   (lnstore $v0 #s(temp-loc t849) #s(label l778))
+#               begin (lnref #s(temp-loc t849) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 24
+add $t0, $t3, 100
+#             begin (lnstore $t0 #s(mem-loc m853) #s(label l778))
+move $t3, $s0
+sw $t0, 120($t3)
+#             end   (lnstore $t0 #s(mem-loc m853) #s(label l778))
+#            begin (lnload #s(mem-loc m853) $a0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 29
+lw $a0, 120($t3)
+#            end (lnload #s(mem-loc m853) $a0 #s(label l778))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m853) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 29
+lw $t0, 120($t3)
+#            end (lnload #s(mem-loc m853) $t0 #s(label l778))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m853) #s(label l778))
+move $t3, $s0
+sw $t0, 120($t3)
+#             end   (lnstore $t0 #s(mem-loc m853) #s(label l778))
+#            begin (lnload #s(temp-loc t851) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 26
+lw $t0, 108($t3)
+#            end (lnload #s(temp-loc t851) $t0 #s(label l778))
+#             begin (lnstore $t0 #s(temp-loc t854) #s(label l778))
+move $t3, $s0
+sw $t0, 124($t3)
+#             end   (lnstore $t0 #s(temp-loc t854) #s(label l778))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m852) #s(label l778))
+move $t3, $s0
+sw $t0, 112($t3)
+#             end   (lnstore $t0 #s(mem-loc m852) #s(label l778))
+#   BEGIN binop op=*, src1=#s(temp-loc t854), src2=#s(mem-loc m852), dest=#s(temp-loc t854)
+#            begin (lnload #s(temp-loc t854) $t1 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 30
+lw $t1, 124($t3)
+#            end (lnload #s(temp-loc t854) $t1 #s(label l778))
+#            begin (lnload #s(mem-loc m852) $t2 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 27
+lw $t2, 112($t3)
+#            end (lnload #s(mem-loc m852) $t2 #s(label l778))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t854) #s(label l778))
+move $t3, $s0
+sw $t0, 124($t3)
+#             end   (lnstore $t0 #s(temp-loc t854) #s(label l778))
+#   END   binop op=*, src1=#s(temp-loc t854), src2=#s(mem-loc m852), dest=#s(temp-loc t854)
+#   BEGIN binop op=+, src1=#s(mem-loc m853), src2=#s(mem-loc m852), dest=#s(mem-loc m852)
+#            begin (lnload #s(mem-loc m853) $t1 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 29
+lw $t1, 120($t3)
+#            end (lnload #s(mem-loc m853) $t1 #s(label l778))
+#            begin (lnload #s(mem-loc m852) $t2 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 27
+lw $t2, 112($t3)
+#            end (lnload #s(mem-loc m852) $t2 #s(label l778))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m852) #s(label l778))
+move $t3, $s0
+sw $t0, 112($t3)
+#             end   (lnstore $t0 #s(mem-loc m852) #s(label l778))
+#   END   binop op=+, src1=#s(mem-loc m853), src2=#s(mem-loc m852), dest=#s(mem-loc m852)
+#   BEGIN binop op=+, src1=#s(temp-loc t854), src2=#s(mem-loc m852), dest=#s(mem-loc m852)
+#            begin (lnload #s(temp-loc t854) $t1 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 30
+lw $t1, 124($t3)
+#            end (lnload #s(temp-loc t854) $t1 #s(label l778))
+#            begin (lnload #s(mem-loc m852) $t2 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 27
+lw $t2, 112($t3)
+#            end (lnload #s(mem-loc m852) $t2 #s(label l778))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m852) #s(label l778))
+move $t3, $s0
+sw $t0, 112($t3)
+#             end   (lnstore $t0 #s(mem-loc m852) #s(label l778))
+#   END   binop op=+, src1=#s(temp-loc t854), src2=#s(mem-loc m852), dest=#s(mem-loc m852)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m853) $a0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 29
+lw $a0, 120($t3)
+#            end (lnload #s(mem-loc m853) $a0 #s(label l778))
+#            begin (lnload #s(mem-loc m852) $a1 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 27
+lw $a1, 112($t3)
+#            end (lnload #s(mem-loc m852) $a1 #s(label l778))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+li $t0, 93
+#             begin (lnstore $t0 #s(temp-loc t855) #s(label l778))
+move $t3, $s0
+sw $t0, 116($t3)
+#             end   (lnstore $t0 #s(temp-loc t855) #s(label l778))
+#  DEREF ASSIGN INS #s(mem-loc m852) #s(temp-loc t855)
+#    first check non-nil
+#            begin (lnload #s(mem-loc m852) $a0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 27
+lw $a0, 112($t3)
+#            end (lnload #s(mem-loc m852) $a0 #s(label l778))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#    end check non-nil
+#            begin (lnload #s(mem-loc m852) $t1 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 27
+lw $t1, 112($t3)
+#            end (lnload #s(mem-loc m852) $t1 #s(label l778))
+#            begin (lnload #s(temp-loc t855) $t2 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 28
+lw $t2, 116($t3)
+#            end (lnload #s(temp-loc t855) $t2 #s(label l778))
+sw $t2, ($t1)
+#            begin (lnload #s(temp-loc t849) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 24
+lw $t0, 100($t3)
+#            end (lnload #s(temp-loc t849) $t0 #s(label l778))
+#             begin (lnstore $t0 #s(temp-loc t846) #s(label l778))
+move $t3, $s0
+sw $t0, 96($t3)
+#             end   (lnstore $t0 #s(temp-loc t846) #s(label l778))
+#     BEGIN FUNCALL labloc=#s(label-loc lt845), args=(#s(temp-loc t846)), dest=#s(temp-loc t780)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t846) $a0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 23
+lw $a0, 96($t3)
+#            end (lnload #s(temp-loc t846) $a0 #s(label l778))
+#            begin (lnload #s(temp-loc t846) $t0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 23
+lw $t0, 96($t3)
+#            end (lnload #s(temp-loc t846) $t0 #s(label l778))
+sw $t0, 0($sp)
+#            begin (lnload #s(label-loc lt845) $t2 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 21
+lw $t2, 88($t3)
+#            end (lnload #s(label-loc lt845) $t2 #s(label l778))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t780) #s(label l778))
+move $t3, $s0
+sw $v0, 4($t3)
+#             end   (lnstore $v0 #s(temp-loc t780) #s(label l778))
+#     END   FUNCALL labloc=#s(label-loc lt845), args=(#s(temp-loc t846)), dest=#s(temp-loc t780)
+#            begin (lnload #s(temp-loc t780) $v0 #s(label l778))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 0
+lw $v0, 4($t3)
+#            end (lnload #s(temp-loc t780) $v0 #s(label l778))
+l778break:  # break label for function l778
+lw $ra, ($sp)
+add $sp, $sp, 4  #pop $ra
+jr $ra
+#     end def l778
+
+
+
+#      begin def l798
+l798:
+sub $sp, $sp, 4  #push $ra
+sw $ra, ($sp)
+li $a0, 36
+li $a1, 0
+sub $sp, $sp, 16
+jal alloc_block
+add $sp, $sp, 16
+sw $s0, ($v0) # put the static parent's activation record in the first slot of the new activation record
+move $s0, $v0 # set the current activation record to be the new one
+lw $t0, 4($sp) # copy arg 0
+#             begin (lnstore $t0 #s(param-loc p801 0) #s(label l798))
+move $t3, $s0
+sw $t0, 8($t3)
+#             end   (lnstore $t0 #s(param-loc p801 0) #s(label l798))
+#      done setting up activation record
+#            begin (lnload #s(param-loc p801 0) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 1
+lw $t0, 8($t3)
+#            end (lnload #s(param-loc p801 0) $t0 #s(label l798))
+#             begin (lnstore $t0 #s(temp-loc t804) #s(label l798))
+move $t3, $s0
+sw $t0, 16($t3)
+#             end   (lnstore $t0 #s(temp-loc t804) #s(label l798))
+#            begin (lnload #s(temp-loc t795) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 13
+lw $t3, ($t3)
+lw $t0, 56($t3)
+#            end (lnload #s(temp-loc t795) $t0 #s(label l798))
+#             begin (lnstore $t0 #s(temp-loc t805) #s(label l798))
+move $t3, $s0
+sw $t0, 20($t3)
+#             end   (lnstore $t0 #s(temp-loc t805) #s(label l798))
+#            begin (lnload #s(temp-loc t804) $t1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 3
+lw $t1, 16($t3)
+#            end (lnload #s(temp-loc t804) $t1 #s(label l798))
+#            begin (lnload #s(temp-loc t805) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 4
+lw $t2, 20($t3)
+#            end (lnload #s(temp-loc t805) $t2 #s(label l798))
+bgt $t1, $t2, l802
+#            begin (lnload #s(label-loc lt651) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 2 and offset 10
+lw $t3, ($t3)
+lw $t3, ($t3)
+lw $t0, 44($t3)
+#            end (lnload #s(label-loc lt651) $t0 #s(label l798))
+#             begin (lnstore $t0 #s(label-loc lt806) #s(label l798))
+move $t3, $s0
+sw $t0, 24($t3)
+#             end   (lnstore $t0 #s(label-loc lt806) #s(label l798))
+#            begin (lnload #s(label-loc lt655) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 2 and offset 6
+lw $t3, ($t3)
+lw $t3, ($t3)
+lw $t0, 28($t3)
+#            end (lnload #s(label-loc lt655) $t0 #s(label l798))
+#             begin (lnstore $t0 #s(label-loc lt810) #s(label l798))
+move $t3, $s0
+sw $t0, 36($t3)
+#             end   (lnstore $t0 #s(label-loc lt810) #s(label l798))
+#               begin (lnref #s(param-loc p781 0) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 1
+lw $t3, ($t3)
+add $t0, $t3, 8
+#             begin (lnstore $t0 #s(mem-loc m815) #s(label l798))
+move $t3, $s0
+sw $t0, 52($t3)
+#             end   (lnstore $t0 #s(mem-loc m815) #s(label l798))
+#            begin (lnload #s(mem-loc m815) $a0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 12
+lw $a0, 52($t3)
+#            end (lnload #s(mem-loc m815) $a0 #s(label l798))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m815) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 12
+lw $t0, 52($t3)
+#            end (lnload #s(mem-loc m815) $t0 #s(label l798))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m815) #s(label l798))
+move $t3, $s0
+sw $t0, 52($t3)
+#             end   (lnstore $t0 #s(mem-loc m815) #s(label l798))
+#            begin (lnload #s(param-loc p801 0) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 1
+lw $t0, 8($t3)
+#            end (lnload #s(param-loc p801 0) $t0 #s(label l798))
+#             begin (lnstore $t0 #s(temp-loc t816) #s(label l798))
+move $t3, $s0
+sw $t0, 56($t3)
+#             end   (lnstore $t0 #s(temp-loc t816) #s(label l798))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m814) #s(label l798))
+move $t3, $s0
+sw $t0, 48($t3)
+#             end   (lnstore $t0 #s(mem-loc m814) #s(label l798))
+#   BEGIN binop op=*, src1=#s(temp-loc t816), src2=#s(mem-loc m814), dest=#s(temp-loc t816)
+#            begin (lnload #s(temp-loc t816) $t1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+lw $t1, 56($t3)
+#            end (lnload #s(temp-loc t816) $t1 #s(label l798))
+#            begin (lnload #s(mem-loc m814) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t2, 48($t3)
+#            end (lnload #s(mem-loc m814) $t2 #s(label l798))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t816) #s(label l798))
+move $t3, $s0
+sw $t0, 56($t3)
+#             end   (lnstore $t0 #s(temp-loc t816) #s(label l798))
+#   END   binop op=*, src1=#s(temp-loc t816), src2=#s(mem-loc m814), dest=#s(temp-loc t816)
+#   BEGIN binop op=+, src1=#s(mem-loc m815), src2=#s(mem-loc m814), dest=#s(mem-loc m814)
+#            begin (lnload #s(mem-loc m815) $t1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 12
+lw $t1, 52($t3)
+#            end (lnload #s(mem-loc m815) $t1 #s(label l798))
+#            begin (lnload #s(mem-loc m814) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t2, 48($t3)
+#            end (lnload #s(mem-loc m814) $t2 #s(label l798))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m814) #s(label l798))
+move $t3, $s0
+sw $t0, 48($t3)
+#             end   (lnstore $t0 #s(mem-loc m814) #s(label l798))
+#   END   binop op=+, src1=#s(mem-loc m815), src2=#s(mem-loc m814), dest=#s(mem-loc m814)
+#   BEGIN binop op=+, src1=#s(temp-loc t816), src2=#s(mem-loc m814), dest=#s(mem-loc m814)
+#            begin (lnload #s(temp-loc t816) $t1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+lw $t1, 56($t3)
+#            end (lnload #s(temp-loc t816) $t1 #s(label l798))
+#            begin (lnload #s(mem-loc m814) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t2, 48($t3)
+#            end (lnload #s(mem-loc m814) $t2 #s(label l798))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m814) #s(label l798))
+move $t3, $s0
+sw $t0, 48($t3)
+#             end   (lnstore $t0 #s(mem-loc m814) #s(label l798))
+#   END   binop op=+, src1=#s(temp-loc t816), src2=#s(mem-loc m814), dest=#s(mem-loc m814)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m815) $a0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 12
+lw $a0, 52($t3)
+#            end (lnload #s(mem-loc m815) $a0 #s(label l798))
+#            begin (lnload #s(mem-loc m814) $a1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $a1, 48($t3)
+#            end (lnload #s(mem-loc m814) $a1 #s(label l798))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+#            begin (lnload #s(mem-loc m814) $a0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $a0, 48($t3)
+#            end (lnload #s(mem-loc m814) $a0 #s(label l798))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m814) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t0, 48($t3)
+#            end (lnload #s(mem-loc m814) $t0 #s(label l798))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(temp-loc t811) #s(label l798))
+move $t3, $s0
+sw $t0, 44($t3)
+#             end   (lnstore $t0 #s(temp-loc t811) #s(label l798))
+#     BEGIN FUNCALL labloc=#s(label-loc lt810), args=(#s(temp-loc t811)), dest=#s(temp-loc t807)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t811) $a0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 10
+lw $a0, 44($t3)
+#            end (lnload #s(temp-loc t811) $a0 #s(label l798))
+#            begin (lnload #s(temp-loc t811) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 10
+lw $t0, 44($t3)
+#            end (lnload #s(temp-loc t811) $t0 #s(label l798))
+sw $t0, 0($sp)
+#            begin (lnload #s(label-loc lt810) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 8
+lw $t2, 36($t3)
+#            end (lnload #s(label-loc lt810) $t2 #s(label l798))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t807) #s(label l798))
+move $t3, $s0
+sw $v0, 32($t3)
+#             end   (lnstore $v0 #s(temp-loc t807) #s(label l798))
+#     END   FUNCALL labloc=#s(label-loc lt810), args=(#s(temp-loc t811)), dest=#s(temp-loc t807)
+#     BEGIN FUNCALL labloc=#s(label-loc lt806), args=(#s(temp-loc t807)), dest=#s(temp-loc t803)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t807) $a0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $a0, 32($t3)
+#            end (lnload #s(temp-loc t807) $a0 #s(label l798))
+#            begin (lnload #s(temp-loc t807) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $t0, 32($t3)
+#            end (lnload #s(temp-loc t807) $t0 #s(label l798))
+sw $t0, 0($sp)
+#            begin (lnload #s(label-loc lt806) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 5
+lw $t2, 24($t3)
+#            end (lnload #s(label-loc lt806) $t2 #s(label l798))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t803) #s(label l798))
+move $t3, $s0
+sw $v0, 12($t3)
+#             end   (lnstore $v0 #s(temp-loc t803) #s(label l798))
+#     END   FUNCALL labloc=#s(label-loc lt806), args=(#s(temp-loc t807)), dest=#s(temp-loc t803)
+#            begin (lnload #s(temp-loc t816) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+lw $t0, 56($t3)
+#            end (lnload #s(temp-loc t816) $t0 #s(label l798))
+#             begin (lnstore $t0 #s(temp-loc t820) #s(label l798))
+move $t3, $s0
+sw $t0, 68($t3)
+#             end   (lnstore $t0 #s(temp-loc t820) #s(label l798))
+#            begin (lnload #s(param-loc p782 1) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 2
+lw $t3, ($t3)
+lw $t0, 12($t3)
+#            end (lnload #s(param-loc p782 1) $t0 #s(label l798))
+#             begin (lnstore $t0 #s(temp-loc t822) #s(label l798))
+move $t3, $s0
+sw $t0, 76($t3)
+#             end   (lnstore $t0 #s(temp-loc t822) #s(label l798))
+li $t0, 1
+#             begin (lnstore $t0 #s(temp-loc t823) #s(label l798))
+move $t3, $s0
+sw $t0, 80($t3)
+#             end   (lnstore $t0 #s(temp-loc t823) #s(label l798))
+#   BEGIN binop op=-, src1=#s(temp-loc t822), src2=#s(temp-loc t823), dest=#s(temp-loc t821)
+#            begin (lnload #s(temp-loc t822) $t1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 18
+lw $t1, 76($t3)
+#            end (lnload #s(temp-loc t822) $t1 #s(label l798))
+#            begin (lnload #s(temp-loc t823) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 19
+lw $t2, 80($t3)
+#            end (lnload #s(temp-loc t823) $t2 #s(label l798))
+sub $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t821) #s(label l798))
+move $t3, $s0
+sw $t0, 72($t3)
+#             end   (lnstore $t0 #s(temp-loc t821) #s(label l798))
+#   END   binop op=-, src1=#s(temp-loc t822), src2=#s(temp-loc t823), dest=#s(temp-loc t821)
+#   BEGIN binop op=<>, src1=#s(temp-loc t820), src2=#s(temp-loc t821), dest=#s(temp-loc t819)
+#            begin (lnload #s(temp-loc t820) $t1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 16
+lw $t1, 68($t3)
+#            end (lnload #s(temp-loc t820) $t1 #s(label l798))
+#            begin (lnload #s(temp-loc t821) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 17
+lw $t2, 72($t3)
+#            end (lnload #s(temp-loc t821) $t2 #s(label l798))
+sne $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t819) #s(label l798))
+move $t3, $s0
+sw $t0, 64($t3)
+#             end   (lnstore $t0 #s(temp-loc t819) #s(label l798))
+#   END   binop op=<>, src1=#s(temp-loc t820), src2=#s(temp-loc t821), dest=#s(temp-loc t819)
+#            begin (lnload #s(temp-loc t819) $t1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 15
+lw $t1, 64($t3)
+#            end (lnload #s(temp-loc t819) $t1 #s(label l798))
+beqz $t1, l817
+#            begin (lnload #s(label-loc lt651) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 2 and offset 10
+lw $t3, ($t3)
+lw $t3, ($t3)
+lw $t0, 44($t3)
+#            end (lnload #s(label-loc lt651) $t0 #s(label l798))
+#             begin (lnstore $t0 #s(label-loc lt824) #s(label l798))
+move $t3, $s0
+sw $t0, 84($t3)
+#             end   (lnstore $t0 #s(label-loc lt824) #s(label l798))
+li $t0, 1
+#             begin (lnstore $t0 #s(temp-loc t829) #s(label l798))
+move $t3, $s0
+sw $t0, 100($t3)
+#             end   (lnstore $t0 #s(temp-loc t829) #s(label l798))
+li $t0, 0
+#             begin (lnstore $t0 #s(temp-loc t830) #s(label l798))
+move $t3, $s0
+sw $t0, 104($t3)
+#             end   (lnstore $t0 #s(temp-loc t830) #s(label l798))
+#            begin (lnload #s(temp-loc t829) $a0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 24
+lw $a0, 100($t3)
+#            end (lnload #s(temp-loc t829) $a0 #s(label l798))
+#            begin (lnload #s(temp-loc t830) $a1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 25
+lw $a1, 104($t3)
+#            end (lnload #s(temp-loc t830) $a1 #s(label l798))
+sub $sp, $sp, 16
+jal alloc_array
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(temp-loc t828) #s(label l798))
+move $t3, $s0
+sw $v0, 96($t3)
+#             end   (lnstore $v0 #s(temp-loc t828) #s(label l798))
+#               begin (lnref #s(temp-loc t828) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 23
+add $t0, $t3, 96
+#             begin (lnstore $t0 #s(mem-loc m832) #s(label l798))
+move $t3, $s0
+sw $t0, 116($t3)
+#             end   (lnstore $t0 #s(mem-loc m832) #s(label l798))
+#            begin (lnload #s(mem-loc m832) $a0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 28
+lw $a0, 116($t3)
+#            end (lnload #s(mem-loc m832) $a0 #s(label l798))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m832) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 28
+lw $t0, 116($t3)
+#            end (lnload #s(mem-loc m832) $t0 #s(label l798))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m832) #s(label l798))
+move $t3, $s0
+sw $t0, 116($t3)
+#             end   (lnstore $t0 #s(mem-loc m832) #s(label l798))
+#            begin (lnload #s(temp-loc t830) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 25
+lw $t0, 104($t3)
+#            end (lnload #s(temp-loc t830) $t0 #s(label l798))
+#             begin (lnstore $t0 #s(temp-loc t833) #s(label l798))
+move $t3, $s0
+sw $t0, 120($t3)
+#             end   (lnstore $t0 #s(temp-loc t833) #s(label l798))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m831) #s(label l798))
+move $t3, $s0
+sw $t0, 108($t3)
+#             end   (lnstore $t0 #s(mem-loc m831) #s(label l798))
+#   BEGIN binop op=*, src1=#s(temp-loc t833), src2=#s(mem-loc m831), dest=#s(temp-loc t833)
+#            begin (lnload #s(temp-loc t833) $t1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 29
+lw $t1, 120($t3)
+#            end (lnload #s(temp-loc t833) $t1 #s(label l798))
+#            begin (lnload #s(mem-loc m831) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 26
+lw $t2, 108($t3)
+#            end (lnload #s(mem-loc m831) $t2 #s(label l798))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t833) #s(label l798))
+move $t3, $s0
+sw $t0, 120($t3)
+#             end   (lnstore $t0 #s(temp-loc t833) #s(label l798))
+#   END   binop op=*, src1=#s(temp-loc t833), src2=#s(mem-loc m831), dest=#s(temp-loc t833)
+#   BEGIN binop op=+, src1=#s(mem-loc m832), src2=#s(mem-loc m831), dest=#s(mem-loc m831)
+#            begin (lnload #s(mem-loc m832) $t1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 28
+lw $t1, 116($t3)
+#            end (lnload #s(mem-loc m832) $t1 #s(label l798))
+#            begin (lnload #s(mem-loc m831) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 26
+lw $t2, 108($t3)
+#            end (lnload #s(mem-loc m831) $t2 #s(label l798))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m831) #s(label l798))
+move $t3, $s0
+sw $t0, 108($t3)
+#             end   (lnstore $t0 #s(mem-loc m831) #s(label l798))
+#   END   binop op=+, src1=#s(mem-loc m832), src2=#s(mem-loc m831), dest=#s(mem-loc m831)
+#   BEGIN binop op=+, src1=#s(temp-loc t833), src2=#s(mem-loc m831), dest=#s(mem-loc m831)
+#            begin (lnload #s(temp-loc t833) $t1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 29
+lw $t1, 120($t3)
+#            end (lnload #s(temp-loc t833) $t1 #s(label l798))
+#            begin (lnload #s(mem-loc m831) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 26
+lw $t2, 108($t3)
+#            end (lnload #s(mem-loc m831) $t2 #s(label l798))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m831) #s(label l798))
+move $t3, $s0
+sw $t0, 108($t3)
+#             end   (lnstore $t0 #s(mem-loc m831) #s(label l798))
+#   END   binop op=+, src1=#s(temp-loc t833), src2=#s(mem-loc m831), dest=#s(mem-loc m831)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m832) $a0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 28
+lw $a0, 116($t3)
+#            end (lnload #s(mem-loc m832) $a0 #s(label l798))
+#            begin (lnload #s(mem-loc m831) $a1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 26
+lw $a1, 108($t3)
+#            end (lnload #s(mem-loc m831) $a1 #s(label l798))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+li $t0, 44
+#             begin (lnstore $t0 #s(temp-loc t834) #s(label l798))
+move $t3, $s0
+sw $t0, 112($t3)
+#             end   (lnstore $t0 #s(temp-loc t834) #s(label l798))
+#  DEREF ASSIGN INS #s(mem-loc m831) #s(temp-loc t834)
+#    first check non-nil
+#            begin (lnload #s(mem-loc m831) $a0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 26
+lw $a0, 108($t3)
+#            end (lnload #s(mem-loc m831) $a0 #s(label l798))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#    end check non-nil
+#            begin (lnload #s(mem-loc m831) $t1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 26
+lw $t1, 108($t3)
+#            end (lnload #s(mem-loc m831) $t1 #s(label l798))
+#            begin (lnload #s(temp-loc t834) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 27
+lw $t2, 112($t3)
+#            end (lnload #s(temp-loc t834) $t2 #s(label l798))
+sw $t2, ($t1)
+#            begin (lnload #s(temp-loc t828) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 23
+lw $t0, 96($t3)
+#            end (lnload #s(temp-loc t828) $t0 #s(label l798))
+#             begin (lnstore $t0 #s(temp-loc t825) #s(label l798))
+move $t3, $s0
+sw $t0, 92($t3)
+#             end   (lnstore $t0 #s(temp-loc t825) #s(label l798))
+#     BEGIN FUNCALL labloc=#s(label-loc lt824), args=(#s(temp-loc t825)), dest=#s(temp-loc t818)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t825) $a0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 22
+lw $a0, 92($t3)
+#            end (lnload #s(temp-loc t825) $a0 #s(label l798))
+#            begin (lnload #s(temp-loc t825) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 22
+lw $t0, 92($t3)
+#            end (lnload #s(temp-loc t825) $t0 #s(label l798))
+sw $t0, 0($sp)
+#            begin (lnload #s(label-loc lt824) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 20
+lw $t2, 84($t3)
+#            end (lnload #s(label-loc lt824) $t2 #s(label l798))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t818) #s(label l798))
+move $t3, $s0
+sw $v0, 60($t3)
+#             end   (lnstore $v0 #s(temp-loc t818) #s(label l798))
+#     END   FUNCALL labloc=#s(label-loc lt824), args=(#s(temp-loc t825)), dest=#s(temp-loc t818)
+l817:
+#            begin (lnload #s(label-loc lt799) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 17
+lw $t3, ($t3)
+lw $t0, 72($t3)
+#            end (lnload #s(label-loc lt799) $t0 #s(label l798))
+#             begin (lnstore $t0 #s(label-loc lt835) #s(label l798))
+move $t3, $s0
+sw $t0, 124($t3)
+#             end   (lnstore $t0 #s(label-loc lt835) #s(label l798))
+#            begin (lnload #s(param-loc p801 0) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 1
+lw $t0, 8($t3)
+#            end (lnload #s(param-loc p801 0) $t0 #s(label l798))
+#             begin (lnstore $t0 #s(temp-loc t839) #s(label l798))
+move $t3, $s0
+sw $t0, 136($t3)
+#             end   (lnstore $t0 #s(temp-loc t839) #s(label l798))
+li $t0, 1
+#             begin (lnstore $t0 #s(temp-loc t840) #s(label l798))
+move $t3, $s0
+sw $t0, 140($t3)
+#             end   (lnstore $t0 #s(temp-loc t840) #s(label l798))
+#   BEGIN binop op=+, src1=#s(temp-loc t839), src2=#s(temp-loc t840), dest=#s(temp-loc t836)
+#            begin (lnload #s(temp-loc t839) $t1 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 33
+lw $t1, 136($t3)
+#            end (lnload #s(temp-loc t839) $t1 #s(label l798))
+#            begin (lnload #s(temp-loc t840) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 34
+lw $t2, 140($t3)
+#            end (lnload #s(temp-loc t840) $t2 #s(label l798))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t836) #s(label l798))
+move $t3, $s0
+sw $t0, 132($t3)
+#             end   (lnstore $t0 #s(temp-loc t836) #s(label l798))
+#   END   binop op=+, src1=#s(temp-loc t839), src2=#s(temp-loc t840), dest=#s(temp-loc t836)
+#     BEGIN FUNCALL labloc=#s(label-loc lt835), args=(#s(temp-loc t836)), dest=#s(temp-loc t803)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t836) $a0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 32
+lw $a0, 132($t3)
+#            end (lnload #s(temp-loc t836) $a0 #s(label l798))
+#            begin (lnload #s(temp-loc t836) $t0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 32
+lw $t0, 132($t3)
+#            end (lnload #s(temp-loc t836) $t0 #s(label l798))
+sw $t0, 0($sp)
+#            begin (lnload #s(label-loc lt835) $t2 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 30
+lw $t2, 124($t3)
+#            end (lnload #s(label-loc lt835) $t2 #s(label l798))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t803) #s(label l798))
+move $t3, $s0
+sw $v0, 12($t3)
+#             end   (lnstore $v0 #s(temp-loc t803) #s(label l798))
+#     END   FUNCALL labloc=#s(label-loc lt835), args=(#s(temp-loc t836)), dest=#s(temp-loc t803)
+l802:
+#            begin (lnload #s(temp-loc t800) $v0 #s(label l798))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 0
+lw $v0, 4($t3)
+#            end (lnload #s(temp-loc t800) $v0 #s(label l798))
+l798break:  # break label for function l798
+lw $ra, ($sp)
+add $sp, $sp, 4  #pop $ra
+jr $ra
+#     end def l798
+
+
+
+#      begin def l662
+l662:
+sub $sp, $sp, 4  #push $ra
+sw $ra, ($sp)
+li $a0, 12
+li $a1, 0
+sub $sp, $sp, 16
+jal alloc_block
+add $sp, $sp, 16
+sw $s0, ($v0) # put the static parent's activation record in the first slot of the new activation record
+move $s0, $v0 # set the current activation record to be the new one
+lw $t0, 4($sp) # copy arg 0
+#             begin (lnstore $t0 #s(param-loc p665 0) #s(label l662))
+move $t3, $s0
+sw $t0, 8($t3)
+#             end   (lnstore $t0 #s(param-loc p665 0) #s(label l662))
+lw $t0, 8($sp) # copy arg 1
+#             begin (lnstore $t0 #s(param-loc p666 1) #s(label l662))
+move $t3, $s0
+sw $t0, 12($t3)
+#             end   (lnstore $t0 #s(param-loc p666 1) #s(label l662))
+#      done setting up activation record
+la $a0, l687
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt688) #s(label l662))
+move $t3, $s0
+sw $v0, 16($t3)
+#             end   (lnstore $v0 #s(label-loc lt688) #s(label l662))
+la $a0, l667
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt668) #s(label l662))
+move $t3, $s0
+sw $v0, 20($t3)
+#             end   (lnstore $v0 #s(label-loc lt668) #s(label l662))
+#            begin (lnload #s(label-loc lt688) $t0 #s(label l662))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 3
+lw $t0, 16($t3)
+#            end (lnload #s(label-loc lt688) $t0 #s(label l662))
+#             begin (lnstore $t0 #s(label-loc lt771) #s(label l662))
+move $t3, $s0
+sw $t0, 24($t3)
+#             end   (lnstore $t0 #s(label-loc lt771) #s(label l662))
+li $t0, 0
+#             begin (lnstore $t0 #s(temp-loc t772) #s(label l662))
+move $t3, $s0
+sw $t0, 32($t3)
+#             end   (lnstore $t0 #s(temp-loc t772) #s(label l662))
+#            begin (lnload #s(param-loc p666 1) $t0 #s(label l662))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 2
+lw $t0, 12($t3)
+#            end (lnload #s(param-loc p666 1) $t0 #s(label l662))
+#             begin (lnstore $t0 #s(temp-loc t776) #s(label l662))
+move $t3, $s0
+sw $t0, 40($t3)
+#             end   (lnstore $t0 #s(temp-loc t776) #s(label l662))
+li $t0, 1
+#             begin (lnstore $t0 #s(temp-loc t777) #s(label l662))
+move $t3, $s0
+sw $t0, 44($t3)
+#             end   (lnstore $t0 #s(temp-loc t777) #s(label l662))
+#   BEGIN binop op=-, src1=#s(temp-loc t776), src2=#s(temp-loc t777), dest=#s(temp-loc t773)
+#            begin (lnload #s(temp-loc t776) $t1 #s(label l662))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $t1, 40($t3)
+#            end (lnload #s(temp-loc t776) $t1 #s(label l662))
+#            begin (lnload #s(temp-loc t777) $t2 #s(label l662))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 10
+lw $t2, 44($t3)
+#            end (lnload #s(temp-loc t777) $t2 #s(label l662))
+sub $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t773) #s(label l662))
+move $t3, $s0
+sw $t0, 36($t3)
+#             end   (lnstore $t0 #s(temp-loc t773) #s(label l662))
+#   END   binop op=-, src1=#s(temp-loc t776), src2=#s(temp-loc t777), dest=#s(temp-loc t773)
+#     BEGIN FUNCALL labloc=#s(label-loc lt771), args=(#s(temp-loc t772) #s(temp-loc t773)), dest=#s(temp-loc t664)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t772) $a0 #s(label l662))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $a0, 32($t3)
+#            end (lnload #s(temp-loc t772) $a0 #s(label l662))
+#            begin (lnload #s(temp-loc t772) $t0 #s(label l662))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $t0, 32($t3)
+#            end (lnload #s(temp-loc t772) $t0 #s(label l662))
+sw $t0, 0($sp)
+#            begin (lnload #s(temp-loc t773) $a1 #s(label l662))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 8
+lw $a1, 36($t3)
+#            end (lnload #s(temp-loc t773) $a1 #s(label l662))
+#            begin (lnload #s(temp-loc t773) $t0 #s(label l662))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 8
+lw $t0, 36($t3)
+#            end (lnload #s(temp-loc t773) $t0 #s(label l662))
+sw $t0, 4($sp)
+#            begin (lnload #s(label-loc lt771) $t2 #s(label l662))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 5
+lw $t2, 24($t3)
+#            end (lnload #s(label-loc lt771) $t2 #s(label l662))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t664) #s(label l662))
+move $t3, $s0
+sw $v0, 4($t3)
+#             end   (lnstore $v0 #s(temp-loc t664) #s(label l662))
+#     END   FUNCALL labloc=#s(label-loc lt771), args=(#s(temp-loc t772) #s(temp-loc t773)), dest=#s(temp-loc t664)
+#            begin (lnload #s(temp-loc t664) $v0 #s(label l662))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 0
+lw $v0, 4($t3)
+#            end (lnload #s(temp-loc t664) $v0 #s(label l662))
+l662break:  # break label for function l662
+lw $ra, ($sp)
+add $sp, $sp, 4  #pop $ra
+jr $ra
+#     end def l662
+
+
+
+#      begin def l687
+l687:
+sub $sp, $sp, 4  #push $ra
+sw $ra, ($sp)
+li $a0, 30
+li $a1, 0
+sub $sp, $sp, 16
+jal alloc_block
+add $sp, $sp, 16
+sw $s0, ($v0) # put the static parent's activation record in the first slot of the new activation record
+move $s0, $v0 # set the current activation record to be the new one
+lw $t0, 4($sp) # copy arg 0
+#             begin (lnstore $t0 #s(param-loc p690 0) #s(label l687))
+move $t3, $s0
+sw $t0, 8($t3)
+#             end   (lnstore $t0 #s(param-loc p690 0) #s(label l687))
+lw $t0, 8($sp) # copy arg 1
+#             begin (lnstore $t0 #s(param-loc p691 1) #s(label l687))
+move $t3, $s0
+sw $t0, 12($t3)
+#             end   (lnstore $t0 #s(param-loc p691 1) #s(label l687))
+#      done setting up activation record
+#            begin (lnload #s(param-loc p691 1) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 2
+lw $t0, 12($t3)
+#            end (lnload #s(param-loc p691 1) $t0 #s(label l687))
+#             begin (lnstore $t0 #s(temp-loc t694) #s(label l687))
+move $t3, $s0
+sw $t0, 20($t3)
+#             end   (lnstore $t0 #s(temp-loc t694) #s(label l687))
+#            begin (lnload #s(param-loc p690 0) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 1
+lw $t0, 8($t3)
+#            end (lnload #s(param-loc p690 0) $t0 #s(label l687))
+#             begin (lnstore $t0 #s(temp-loc t695) #s(label l687))
+move $t3, $s0
+sw $t0, 24($t3)
+#             end   (lnstore $t0 #s(temp-loc t695) #s(label l687))
+#            begin (lnload #s(temp-loc t694) $t1 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 4
+lw $t1, 20($t3)
+#            end (lnload #s(temp-loc t694) $t1 #s(label l687))
+#            begin (lnload #s(temp-loc t695) $t2 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 5
+lw $t2, 24($t3)
+#            end (lnload #s(temp-loc t695) $t2 #s(label l687))
+ble $t1, $t2, l692
+#            begin (lnload #s(temp-loc t695) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 5
+lw $t0, 24($t3)
+#            end (lnload #s(temp-loc t695) $t0 #s(label l687))
+#             begin (lnstore $t0 #s(temp-loc t697) #s(label l687))
+move $t3, $s0
+sw $t0, 32($t3)
+#             end   (lnstore $t0 #s(temp-loc t697) #s(label l687))
+#            begin (lnload #s(temp-loc t694) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 4
+lw $t0, 20($t3)
+#            end (lnload #s(temp-loc t694) $t0 #s(label l687))
+#             begin (lnstore $t0 #s(temp-loc t701) #s(label l687))
+move $t3, $s0
+sw $t0, 48($t3)
+#             end   (lnstore $t0 #s(temp-loc t701) #s(label l687))
+#            begin (lnload #s(temp-loc t695) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 5
+lw $t0, 24($t3)
+#            end (lnload #s(temp-loc t695) $t0 #s(label l687))
+#             begin (lnstore $t0 #s(temp-loc t702) #s(label l687))
+move $t3, $s0
+sw $t0, 52($t3)
+#             end   (lnstore $t0 #s(temp-loc t702) #s(label l687))
+#   BEGIN binop op=-, src1=#s(temp-loc t701), src2=#s(temp-loc t702), dest=#s(temp-loc t699)
+#            begin (lnload #s(temp-loc t701) $t1 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t1, 48($t3)
+#            end (lnload #s(temp-loc t701) $t1 #s(label l687))
+#            begin (lnload #s(temp-loc t702) $t2 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 12
+lw $t2, 52($t3)
+#            end (lnload #s(temp-loc t702) $t2 #s(label l687))
+sub $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t699) #s(label l687))
+move $t3, $s0
+sw $t0, 40($t3)
+#             end   (lnstore $t0 #s(temp-loc t699) #s(label l687))
+#   END   binop op=-, src1=#s(temp-loc t701), src2=#s(temp-loc t702), dest=#s(temp-loc t699)
+li $t0, 2
+#             begin (lnstore $t0 #s(temp-loc t700) #s(label l687))
+move $t3, $s0
+sw $t0, 44($t3)
+#             end   (lnstore $t0 #s(temp-loc t700) #s(label l687))
+#   BEGIN binop op=/, src1=#s(temp-loc t699), src2=#s(temp-loc t700), dest=#s(temp-loc t698)
+#            begin (lnload #s(temp-loc t699) $t1 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $t1, 40($t3)
+#            end (lnload #s(temp-loc t699) $t1 #s(label l687))
+#            begin (lnload #s(temp-loc t700) $t2 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 10
+lw $t2, 44($t3)
+#            end (lnload #s(temp-loc t700) $t2 #s(label l687))
+div $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t698) #s(label l687))
+move $t3, $s0
+sw $t0, 36($t3)
+#             end   (lnstore $t0 #s(temp-loc t698) #s(label l687))
+#   END   binop op=/, src1=#s(temp-loc t699), src2=#s(temp-loc t700), dest=#s(temp-loc t698)
+#   BEGIN binop op=+, src1=#s(temp-loc t697), src2=#s(temp-loc t698), dest=#s(temp-loc t696)
+#            begin (lnload #s(temp-loc t697) $t1 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $t1, 32($t3)
+#            end (lnload #s(temp-loc t697) $t1 #s(label l687))
+#            begin (lnload #s(temp-loc t698) $t2 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 8
+lw $t2, 36($t3)
+#            end (lnload #s(temp-loc t698) $t2 #s(label l687))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t696) #s(label l687))
+move $t3, $s0
+sw $t0, 28($t3)
+#             end   (lnstore $t0 #s(temp-loc t696) #s(label l687))
+#   END   binop op=+, src1=#s(temp-loc t697), src2=#s(temp-loc t698), dest=#s(temp-loc t696)
+la $a0, l703
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt704) #s(label l687))
+move $t3, $s0
+sw $v0, 56($t3)
+#             end   (lnstore $v0 #s(label-loc lt704) #s(label l687))
+#            begin (lnload #s(label-loc lt704) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+lw $t0, 56($t3)
+#            end (lnload #s(label-loc lt704) $t0 #s(label l687))
+#             begin (lnstore $t0 #s(label-loc lt754) #s(label l687))
+move $t3, $s0
+sw $t0, 64($t3)
+#             end   (lnstore $t0 #s(label-loc lt754) #s(label l687))
+#     BEGIN FUNCALL labloc=#s(label-loc lt754), args=(), dest=#s(temp-loc t753)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(label-loc lt754) $t2 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 15
+lw $t2, 64($t3)
+#            end (lnload #s(label-loc lt754) $t2 #s(label l687))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t753) #s(label l687))
+move $t3, $s0
+sw $v0, 60($t3)
+#             end   (lnstore $v0 #s(temp-loc t753) #s(label l687))
+#     END   FUNCALL labloc=#s(label-loc lt754), args=(), dest=#s(temp-loc t753)
+#            begin (lnload #s(label-loc lt688) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 3
+lw $t3, ($t3)
+lw $t0, 16($t3)
+#            end (lnload #s(label-loc lt688) $t0 #s(label l687))
+#             begin (lnstore $t0 #s(label-loc lt757) #s(label l687))
+move $t3, $s0
+sw $t0, 72($t3)
+#             end   (lnstore $t0 #s(label-loc lt757) #s(label l687))
+#            begin (lnload #s(param-loc p690 0) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 1
+lw $t0, 8($t3)
+#            end (lnload #s(param-loc p690 0) $t0 #s(label l687))
+#             begin (lnstore $t0 #s(temp-loc t758) #s(label l687))
+move $t3, $s0
+sw $t0, 80($t3)
+#             end   (lnstore $t0 #s(temp-loc t758) #s(label l687))
+#            begin (lnload #s(temp-loc t753) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t0, 60($t3)
+#            end (lnload #s(temp-loc t753) $t0 #s(label l687))
+#             begin (lnstore $t0 #s(temp-loc t762) #s(label l687))
+move $t3, $s0
+sw $t0, 88($t3)
+#             end   (lnstore $t0 #s(temp-loc t762) #s(label l687))
+li $t0, 1
+#             begin (lnstore $t0 #s(temp-loc t763) #s(label l687))
+move $t3, $s0
+sw $t0, 92($t3)
+#             end   (lnstore $t0 #s(temp-loc t763) #s(label l687))
+#   BEGIN binop op=-, src1=#s(temp-loc t762), src2=#s(temp-loc t763), dest=#s(temp-loc t759)
+#            begin (lnload #s(temp-loc t762) $t1 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 21
+lw $t1, 88($t3)
+#            end (lnload #s(temp-loc t762) $t1 #s(label l687))
+#            begin (lnload #s(temp-loc t763) $t2 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 22
+lw $t2, 92($t3)
+#            end (lnload #s(temp-loc t763) $t2 #s(label l687))
+sub $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t759) #s(label l687))
+move $t3, $s0
+sw $t0, 84($t3)
+#             end   (lnstore $t0 #s(temp-loc t759) #s(label l687))
+#   END   binop op=-, src1=#s(temp-loc t762), src2=#s(temp-loc t763), dest=#s(temp-loc t759)
+#     BEGIN FUNCALL labloc=#s(label-loc lt757), args=(#s(temp-loc t758) #s(temp-loc t759)), dest=#s(temp-loc t693)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t758) $a0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 19
+lw $a0, 80($t3)
+#            end (lnload #s(temp-loc t758) $a0 #s(label l687))
+#            begin (lnload #s(temp-loc t758) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 19
+lw $t0, 80($t3)
+#            end (lnload #s(temp-loc t758) $t0 #s(label l687))
+sw $t0, 0($sp)
+#            begin (lnload #s(temp-loc t759) $a1 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 20
+lw $a1, 84($t3)
+#            end (lnload #s(temp-loc t759) $a1 #s(label l687))
+#            begin (lnload #s(temp-loc t759) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 20
+lw $t0, 84($t3)
+#            end (lnload #s(temp-loc t759) $t0 #s(label l687))
+sw $t0, 4($sp)
+#            begin (lnload #s(label-loc lt757) $t2 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 17
+lw $t2, 72($t3)
+#            end (lnload #s(label-loc lt757) $t2 #s(label l687))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t693) #s(label l687))
+move $t3, $s0
+sw $v0, 16($t3)
+#             end   (lnstore $v0 #s(temp-loc t693) #s(label l687))
+#     END   FUNCALL labloc=#s(label-loc lt757), args=(#s(temp-loc t758) #s(temp-loc t759)), dest=#s(temp-loc t693)
+#            begin (lnload #s(label-loc lt688) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 3
+lw $t3, ($t3)
+lw $t0, 16($t3)
+#            end (lnload #s(label-loc lt688) $t0 #s(label l687))
+#             begin (lnstore $t0 #s(label-loc lt764) #s(label l687))
+move $t3, $s0
+sw $t0, 96($t3)
+#             end   (lnstore $t0 #s(label-loc lt764) #s(label l687))
+#            begin (lnload #s(temp-loc t753) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t0, 60($t3)
+#            end (lnload #s(temp-loc t753) $t0 #s(label l687))
+#             begin (lnstore $t0 #s(temp-loc t769) #s(label l687))
+move $t3, $s0
+sw $t0, 108($t3)
+#             end   (lnstore $t0 #s(temp-loc t769) #s(label l687))
+li $t0, 1
+#             begin (lnstore $t0 #s(temp-loc t770) #s(label l687))
+move $t3, $s0
+sw $t0, 112($t3)
+#             end   (lnstore $t0 #s(temp-loc t770) #s(label l687))
+#   BEGIN binop op=+, src1=#s(temp-loc t769), src2=#s(temp-loc t770), dest=#s(temp-loc t765)
+#            begin (lnload #s(temp-loc t769) $t1 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 26
+lw $t1, 108($t3)
+#            end (lnload #s(temp-loc t769) $t1 #s(label l687))
+#            begin (lnload #s(temp-loc t770) $t2 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 27
+lw $t2, 112($t3)
+#            end (lnload #s(temp-loc t770) $t2 #s(label l687))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t765) #s(label l687))
+move $t3, $s0
+sw $t0, 104($t3)
+#             end   (lnstore $t0 #s(temp-loc t765) #s(label l687))
+#   END   binop op=+, src1=#s(temp-loc t769), src2=#s(temp-loc t770), dest=#s(temp-loc t765)
+#            begin (lnload #s(param-loc p691 1) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 2
+lw $t0, 12($t3)
+#            end (lnload #s(param-loc p691 1) $t0 #s(label l687))
+#             begin (lnstore $t0 #s(temp-loc t766) #s(label l687))
+move $t3, $s0
+sw $t0, 116($t3)
+#             end   (lnstore $t0 #s(temp-loc t766) #s(label l687))
+#     BEGIN FUNCALL labloc=#s(label-loc lt764), args=(#s(temp-loc t765) #s(temp-loc t766)), dest=#s(temp-loc t693)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t765) $a0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 25
+lw $a0, 104($t3)
+#            end (lnload #s(temp-loc t765) $a0 #s(label l687))
+#            begin (lnload #s(temp-loc t765) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 25
+lw $t0, 104($t3)
+#            end (lnload #s(temp-loc t765) $t0 #s(label l687))
+sw $t0, 0($sp)
+#            begin (lnload #s(temp-loc t766) $a1 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 28
+lw $a1, 116($t3)
+#            end (lnload #s(temp-loc t766) $a1 #s(label l687))
+#            begin (lnload #s(temp-loc t766) $t0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 28
+lw $t0, 116($t3)
+#            end (lnload #s(temp-loc t766) $t0 #s(label l687))
+sw $t0, 4($sp)
+#            begin (lnload #s(label-loc lt764) $t2 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 23
+lw $t2, 96($t3)
+#            end (lnload #s(label-loc lt764) $t2 #s(label l687))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t693) #s(label l687))
+move $t3, $s0
+sw $v0, 16($t3)
+#             end   (lnstore $v0 #s(temp-loc t693) #s(label l687))
+#     END   FUNCALL labloc=#s(label-loc lt764), args=(#s(temp-loc t765) #s(temp-loc t766)), dest=#s(temp-loc t693)
+l692:
+#            begin (lnload #s(temp-loc t689) $v0 #s(label l687))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 0
+lw $v0, 4($t3)
+#            end (lnload #s(temp-loc t689) $v0 #s(label l687))
+l687break:  # break label for function l687
+lw $ra, ($sp)
+add $sp, $sp, 4  #pop $ra
+jr $ra
+#     end def l687
+
+
+
+#      begin def l703
+l703:
+sub $sp, $sp, 4  #push $ra
+sw $ra, ($sp)
+li $a0, 18
+li $a1, 0
+sub $sp, $sp, 16
+jal alloc_block
+add $sp, $sp, 16
+sw $s0, ($v0) # put the static parent's activation record in the first slot of the new activation record
+move $s0, $v0 # set the current activation record to be the new one
+#      done setting up activation record
+#               begin (lnref #s(param-loc p665 0) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 2 and offset 1
+lw $t3, ($t3)
+lw $t3, ($t3)
+add $t0, $t3, 8
+#             begin (lnstore $t0 #s(mem-loc m708) #s(label l703))
+move $t3, $s0
+sw $t0, 16($t3)
+#             end   (lnstore $t0 #s(mem-loc m708) #s(label l703))
+#            begin (lnload #s(mem-loc m708) $a0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 3
+lw $a0, 16($t3)
+#            end (lnload #s(mem-loc m708) $a0 #s(label l703))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m708) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 3
+lw $t0, 16($t3)
+#            end (lnload #s(mem-loc m708) $t0 #s(label l703))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m708) #s(label l703))
+move $t3, $s0
+sw $t0, 16($t3)
+#             end   (lnstore $t0 #s(mem-loc m708) #s(label l703))
+#            begin (lnload #s(temp-loc t696) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 6
+lw $t3, ($t3)
+lw $t0, 28($t3)
+#            end (lnload #s(temp-loc t696) $t0 #s(label l703))
+#             begin (lnstore $t0 #s(temp-loc t709) #s(label l703))
+move $t3, $s0
+sw $t0, 20($t3)
+#             end   (lnstore $t0 #s(temp-loc t709) #s(label l703))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m707) #s(label l703))
+move $t3, $s0
+sw $t0, 12($t3)
+#             end   (lnstore $t0 #s(mem-loc m707) #s(label l703))
+#   BEGIN binop op=*, src1=#s(temp-loc t709), src2=#s(mem-loc m707), dest=#s(temp-loc t709)
+#            begin (lnload #s(temp-loc t709) $t1 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 4
+lw $t1, 20($t3)
+#            end (lnload #s(temp-loc t709) $t1 #s(label l703))
+#            begin (lnload #s(mem-loc m707) $t2 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 2
+lw $t2, 12($t3)
+#            end (lnload #s(mem-loc m707) $t2 #s(label l703))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t709) #s(label l703))
+move $t3, $s0
+sw $t0, 20($t3)
+#             end   (lnstore $t0 #s(temp-loc t709) #s(label l703))
+#   END   binop op=*, src1=#s(temp-loc t709), src2=#s(mem-loc m707), dest=#s(temp-loc t709)
+#   BEGIN binop op=+, src1=#s(mem-loc m708), src2=#s(mem-loc m707), dest=#s(mem-loc m707)
+#            begin (lnload #s(mem-loc m708) $t1 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 3
+lw $t1, 16($t3)
+#            end (lnload #s(mem-loc m708) $t1 #s(label l703))
+#            begin (lnload #s(mem-loc m707) $t2 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 2
+lw $t2, 12($t3)
+#            end (lnload #s(mem-loc m707) $t2 #s(label l703))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m707) #s(label l703))
+move $t3, $s0
+sw $t0, 12($t3)
+#             end   (lnstore $t0 #s(mem-loc m707) #s(label l703))
+#   END   binop op=+, src1=#s(mem-loc m708), src2=#s(mem-loc m707), dest=#s(mem-loc m707)
+#   BEGIN binop op=+, src1=#s(temp-loc t709), src2=#s(mem-loc m707), dest=#s(mem-loc m707)
+#            begin (lnload #s(temp-loc t709) $t1 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 4
+lw $t1, 20($t3)
+#            end (lnload #s(temp-loc t709) $t1 #s(label l703))
+#            begin (lnload #s(mem-loc m707) $t2 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 2
+lw $t2, 12($t3)
+#            end (lnload #s(mem-loc m707) $t2 #s(label l703))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m707) #s(label l703))
+move $t3, $s0
+sw $t0, 12($t3)
+#             end   (lnstore $t0 #s(mem-loc m707) #s(label l703))
+#   END   binop op=+, src1=#s(temp-loc t709), src2=#s(mem-loc m707), dest=#s(mem-loc m707)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m708) $a0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 3
+lw $a0, 16($t3)
+#            end (lnload #s(mem-loc m708) $a0 #s(label l703))
+#            begin (lnload #s(mem-loc m707) $a1 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 2
+lw $a1, 12($t3)
+#            end (lnload #s(mem-loc m707) $a1 #s(label l703))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+#            begin (lnload #s(mem-loc m707) $a0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 2
+lw $a0, 12($t3)
+#            end (lnload #s(mem-loc m707) $a0 #s(label l703))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m707) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 2
+lw $t0, 12($t3)
+#            end (lnload #s(mem-loc m707) $t0 #s(label l703))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(temp-loc t706) #s(label l703))
+move $t3, $s0
+sw $t0, 8($t3)
+#             end   (lnstore $t0 #s(temp-loc t706) #s(label l703))
+#            begin (lnload #s(label-loc lt668) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 2 and offset 4
+lw $t3, ($t3)
+lw $t3, ($t3)
+lw $t0, 20($t3)
+#            end (lnload #s(label-loc lt668) $t0 #s(label l703))
+#             begin (lnstore $t0 #s(label-loc lt710) #s(label l703))
+move $t3, $s0
+sw $t0, 24($t3)
+#             end   (lnstore $t0 #s(label-loc lt710) #s(label l703))
+#            begin (lnload #s(temp-loc t696) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 6
+lw $t3, ($t3)
+lw $t0, 28($t3)
+#            end (lnload #s(temp-loc t696) $t0 #s(label l703))
+#             begin (lnstore $t0 #s(temp-loc t711) #s(label l703))
+move $t3, $s0
+sw $t0, 32($t3)
+#             end   (lnstore $t0 #s(temp-loc t711) #s(label l703))
+#            begin (lnload #s(param-loc p691 1) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 2
+lw $t3, ($t3)
+lw $t0, 12($t3)
+#            end (lnload #s(param-loc p691 1) $t0 #s(label l703))
+#             begin (lnstore $t0 #s(temp-loc t712) #s(label l703))
+move $t3, $s0
+sw $t0, 36($t3)
+#             end   (lnstore $t0 #s(temp-loc t712) #s(label l703))
+#     BEGIN FUNCALL labloc=#s(label-loc lt710), args=(#s(temp-loc t711) #s(temp-loc t712)), dest=#s(temp-loc t705)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t711) $a0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $a0, 32($t3)
+#            end (lnload #s(temp-loc t711) $a0 #s(label l703))
+#            begin (lnload #s(temp-loc t711) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $t0, 32($t3)
+#            end (lnload #s(temp-loc t711) $t0 #s(label l703))
+sw $t0, 0($sp)
+#            begin (lnload #s(temp-loc t712) $a1 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 8
+lw $a1, 36($t3)
+#            end (lnload #s(temp-loc t712) $a1 #s(label l703))
+#            begin (lnload #s(temp-loc t712) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 8
+lw $t0, 36($t3)
+#            end (lnload #s(temp-loc t712) $t0 #s(label l703))
+sw $t0, 4($sp)
+#            begin (lnload #s(label-loc lt710) $t2 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 5
+lw $t2, 24($t3)
+#            end (lnload #s(label-loc lt710) $t2 #s(label l703))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t705) #s(label l703))
+move $t3, $s0
+sw $v0, 4($t3)
+#             end   (lnstore $v0 #s(temp-loc t705) #s(label l703))
+#     END   FUNCALL labloc=#s(label-loc lt710), args=(#s(temp-loc t711) #s(temp-loc t712)), dest=#s(temp-loc t705)
+#            begin (lnload #s(temp-loc t712) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 8
+lw $t0, 36($t3)
+#            end (lnload #s(temp-loc t712) $t0 #s(label l703))
+#             begin (lnstore $t0 #s(temp-loc t715) #s(label l703))
+move $t3, $s0
+sw $t0, 40($t3)
+#             end   (lnstore $t0 #s(temp-loc t715) #s(label l703))
+la $a0, l716
+move $a1, $s0
+sub $sp, $sp, 16
+jal alloc_closure
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(label-loc lt717) #s(label l703))
+move $t3, $s0
+sw $v0, 44($t3)
+#             end   (lnstore $v0 #s(label-loc lt717) #s(label l703))
+#            begin (lnload #s(label-loc lt717) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 10
+lw $t0, 44($t3)
+#            end (lnload #s(label-loc lt717) $t0 #s(label l703))
+#             begin (lnstore $t0 #s(label-loc lt746) #s(label l703))
+move $t3, $s0
+sw $t0, 48($t3)
+#             end   (lnstore $t0 #s(label-loc lt746) #s(label l703))
+#            begin (lnload #s(param-loc p690 0) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 1
+lw $t3, ($t3)
+lw $t0, 8($t3)
+#            end (lnload #s(param-loc p690 0) $t0 #s(label l703))
+#             begin (lnstore $t0 #s(temp-loc t747) #s(label l703))
+move $t3, $s0
+sw $t0, 56($t3)
+#             end   (lnstore $t0 #s(temp-loc t747) #s(label l703))
+#            begin (lnload #s(param-loc p691 1) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 2
+lw $t3, ($t3)
+lw $t0, 12($t3)
+#            end (lnload #s(param-loc p691 1) $t0 #s(label l703))
+#             begin (lnstore $t0 #s(temp-loc t751) #s(label l703))
+move $t3, $s0
+sw $t0, 64($t3)
+#             end   (lnstore $t0 #s(temp-loc t751) #s(label l703))
+li $t0, 1
+#             begin (lnstore $t0 #s(temp-loc t752) #s(label l703))
+move $t3, $s0
+sw $t0, 68($t3)
+#             end   (lnstore $t0 #s(temp-loc t752) #s(label l703))
+#   BEGIN binop op=-, src1=#s(temp-loc t751), src2=#s(temp-loc t752), dest=#s(temp-loc t748)
+#            begin (lnload #s(temp-loc t751) $t1 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 15
+lw $t1, 64($t3)
+#            end (lnload #s(temp-loc t751) $t1 #s(label l703))
+#            begin (lnload #s(temp-loc t752) $t2 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 16
+lw $t2, 68($t3)
+#            end (lnload #s(temp-loc t752) $t2 #s(label l703))
+sub $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t748) #s(label l703))
+move $t3, $s0
+sw $t0, 60($t3)
+#             end   (lnstore $t0 #s(temp-loc t748) #s(label l703))
+#   END   binop op=-, src1=#s(temp-loc t751), src2=#s(temp-loc t752), dest=#s(temp-loc t748)
+#     BEGIN FUNCALL labloc=#s(label-loc lt746), args=(#s(temp-loc t747) #s(temp-loc t748)), dest=#s(temp-loc t705)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t747) $a0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+lw $a0, 56($t3)
+#            end (lnload #s(temp-loc t747) $a0 #s(label l703))
+#            begin (lnload #s(temp-loc t747) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+lw $t0, 56($t3)
+#            end (lnload #s(temp-loc t747) $t0 #s(label l703))
+sw $t0, 0($sp)
+#            begin (lnload #s(temp-loc t748) $a1 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $a1, 60($t3)
+#            end (lnload #s(temp-loc t748) $a1 #s(label l703))
+#            begin (lnload #s(temp-loc t748) $t0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t0, 60($t3)
+#            end (lnload #s(temp-loc t748) $t0 #s(label l703))
+sw $t0, 4($sp)
+#            begin (lnload #s(label-loc lt746) $t2 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t2, 48($t3)
+#            end (lnload #s(label-loc lt746) $t2 #s(label l703))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t705) #s(label l703))
+move $t3, $s0
+sw $v0, 4($t3)
+#             end   (lnstore $v0 #s(temp-loc t705) #s(label l703))
+#     END   FUNCALL labloc=#s(label-loc lt746), args=(#s(temp-loc t747) #s(temp-loc t748)), dest=#s(temp-loc t705)
+#            begin (lnload #s(temp-loc t705) $v0 #s(label l703))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 0
+lw $v0, 4($t3)
+#            end (lnload #s(temp-loc t705) $v0 #s(label l703))
+l703break:  # break label for function l703
+lw $ra, ($sp)
+add $sp, $sp, 4  #pop $ra
+jr $ra
+#     end def l703
+
+
+
+#      begin def l716
+l716:
+sub $sp, $sp, 4  #push $ra
+sw $ra, ($sp)
+li $a0, 24
+li $a1, 0
+sub $sp, $sp, 16
+jal alloc_block
+add $sp, $sp, 16
+sw $s0, ($v0) # put the static parent's activation record in the first slot of the new activation record
+move $s0, $v0 # set the current activation record to be the new one
+lw $t0, 4($sp) # copy arg 0
+#             begin (lnstore $t0 #s(param-loc p719 0) #s(label l716))
+move $t3, $s0
+sw $t0, 8($t3)
+#             end   (lnstore $t0 #s(param-loc p719 0) #s(label l716))
+lw $t0, 8($sp) # copy arg 1
+#             begin (lnstore $t0 #s(param-loc p720 1) #s(label l716))
+move $t3, $s0
+sw $t0, 12($t3)
+#             end   (lnstore $t0 #s(param-loc p720 1) #s(label l716))
+#      done setting up activation record
+#            begin (lnload #s(param-loc p719 0) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 1
+lw $t0, 8($t3)
+#            end (lnload #s(param-loc p719 0) $t0 #s(label l716))
+#             begin (lnstore $t0 #s(temp-loc t725) #s(label l716))
+move $t3, $s0
+sw $t0, 16($t3)
+#             end   (lnstore $t0 #s(temp-loc t725) #s(label l716))
+#            begin (lnload #s(param-loc p720 1) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 2
+lw $t0, 12($t3)
+#            end (lnload #s(param-loc p720 1) $t0 #s(label l716))
+#             begin (lnstore $t0 #s(temp-loc t726) #s(label l716))
+move $t3, $s0
+sw $t0, 20($t3)
+#             end   (lnstore $t0 #s(temp-loc t726) #s(label l716))
+#            begin (lnload #s(temp-loc t725) $t1 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 3
+lw $t1, 16($t3)
+#            end (lnload #s(temp-loc t725) $t1 #s(label l716))
+#            begin (lnload #s(temp-loc t726) $t2 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 4
+lw $t2, 20($t3)
+#            end (lnload #s(temp-loc t726) $t2 #s(label l716))
+ble $t1, $t2, l723
+#            begin (lnload #s(label-loc lt668) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 3 and offset 4
+lw $t3, ($t3)
+lw $t3, ($t3)
+lw $t3, ($t3)
+lw $t0, 20($t3)
+#            end (lnload #s(label-loc lt668) $t0 #s(label l716))
+#             begin (lnstore $t0 #s(label-loc lt727) #s(label l716))
+move $t3, $s0
+sw $t0, 32($t3)
+#             end   (lnstore $t0 #s(label-loc lt727) #s(label l716))
+#            begin (lnload #s(temp-loc t715) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 9
+lw $t3, ($t3)
+lw $t0, 40($t3)
+#            end (lnload #s(temp-loc t715) $t0 #s(label l716))
+#             begin (lnstore $t0 #s(temp-loc t728) #s(label l716))
+move $t3, $s0
+sw $t0, 40($t3)
+#             end   (lnstore $t0 #s(temp-loc t728) #s(label l716))
+#            begin (lnload #s(param-loc p719 0) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 1
+lw $t0, 8($t3)
+#            end (lnload #s(param-loc p719 0) $t0 #s(label l716))
+#             begin (lnstore $t0 #s(temp-loc t729) #s(label l716))
+move $t3, $s0
+sw $t0, 44($t3)
+#             end   (lnstore $t0 #s(temp-loc t729) #s(label l716))
+#     BEGIN FUNCALL labloc=#s(label-loc lt727), args=(#s(temp-loc t728) #s(temp-loc t729)), dest=#s(temp-loc t722)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t728) $a0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $a0, 40($t3)
+#            end (lnload #s(temp-loc t728) $a0 #s(label l716))
+#            begin (lnload #s(temp-loc t728) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $t0, 40($t3)
+#            end (lnload #s(temp-loc t728) $t0 #s(label l716))
+sw $t0, 0($sp)
+#            begin (lnload #s(temp-loc t729) $a1 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 10
+lw $a1, 44($t3)
+#            end (lnload #s(temp-loc t729) $a1 #s(label l716))
+#            begin (lnload #s(temp-loc t729) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 10
+lw $t0, 44($t3)
+#            end (lnload #s(temp-loc t729) $t0 #s(label l716))
+sw $t0, 4($sp)
+#            begin (lnload #s(label-loc lt727) $t2 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $t2, 32($t3)
+#            end (lnload #s(label-loc lt727) $t2 #s(label l716))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t722) #s(label l716))
+move $t3, $s0
+sw $v0, 24($t3)
+#             end   (lnstore $v0 #s(temp-loc t722) #s(label l716))
+#     END   FUNCALL labloc=#s(label-loc lt727), args=(#s(temp-loc t728) #s(temp-loc t729)), dest=#s(temp-loc t722)
+#            begin (lnload #s(temp-loc t729) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 10
+lw $t0, 44($t3)
+#            end (lnload #s(temp-loc t729) $t0 #s(label l716))
+#             begin (lnstore $t0 #s(temp-loc t722) #s(label l716))
+move $t3, $s0
+sw $t0, 24($t3)
+#             end   (lnstore $t0 #s(temp-loc t722) #s(label l716))
+#            begin (lnload #s(temp-loc t722) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 5
+lw $t0, 24($t3)
+#            end (lnload #s(temp-loc t722) $t0 #s(label l716))
+#             begin (lnstore $t0 #s(temp-loc t718) #s(label l716))
+move $t3, $s0
+sw $t0, 4($t3)
+#             end   (lnstore $t0 #s(temp-loc t718) #s(label l716))
+j l721
+l723:
+#               begin (lnref #s(param-loc p665 0) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 3 and offset 1
+lw $t3, ($t3)
+lw $t3, ($t3)
+lw $t3, ($t3)
+add $t0, $t3, 8
+#             begin (lnstore $t0 #s(mem-loc m737) #s(label l716))
+move $t3, $s0
+sw $t0, 64($t3)
+#             end   (lnstore $t0 #s(mem-loc m737) #s(label l716))
+#            begin (lnload #s(mem-loc m737) $a0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 15
+lw $a0, 64($t3)
+#            end (lnload #s(mem-loc m737) $a0 #s(label l716))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m737) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 15
+lw $t0, 64($t3)
+#            end (lnload #s(mem-loc m737) $t0 #s(label l716))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m737) #s(label l716))
+move $t3, $s0
+sw $t0, 64($t3)
+#             end   (lnstore $t0 #s(mem-loc m737) #s(label l716))
+#            begin (lnload #s(param-loc p719 0) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 1
+lw $t0, 8($t3)
+#            end (lnload #s(param-loc p719 0) $t0 #s(label l716))
+#             begin (lnstore $t0 #s(temp-loc t738) #s(label l716))
+move $t3, $s0
+sw $t0, 68($t3)
+#             end   (lnstore $t0 #s(temp-loc t738) #s(label l716))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m736) #s(label l716))
+move $t3, $s0
+sw $t0, 60($t3)
+#             end   (lnstore $t0 #s(mem-loc m736) #s(label l716))
+#   BEGIN binop op=*, src1=#s(temp-loc t738), src2=#s(mem-loc m736), dest=#s(temp-loc t738)
+#            begin (lnload #s(temp-loc t738) $t1 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 16
+lw $t1, 68($t3)
+#            end (lnload #s(temp-loc t738) $t1 #s(label l716))
+#            begin (lnload #s(mem-loc m736) $t2 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t2, 60($t3)
+#            end (lnload #s(mem-loc m736) $t2 #s(label l716))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t738) #s(label l716))
+move $t3, $s0
+sw $t0, 68($t3)
+#             end   (lnstore $t0 #s(temp-loc t738) #s(label l716))
+#   END   binop op=*, src1=#s(temp-loc t738), src2=#s(mem-loc m736), dest=#s(temp-loc t738)
+#   BEGIN binop op=+, src1=#s(mem-loc m737), src2=#s(mem-loc m736), dest=#s(mem-loc m736)
+#            begin (lnload #s(mem-loc m737) $t1 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 15
+lw $t1, 64($t3)
+#            end (lnload #s(mem-loc m737) $t1 #s(label l716))
+#            begin (lnload #s(mem-loc m736) $t2 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t2, 60($t3)
+#            end (lnload #s(mem-loc m736) $t2 #s(label l716))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m736) #s(label l716))
+move $t3, $s0
+sw $t0, 60($t3)
+#             end   (lnstore $t0 #s(mem-loc m736) #s(label l716))
+#   END   binop op=+, src1=#s(mem-loc m737), src2=#s(mem-loc m736), dest=#s(mem-loc m736)
+#   BEGIN binop op=+, src1=#s(temp-loc t738), src2=#s(mem-loc m736), dest=#s(mem-loc m736)
+#            begin (lnload #s(temp-loc t738) $t1 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 16
+lw $t1, 68($t3)
+#            end (lnload #s(temp-loc t738) $t1 #s(label l716))
+#            begin (lnload #s(mem-loc m736) $t2 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t2, 60($t3)
+#            end (lnload #s(mem-loc m736) $t2 #s(label l716))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m736) #s(label l716))
+move $t3, $s0
+sw $t0, 60($t3)
+#             end   (lnstore $t0 #s(mem-loc m736) #s(label l716))
+#   END   binop op=+, src1=#s(temp-loc t738), src2=#s(mem-loc m736), dest=#s(mem-loc m736)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m737) $a0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 15
+lw $a0, 64($t3)
+#            end (lnload #s(mem-loc m737) $a0 #s(label l716))
+#            begin (lnload #s(mem-loc m736) $a1 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $a1, 60($t3)
+#            end (lnload #s(mem-loc m736) $a1 #s(label l716))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+#            begin (lnload #s(mem-loc m736) $a0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $a0, 60($t3)
+#            end (lnload #s(mem-loc m736) $a0 #s(label l716))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m736) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t0, 60($t3)
+#            end (lnload #s(mem-loc m736) $t0 #s(label l716))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(temp-loc t734) #s(label l716))
+move $t3, $s0
+sw $t0, 52($t3)
+#             end   (lnstore $t0 #s(temp-loc t734) #s(label l716))
+#            begin (lnload #s(temp-loc t706) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 1
+lw $t3, ($t3)
+lw $t0, 8($t3)
+#            end (lnload #s(temp-loc t706) $t0 #s(label l716))
+#             begin (lnstore $t0 #s(temp-loc t735) #s(label l716))
+move $t3, $s0
+sw $t0, 56($t3)
+#             end   (lnstore $t0 #s(temp-loc t735) #s(label l716))
+#            begin (lnload #s(temp-loc t734) $t1 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 12
+lw $t1, 52($t3)
+#            end (lnload #s(temp-loc t734) $t1 #s(label l716))
+#            begin (lnload #s(temp-loc t735) $t2 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+lw $t2, 56($t3)
+#            end (lnload #s(temp-loc t735) $t2 #s(label l716))
+bgt $t1, $t2, l732
+#            begin (lnload #s(label-loc lt717) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 10
+lw $t3, ($t3)
+lw $t0, 44($t3)
+#            end (lnload #s(label-loc lt717) $t0 #s(label l716))
+#             begin (lnstore $t0 #s(label-loc lt739) #s(label l716))
+move $t3, $s0
+sw $t0, 72($t3)
+#             end   (lnstore $t0 #s(label-loc lt739) #s(label l716))
+#            begin (lnload #s(param-loc p719 0) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 1
+lw $t0, 8($t3)
+#            end (lnload #s(param-loc p719 0) $t0 #s(label l716))
+#             begin (lnstore $t0 #s(temp-loc t744) #s(label l716))
+move $t3, $s0
+sw $t0, 84($t3)
+#             end   (lnstore $t0 #s(temp-loc t744) #s(label l716))
+li $t0, 1
+#             begin (lnstore $t0 #s(temp-loc t745) #s(label l716))
+move $t3, $s0
+sw $t0, 88($t3)
+#             end   (lnstore $t0 #s(temp-loc t745) #s(label l716))
+#   BEGIN binop op=+, src1=#s(temp-loc t744), src2=#s(temp-loc t745), dest=#s(temp-loc t740)
+#            begin (lnload #s(temp-loc t744) $t1 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 20
+lw $t1, 84($t3)
+#            end (lnload #s(temp-loc t744) $t1 #s(label l716))
+#            begin (lnload #s(temp-loc t745) $t2 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 21
+lw $t2, 88($t3)
+#            end (lnload #s(temp-loc t745) $t2 #s(label l716))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t740) #s(label l716))
+move $t3, $s0
+sw $t0, 80($t3)
+#             end   (lnstore $t0 #s(temp-loc t740) #s(label l716))
+#   END   binop op=+, src1=#s(temp-loc t744), src2=#s(temp-loc t745), dest=#s(temp-loc t740)
+#            begin (lnload #s(param-loc p720 1) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 2
+lw $t0, 12($t3)
+#            end (lnload #s(param-loc p720 1) $t0 #s(label l716))
+#             begin (lnstore $t0 #s(temp-loc t741) #s(label l716))
+move $t3, $s0
+sw $t0, 92($t3)
+#             end   (lnstore $t0 #s(temp-loc t741) #s(label l716))
+#     BEGIN FUNCALL labloc=#s(label-loc lt739), args=(#s(temp-loc t740) #s(temp-loc t741)), dest=#s(temp-loc t733)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t740) $a0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 19
+lw $a0, 80($t3)
+#            end (lnload #s(temp-loc t740) $a0 #s(label l716))
+#            begin (lnload #s(temp-loc t740) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 19
+lw $t0, 80($t3)
+#            end (lnload #s(temp-loc t740) $t0 #s(label l716))
+sw $t0, 0($sp)
+#            begin (lnload #s(temp-loc t741) $a1 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 22
+lw $a1, 92($t3)
+#            end (lnload #s(temp-loc t741) $a1 #s(label l716))
+#            begin (lnload #s(temp-loc t741) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 22
+lw $t0, 92($t3)
+#            end (lnload #s(temp-loc t741) $t0 #s(label l716))
+sw $t0, 4($sp)
+#            begin (lnload #s(label-loc lt739) $t2 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 17
+lw $t2, 72($t3)
+#            end (lnload #s(label-loc lt739) $t2 #s(label l716))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t733) #s(label l716))
+move $t3, $s0
+sw $v0, 48($t3)
+#             end   (lnstore $v0 #s(temp-loc t733) #s(label l716))
+#     END   FUNCALL labloc=#s(label-loc lt739), args=(#s(temp-loc t740) #s(temp-loc t741)), dest=#s(temp-loc t733)
+l732:
+#            begin (lnload #s(temp-loc t724) $t0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 6
+lw $t0, 28($t3)
+#            end (lnload #s(temp-loc t724) $t0 #s(label l716))
+#             begin (lnstore $t0 #s(temp-loc t718) #s(label l716))
+move $t3, $s0
+sw $t0, 4($t3)
+#             end   (lnstore $t0 #s(temp-loc t718) #s(label l716))
+l721:
+#            begin (lnload #s(temp-loc t718) $v0 #s(label l716))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 0
+lw $v0, 4($t3)
+#            end (lnload #s(temp-loc t718) $v0 #s(label l716))
+l716break:  # break label for function l716
+lw $ra, ($sp)
+add $sp, $sp, 4  #pop $ra
+jr $ra
+#     end def l716
+
+
+
+#      begin def l667
+l667:
+sub $sp, $sp, 4  #push $ra
+sw $ra, ($sp)
+li $a0, 19
+li $a1, 0
+sub $sp, $sp, 16
+jal alloc_block
+add $sp, $sp, 16
+sw $s0, ($v0) # put the static parent's activation record in the first slot of the new activation record
+move $s0, $v0 # set the current activation record to be the new one
+lw $t0, 4($sp) # copy arg 0
+#             begin (lnstore $t0 #s(param-loc p670 0) #s(label l667))
+move $t3, $s0
+sw $t0, 8($t3)
+#             end   (lnstore $t0 #s(param-loc p670 0) #s(label l667))
+lw $t0, 8($sp) # copy arg 1
+#             begin (lnstore $t0 #s(param-loc p671 1) #s(label l667))
+move $t3, $s0
+sw $t0, 12($t3)
+#             end   (lnstore $t0 #s(param-loc p671 1) #s(label l667))
+#      done setting up activation record
+#               begin (lnref #s(param-loc p665 0) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 1
+lw $t3, ($t3)
+add $t0, $t3, 8
+#             begin (lnstore $t0 #s(mem-loc m674) #s(label l667))
+move $t3, $s0
+sw $t0, 24($t3)
+#             end   (lnstore $t0 #s(mem-loc m674) #s(label l667))
+#            begin (lnload #s(mem-loc m674) $a0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 5
+lw $a0, 24($t3)
+#            end (lnload #s(mem-loc m674) $a0 #s(label l667))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m674) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 5
+lw $t0, 24($t3)
+#            end (lnload #s(mem-loc m674) $t0 #s(label l667))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m674) #s(label l667))
+move $t3, $s0
+sw $t0, 24($t3)
+#             end   (lnstore $t0 #s(mem-loc m674) #s(label l667))
+#            begin (lnload #s(param-loc p670 0) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 1
+lw $t0, 8($t3)
+#            end (lnload #s(param-loc p670 0) $t0 #s(label l667))
+#             begin (lnstore $t0 #s(temp-loc t675) #s(label l667))
+move $t3, $s0
+sw $t0, 28($t3)
+#             end   (lnstore $t0 #s(temp-loc t675) #s(label l667))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m673) #s(label l667))
+move $t3, $s0
+sw $t0, 20($t3)
+#             end   (lnstore $t0 #s(mem-loc m673) #s(label l667))
+#   BEGIN binop op=*, src1=#s(temp-loc t675), src2=#s(mem-loc m673), dest=#s(temp-loc t675)
+#            begin (lnload #s(temp-loc t675) $t1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 6
+lw $t1, 28($t3)
+#            end (lnload #s(temp-loc t675) $t1 #s(label l667))
+#            begin (lnload #s(mem-loc m673) $t2 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 4
+lw $t2, 20($t3)
+#            end (lnload #s(mem-loc m673) $t2 #s(label l667))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t675) #s(label l667))
+move $t3, $s0
+sw $t0, 28($t3)
+#             end   (lnstore $t0 #s(temp-loc t675) #s(label l667))
+#   END   binop op=*, src1=#s(temp-loc t675), src2=#s(mem-loc m673), dest=#s(temp-loc t675)
+#   BEGIN binop op=+, src1=#s(mem-loc m674), src2=#s(mem-loc m673), dest=#s(mem-loc m673)
+#            begin (lnload #s(mem-loc m674) $t1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 5
+lw $t1, 24($t3)
+#            end (lnload #s(mem-loc m674) $t1 #s(label l667))
+#            begin (lnload #s(mem-loc m673) $t2 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 4
+lw $t2, 20($t3)
+#            end (lnload #s(mem-loc m673) $t2 #s(label l667))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m673) #s(label l667))
+move $t3, $s0
+sw $t0, 20($t3)
+#             end   (lnstore $t0 #s(mem-loc m673) #s(label l667))
+#   END   binop op=+, src1=#s(mem-loc m674), src2=#s(mem-loc m673), dest=#s(mem-loc m673)
+#   BEGIN binop op=+, src1=#s(temp-loc t675), src2=#s(mem-loc m673), dest=#s(mem-loc m673)
+#            begin (lnload #s(temp-loc t675) $t1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 6
+lw $t1, 28($t3)
+#            end (lnload #s(temp-loc t675) $t1 #s(label l667))
+#            begin (lnload #s(mem-loc m673) $t2 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 4
+lw $t2, 20($t3)
+#            end (lnload #s(mem-loc m673) $t2 #s(label l667))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m673) #s(label l667))
+move $t3, $s0
+sw $t0, 20($t3)
+#             end   (lnstore $t0 #s(mem-loc m673) #s(label l667))
+#   END   binop op=+, src1=#s(temp-loc t675), src2=#s(mem-loc m673), dest=#s(mem-loc m673)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m674) $a0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 5
+lw $a0, 24($t3)
+#            end (lnload #s(mem-loc m674) $a0 #s(label l667))
+#            begin (lnload #s(mem-loc m673) $a1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 4
+lw $a1, 20($t3)
+#            end (lnload #s(mem-loc m673) $a1 #s(label l667))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+#            begin (lnload #s(mem-loc m673) $a0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 4
+lw $a0, 20($t3)
+#            end (lnload #s(mem-loc m673) $a0 #s(label l667))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m673) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 4
+lw $t0, 20($t3)
+#            end (lnload #s(mem-loc m673) $t0 #s(label l667))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(temp-loc t672) #s(label l667))
+move $t3, $s0
+sw $t0, 16($t3)
+#             end   (lnstore $t0 #s(temp-loc t672) #s(label l667))
+#               begin (lnref #s(param-loc p665 0) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 1
+lw $t3, ($t3)
+add $t0, $t3, 8
+#             begin (lnstore $t0 #s(mem-loc m677) #s(label l667))
+move $t3, $s0
+sw $t0, 40($t3)
+#             end   (lnstore $t0 #s(mem-loc m677) #s(label l667))
+#            begin (lnload #s(mem-loc m677) $a0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $a0, 40($t3)
+#            end (lnload #s(mem-loc m677) $a0 #s(label l667))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m677) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $t0, 40($t3)
+#            end (lnload #s(mem-loc m677) $t0 #s(label l667))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m677) #s(label l667))
+move $t3, $s0
+sw $t0, 40($t3)
+#             end   (lnstore $t0 #s(mem-loc m677) #s(label l667))
+#            begin (lnload #s(temp-loc t675) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 6
+lw $t0, 28($t3)
+#            end (lnload #s(temp-loc t675) $t0 #s(label l667))
+#             begin (lnstore $t0 #s(temp-loc t678) #s(label l667))
+move $t3, $s0
+sw $t0, 44($t3)
+#             end   (lnstore $t0 #s(temp-loc t678) #s(label l667))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m676) #s(label l667))
+move $t3, $s0
+sw $t0, 32($t3)
+#             end   (lnstore $t0 #s(mem-loc m676) #s(label l667))
+#   BEGIN binop op=*, src1=#s(temp-loc t678), src2=#s(mem-loc m676), dest=#s(temp-loc t678)
+#            begin (lnload #s(temp-loc t678) $t1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 10
+lw $t1, 44($t3)
+#            end (lnload #s(temp-loc t678) $t1 #s(label l667))
+#            begin (lnload #s(mem-loc m676) $t2 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $t2, 32($t3)
+#            end (lnload #s(mem-loc m676) $t2 #s(label l667))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t678) #s(label l667))
+move $t3, $s0
+sw $t0, 44($t3)
+#             end   (lnstore $t0 #s(temp-loc t678) #s(label l667))
+#   END   binop op=*, src1=#s(temp-loc t678), src2=#s(mem-loc m676), dest=#s(temp-loc t678)
+#   BEGIN binop op=+, src1=#s(mem-loc m677), src2=#s(mem-loc m676), dest=#s(mem-loc m676)
+#            begin (lnload #s(mem-loc m677) $t1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $t1, 40($t3)
+#            end (lnload #s(mem-loc m677) $t1 #s(label l667))
+#            begin (lnload #s(mem-loc m676) $t2 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $t2, 32($t3)
+#            end (lnload #s(mem-loc m676) $t2 #s(label l667))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m676) #s(label l667))
+move $t3, $s0
+sw $t0, 32($t3)
+#             end   (lnstore $t0 #s(mem-loc m676) #s(label l667))
+#   END   binop op=+, src1=#s(mem-loc m677), src2=#s(mem-loc m676), dest=#s(mem-loc m676)
+#   BEGIN binop op=+, src1=#s(temp-loc t678), src2=#s(mem-loc m676), dest=#s(mem-loc m676)
+#            begin (lnload #s(temp-loc t678) $t1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 10
+lw $t1, 44($t3)
+#            end (lnload #s(temp-loc t678) $t1 #s(label l667))
+#            begin (lnload #s(mem-loc m676) $t2 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $t2, 32($t3)
+#            end (lnload #s(mem-loc m676) $t2 #s(label l667))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m676) #s(label l667))
+move $t3, $s0
+sw $t0, 32($t3)
+#             end   (lnstore $t0 #s(mem-loc m676) #s(label l667))
+#   END   binop op=+, src1=#s(temp-loc t678), src2=#s(mem-loc m676), dest=#s(mem-loc m676)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m677) $a0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $a0, 40($t3)
+#            end (lnload #s(mem-loc m677) $a0 #s(label l667))
+#            begin (lnload #s(mem-loc m676) $a1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $a1, 32($t3)
+#            end (lnload #s(mem-loc m676) $a1 #s(label l667))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+#               begin (lnref #s(param-loc p665 0) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 1
+lw $t3, ($t3)
+add $t0, $t3, 8
+#             begin (lnstore $t0 #s(mem-loc m681) #s(label l667))
+move $t3, $s0
+sw $t0, 52($t3)
+#             end   (lnstore $t0 #s(mem-loc m681) #s(label l667))
+#            begin (lnload #s(mem-loc m681) $a0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 12
+lw $a0, 52($t3)
+#            end (lnload #s(mem-loc m681) $a0 #s(label l667))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m681) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 12
+lw $t0, 52($t3)
+#            end (lnload #s(mem-loc m681) $t0 #s(label l667))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m681) #s(label l667))
+move $t3, $s0
+sw $t0, 52($t3)
+#             end   (lnstore $t0 #s(mem-loc m681) #s(label l667))
+#            begin (lnload #s(param-loc p671 1) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 2
+lw $t0, 12($t3)
+#            end (lnload #s(param-loc p671 1) $t0 #s(label l667))
+#             begin (lnstore $t0 #s(temp-loc t682) #s(label l667))
+move $t3, $s0
+sw $t0, 56($t3)
+#             end   (lnstore $t0 #s(temp-loc t682) #s(label l667))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m680) #s(label l667))
+move $t3, $s0
+sw $t0, 48($t3)
+#             end   (lnstore $t0 #s(mem-loc m680) #s(label l667))
+#   BEGIN binop op=*, src1=#s(temp-loc t682), src2=#s(mem-loc m680), dest=#s(temp-loc t682)
+#            begin (lnload #s(temp-loc t682) $t1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+lw $t1, 56($t3)
+#            end (lnload #s(temp-loc t682) $t1 #s(label l667))
+#            begin (lnload #s(mem-loc m680) $t2 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t2, 48($t3)
+#            end (lnload #s(mem-loc m680) $t2 #s(label l667))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t682) #s(label l667))
+move $t3, $s0
+sw $t0, 56($t3)
+#             end   (lnstore $t0 #s(temp-loc t682) #s(label l667))
+#   END   binop op=*, src1=#s(temp-loc t682), src2=#s(mem-loc m680), dest=#s(temp-loc t682)
+#   BEGIN binop op=+, src1=#s(mem-loc m681), src2=#s(mem-loc m680), dest=#s(mem-loc m680)
+#            begin (lnload #s(mem-loc m681) $t1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 12
+lw $t1, 52($t3)
+#            end (lnload #s(mem-loc m681) $t1 #s(label l667))
+#            begin (lnload #s(mem-loc m680) $t2 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t2, 48($t3)
+#            end (lnload #s(mem-loc m680) $t2 #s(label l667))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m680) #s(label l667))
+move $t3, $s0
+sw $t0, 48($t3)
+#             end   (lnstore $t0 #s(mem-loc m680) #s(label l667))
+#   END   binop op=+, src1=#s(mem-loc m681), src2=#s(mem-loc m680), dest=#s(mem-loc m680)
+#   BEGIN binop op=+, src1=#s(temp-loc t682), src2=#s(mem-loc m680), dest=#s(mem-loc m680)
+#            begin (lnload #s(temp-loc t682) $t1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+lw $t1, 56($t3)
+#            end (lnload #s(temp-loc t682) $t1 #s(label l667))
+#            begin (lnload #s(mem-loc m680) $t2 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t2, 48($t3)
+#            end (lnload #s(mem-loc m680) $t2 #s(label l667))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m680) #s(label l667))
+move $t3, $s0
+sw $t0, 48($t3)
+#             end   (lnstore $t0 #s(mem-loc m680) #s(label l667))
+#   END   binop op=+, src1=#s(temp-loc t682), src2=#s(mem-loc m680), dest=#s(mem-loc m680)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m681) $a0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 12
+lw $a0, 52($t3)
+#            end (lnload #s(mem-loc m681) $a0 #s(label l667))
+#            begin (lnload #s(mem-loc m680) $a1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $a1, 48($t3)
+#            end (lnload #s(mem-loc m680) $a1 #s(label l667))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+#            begin (lnload #s(mem-loc m680) $a0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $a0, 48($t3)
+#            end (lnload #s(mem-loc m680) $a0 #s(label l667))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m680) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t0, 48($t3)
+#            end (lnload #s(mem-loc m680) $t0 #s(label l667))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(temp-loc t679) #s(label l667))
+move $t3, $s0
+sw $t0, 36($t3)
+#             end   (lnstore $t0 #s(temp-loc t679) #s(label l667))
+#  DEREF ASSIGN INS #s(mem-loc m676) #s(temp-loc t679)
+#    first check non-nil
+#            begin (lnload #s(mem-loc m676) $a0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $a0, 32($t3)
+#            end (lnload #s(mem-loc m676) $a0 #s(label l667))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#    end check non-nil
+#            begin (lnload #s(mem-loc m676) $t1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $t1, 32($t3)
+#            end (lnload #s(mem-loc m676) $t1 #s(label l667))
+#            begin (lnload #s(temp-loc t679) $t2 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 8
+lw $t2, 36($t3)
+#            end (lnload #s(temp-loc t679) $t2 #s(label l667))
+sw $t2, ($t1)
+#               begin (lnref #s(param-loc p665 0) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 1
+lw $t3, ($t3)
+add $t0, $t3, 8
+#             begin (lnstore $t0 #s(mem-loc m684) #s(label l667))
+move $t3, $s0
+sw $t0, 68($t3)
+#             end   (lnstore $t0 #s(mem-loc m684) #s(label l667))
+#            begin (lnload #s(mem-loc m684) $a0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 16
+lw $a0, 68($t3)
+#            end (lnload #s(mem-loc m684) $a0 #s(label l667))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m684) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 16
+lw $t0, 68($t3)
+#            end (lnload #s(mem-loc m684) $t0 #s(label l667))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m684) #s(label l667))
+move $t3, $s0
+sw $t0, 68($t3)
+#             end   (lnstore $t0 #s(mem-loc m684) #s(label l667))
+#            begin (lnload #s(param-loc p671 1) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 2
+lw $t0, 12($t3)
+#            end (lnload #s(param-loc p671 1) $t0 #s(label l667))
+#             begin (lnstore $t0 #s(temp-loc t685) #s(label l667))
+move $t3, $s0
+sw $t0, 72($t3)
+#             end   (lnstore $t0 #s(temp-loc t685) #s(label l667))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m683) #s(label l667))
+move $t3, $s0
+sw $t0, 60($t3)
+#             end   (lnstore $t0 #s(mem-loc m683) #s(label l667))
+#   BEGIN binop op=*, src1=#s(temp-loc t685), src2=#s(mem-loc m683), dest=#s(temp-loc t685)
+#            begin (lnload #s(temp-loc t685) $t1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 17
+lw $t1, 72($t3)
+#            end (lnload #s(temp-loc t685) $t1 #s(label l667))
+#            begin (lnload #s(mem-loc m683) $t2 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t2, 60($t3)
+#            end (lnload #s(mem-loc m683) $t2 #s(label l667))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t685) #s(label l667))
+move $t3, $s0
+sw $t0, 72($t3)
+#             end   (lnstore $t0 #s(temp-loc t685) #s(label l667))
+#   END   binop op=*, src1=#s(temp-loc t685), src2=#s(mem-loc m683), dest=#s(temp-loc t685)
+#   BEGIN binop op=+, src1=#s(mem-loc m684), src2=#s(mem-loc m683), dest=#s(mem-loc m683)
+#            begin (lnload #s(mem-loc m684) $t1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 16
+lw $t1, 68($t3)
+#            end (lnload #s(mem-loc m684) $t1 #s(label l667))
+#            begin (lnload #s(mem-loc m683) $t2 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t2, 60($t3)
+#            end (lnload #s(mem-loc m683) $t2 #s(label l667))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m683) #s(label l667))
+move $t3, $s0
+sw $t0, 60($t3)
+#             end   (lnstore $t0 #s(mem-loc m683) #s(label l667))
+#   END   binop op=+, src1=#s(mem-loc m684), src2=#s(mem-loc m683), dest=#s(mem-loc m683)
+#   BEGIN binop op=+, src1=#s(temp-loc t685), src2=#s(mem-loc m683), dest=#s(mem-loc m683)
+#            begin (lnload #s(temp-loc t685) $t1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 17
+lw $t1, 72($t3)
+#            end (lnload #s(temp-loc t685) $t1 #s(label l667))
+#            begin (lnload #s(mem-loc m683) $t2 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t2, 60($t3)
+#            end (lnload #s(mem-loc m683) $t2 #s(label l667))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m683) #s(label l667))
+move $t3, $s0
+sw $t0, 60($t3)
+#             end   (lnstore $t0 #s(mem-loc m683) #s(label l667))
+#   END   binop op=+, src1=#s(temp-loc t685), src2=#s(mem-loc m683), dest=#s(mem-loc m683)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m684) $a0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 16
+lw $a0, 68($t3)
+#            end (lnload #s(mem-loc m684) $a0 #s(label l667))
+#            begin (lnload #s(mem-loc m683) $a1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $a1, 60($t3)
+#            end (lnload #s(mem-loc m683) $a1 #s(label l667))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+#            begin (lnload #s(temp-loc t672) $t0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 3
+lw $t0, 16($t3)
+#            end (lnload #s(temp-loc t672) $t0 #s(label l667))
+#             begin (lnstore $t0 #s(temp-loc t686) #s(label l667))
+move $t3, $s0
+sw $t0, 64($t3)
+#             end   (lnstore $t0 #s(temp-loc t686) #s(label l667))
+#  DEREF ASSIGN INS #s(mem-loc m683) #s(temp-loc t686)
+#    first check non-nil
+#            begin (lnload #s(mem-loc m683) $a0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $a0, 60($t3)
+#            end (lnload #s(mem-loc m683) $a0 #s(label l667))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#    end check non-nil
+#            begin (lnload #s(mem-loc m683) $t1 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t1, 60($t3)
+#            end (lnload #s(mem-loc m683) $t1 #s(label l667))
+#            begin (lnload #s(temp-loc t686) $t2 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 15
+lw $t2, 64($t3)
+#            end (lnload #s(temp-loc t686) $t2 #s(label l667))
+sw $t2, ($t1)
+#            begin (lnload #s(temp-loc t669) $v0 #s(label l667))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 0
+lw $v0, 4($t3)
+#            end (lnload #s(temp-loc t669) $v0 #s(label l667))
+l667break:  # break label for function l667
+lw $ra, ($sp)
+add $sp, $sp, 4  #pop $ra
+jr $ra
+#     end def l667
+
+
+
+#      begin def l860
+l860:
+sub $sp, $sp, 4  #push $ra
+sw $ra, ($sp)
+li $a0, 16
+li $a1, 0
+sub $sp, $sp, 16
+jal alloc_block
+add $sp, $sp, 16
+sw $s0, ($v0) # put the static parent's activation record in the first slot of the new activation record
+move $s0, $v0 # set the current activation record to be the new one
+#      done setting up activation record
+#            begin (lnload #s(label-loc lt779) $t0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 11
+lw $t3, ($t3)
+lw $t0, 48($t3)
+#            end (lnload #s(label-loc lt779) $t0 #s(label l860))
+#             begin (lnstore $t0 #s(label-loc lt863) #s(label l860))
+move $t3, $s0
+sw $t0, 8($t3)
+#             end   (lnstore $t0 #s(label-loc lt863) #s(label l860))
+#            begin (lnload #s(temp-loc t857) $t0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 13
+lw $t3, ($t3)
+lw $t0, 56($t3)
+#            end (lnload #s(temp-loc t857) $t0 #s(label l860))
+#             begin (lnstore $t0 #s(temp-loc t864) #s(label l860))
+move $t3, $s0
+sw $t0, 16($t3)
+#             end   (lnstore $t0 #s(temp-loc t864) #s(label l860))
+#            begin (lnload #s(temp-loc t856) $t0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 14
+lw $t3, ($t3)
+lw $t0, 60($t3)
+#            end (lnload #s(temp-loc t856) $t0 #s(label l860))
+#             begin (lnstore $t0 #s(temp-loc t865) #s(label l860))
+move $t3, $s0
+sw $t0, 20($t3)
+#             end   (lnstore $t0 #s(temp-loc t865) #s(label l860))
+#     BEGIN FUNCALL labloc=#s(label-loc lt863), args=(#s(temp-loc t864) #s(temp-loc t865)), dest=#s(temp-loc t862)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t864) $a0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 3
+lw $a0, 16($t3)
+#            end (lnload #s(temp-loc t864) $a0 #s(label l860))
+#            begin (lnload #s(temp-loc t864) $t0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 3
+lw $t0, 16($t3)
+#            end (lnload #s(temp-loc t864) $t0 #s(label l860))
+sw $t0, 0($sp)
+#            begin (lnload #s(temp-loc t865) $a1 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 4
+lw $a1, 20($t3)
+#            end (lnload #s(temp-loc t865) $a1 #s(label l860))
+#            begin (lnload #s(temp-loc t865) $t0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 4
+lw $t0, 20($t3)
+#            end (lnload #s(temp-loc t865) $t0 #s(label l860))
+sw $t0, 4($sp)
+#            begin (lnload #s(label-loc lt863) $t2 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 1
+lw $t2, 8($t3)
+#            end (lnload #s(label-loc lt863) $t2 #s(label l860))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t862) #s(label l860))
+move $t3, $s0
+sw $v0, 4($t3)
+#             end   (lnstore $v0 #s(temp-loc t862) #s(label l860))
+#     END   FUNCALL labloc=#s(label-loc lt863), args=(#s(temp-loc t864) #s(temp-loc t865)), dest=#s(temp-loc t862)
+#            begin (lnload #s(label-loc lt651) $t0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 1 and offset 10
+lw $t3, ($t3)
+lw $t0, 44($t3)
+#            end (lnload #s(label-loc lt651) $t0 #s(label l860))
+#             begin (lnstore $t0 #s(label-loc lt868) #s(label l860))
+move $t3, $s0
+sw $t0, 24($t3)
+#             end   (lnstore $t0 #s(label-loc lt868) #s(label l860))
+li $t0, 1
+#             begin (lnstore $t0 #s(temp-loc t873) #s(label l860))
+move $t3, $s0
+sw $t0, 40($t3)
+#             end   (lnstore $t0 #s(temp-loc t873) #s(label l860))
+li $t0, 0
+#             begin (lnstore $t0 #s(temp-loc t874) #s(label l860))
+move $t3, $s0
+sw $t0, 44($t3)
+#             end   (lnstore $t0 #s(temp-loc t874) #s(label l860))
+#            begin (lnload #s(temp-loc t873) $a0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 9
+lw $a0, 40($t3)
+#            end (lnload #s(temp-loc t873) $a0 #s(label l860))
+#            begin (lnload #s(temp-loc t874) $a1 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 10
+lw $a1, 44($t3)
+#            end (lnload #s(temp-loc t874) $a1 #s(label l860))
+sub $sp, $sp, 16
+jal alloc_array
+add $sp, $sp, 16
+#             begin (lnstore $v0 #s(temp-loc t872) #s(label l860))
+move $t3, $s0
+sw $v0, 36($t3)
+#             end   (lnstore $v0 #s(temp-loc t872) #s(label l860))
+#               begin (lnref #s(temp-loc t872) $t0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 8
+add $t0, $t3, 36
+#             begin (lnstore $t0 #s(mem-loc m876) #s(label l860))
+move $t3, $s0
+sw $t0, 56($t3)
+#             end   (lnstore $t0 #s(mem-loc m876) #s(label l860))
+#            begin (lnload #s(mem-loc m876) $a0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+lw $a0, 56($t3)
+#            end (lnload #s(mem-loc m876) $a0 #s(label l860))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#            begin (lnload #s(mem-loc m876) $t0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+lw $t0, 56($t3)
+#            end (lnload #s(mem-loc m876) $t0 #s(label l860))
+lw $t0, ($t0)
+#             begin (lnstore $t0 #s(mem-loc m876) #s(label l860))
+move $t3, $s0
+sw $t0, 56($t3)
+#             end   (lnstore $t0 #s(mem-loc m876) #s(label l860))
+#            begin (lnload #s(temp-loc t874) $t0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 10
+lw $t0, 44($t3)
+#            end (lnload #s(temp-loc t874) $t0 #s(label l860))
+#             begin (lnstore $t0 #s(temp-loc t877) #s(label l860))
+move $t3, $s0
+sw $t0, 60($t3)
+#             end   (lnstore $t0 #s(temp-loc t877) #s(label l860))
+li $t0, 4
+#             begin (lnstore $t0 #s(mem-loc m875) #s(label l860))
+move $t3, $s0
+sw $t0, 48($t3)
+#             end   (lnstore $t0 #s(mem-loc m875) #s(label l860))
+#   BEGIN binop op=*, src1=#s(temp-loc t877), src2=#s(mem-loc m875), dest=#s(temp-loc t877)
+#            begin (lnload #s(temp-loc t877) $t1 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t1, 60($t3)
+#            end (lnload #s(temp-loc t877) $t1 #s(label l860))
+#            begin (lnload #s(mem-loc m875) $t2 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t2, 48($t3)
+#            end (lnload #s(mem-loc m875) $t2 #s(label l860))
+mul $t0, $t1, $t2
+#             begin (lnstore $t0 #s(temp-loc t877) #s(label l860))
+move $t3, $s0
+sw $t0, 60($t3)
+#             end   (lnstore $t0 #s(temp-loc t877) #s(label l860))
+#   END   binop op=*, src1=#s(temp-loc t877), src2=#s(mem-loc m875), dest=#s(temp-loc t877)
+#   BEGIN binop op=+, src1=#s(mem-loc m876), src2=#s(mem-loc m875), dest=#s(mem-loc m875)
+#            begin (lnload #s(mem-loc m876) $t1 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+lw $t1, 56($t3)
+#            end (lnload #s(mem-loc m876) $t1 #s(label l860))
+#            begin (lnload #s(mem-loc m875) $t2 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t2, 48($t3)
+#            end (lnload #s(mem-loc m875) $t2 #s(label l860))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m875) #s(label l860))
+move $t3, $s0
+sw $t0, 48($t3)
+#             end   (lnstore $t0 #s(mem-loc m875) #s(label l860))
+#   END   binop op=+, src1=#s(mem-loc m876), src2=#s(mem-loc m875), dest=#s(mem-loc m875)
+#   BEGIN binop op=+, src1=#s(temp-loc t877), src2=#s(mem-loc m875), dest=#s(mem-loc m875)
+#            begin (lnload #s(temp-loc t877) $t1 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 14
+lw $t1, 60($t3)
+#            end (lnload #s(temp-loc t877) $t1 #s(label l860))
+#            begin (lnload #s(mem-loc m875) $t2 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t2, 48($t3)
+#            end (lnload #s(mem-loc m875) $t2 #s(label l860))
+add $t0, $t1, $t2
+#             begin (lnstore $t0 #s(mem-loc m875) #s(label l860))
+move $t3, $s0
+sw $t0, 48($t3)
+#             end   (lnstore $t0 #s(mem-loc m875) #s(label l860))
+#   END   binop op=+, src1=#s(temp-loc t877), src2=#s(mem-loc m875), dest=#s(mem-loc m875)
+#        start array bounds check
+#            begin (lnload #s(mem-loc m876) $a0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 13
+lw $a0, 56($t3)
+#            end (lnload #s(mem-loc m876) $a0 #s(label l860))
+#            begin (lnload #s(mem-loc m875) $a1 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $a1, 48($t3)
+#            end (lnload #s(mem-loc m875) $a1 #s(label l860))
+sub $sp, $sp, 16
+jal assert_inbounds
+add $sp, $sp, 16
+#        end array bounds check
+li $t0, 10
+#             begin (lnstore $t0 #s(temp-loc t878) #s(label l860))
+move $t3, $s0
+sw $t0, 52($t3)
+#             end   (lnstore $t0 #s(temp-loc t878) #s(label l860))
+#  DEREF ASSIGN INS #s(mem-loc m875) #s(temp-loc t878)
+#    first check non-nil
+#            begin (lnload #s(mem-loc m875) $a0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $a0, 48($t3)
+#            end (lnload #s(mem-loc m875) $a0 #s(label l860))
+sub $sp, $sp, 16
+jal assert_nonnil
+add $sp, $sp, 16
+#    end check non-nil
+#            begin (lnload #s(mem-loc m875) $t1 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 11
+lw $t1, 48($t3)
+#            end (lnload #s(mem-loc m875) $t1 #s(label l860))
+#            begin (lnload #s(temp-loc t878) $t2 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 12
+lw $t2, 52($t3)
+#            end (lnload #s(temp-loc t878) $t2 #s(label l860))
+sw $t2, ($t1)
+#            begin (lnload #s(temp-loc t872) $t0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 8
+lw $t0, 36($t3)
+#            end (lnload #s(temp-loc t872) $t0 #s(label l860))
+#             begin (lnstore $t0 #s(temp-loc t869) #s(label l860))
+move $t3, $s0
+sw $t0, 32($t3)
+#             end   (lnstore $t0 #s(temp-loc t869) #s(label l860))
+#     BEGIN FUNCALL labloc=#s(label-loc lt868), args=(#s(temp-loc t869)), dest=#s(temp-loc t862)
+sub $sp, $sp, 4  #push $s0
+sw $s0, ($sp)
+sub $sp, $sp, 16
+#            begin (lnload #s(temp-loc t869) $a0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $a0, 32($t3)
+#            end (lnload #s(temp-loc t869) $a0 #s(label l860))
+#            begin (lnload #s(temp-loc t869) $t0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 7
+lw $t0, 32($t3)
+#            end (lnload #s(temp-loc t869) $t0 #s(label l860))
+sw $t0, 0($sp)
+#            begin (lnload #s(label-loc lt868) $t2 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 5
+lw $t2, 24($t3)
+#            end (lnload #s(label-loc lt868) $t2 #s(label l860))
+lw $s0, 4($t2)
+lw $t2, ($t2)
+jalr $t2
+add $sp, $sp, 16
+lw $s0, ($sp)
+add $sp, $sp, 4  #pop $s0
+#             begin (lnstore $v0 #s(temp-loc t862) #s(label l860))
+move $t3, $s0
+sw $v0, 4($t3)
+#             end   (lnstore $v0 #s(temp-loc t862) #s(label l860))
+#     END   FUNCALL labloc=#s(label-loc lt868), args=(#s(temp-loc t869)), dest=#s(temp-loc t862)
+#            begin (lnload #s(temp-loc t862) $v0 #s(label l860))
+move $t3, $s0 # loading variable at nest-depth 0 and offset 0
+lw $v0, 4($t3)
+#            end (lnload #s(temp-loc t862) $v0 #s(label l860))
+l860break:  # break label for function l860
+lw $ra, ($sp)
+add $sp, $sp, 4  #pop $ra
+jr $ra
+#     end def l860
+
+
+assembling /tmp/mips_malfile.SuZnUt to /tmp/mips_ofile.ihXruJ...

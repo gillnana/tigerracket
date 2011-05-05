@@ -44,30 +44,32 @@
     ; turning (canon (for ...)) into (canon (let ...)) is ok, because (let ...) is "simpler" than (for ...)
     ; so the compiler will definitely not infinite loop
     [(for-statement index start end body)
-     (canonicalize (let-vars
-                    (list (vardec 'startval 'int start)
-                          (vardec 'endval 'int end))
-                    (expseq (list (let-funs
-                                   (list (fundec 'f
-                                                 (list (tyfield index (type-id 'int)))
-                                                 #f
-                                                 (if-statement
-                                                  (binary-op (op '<=) (id index) (id 'endval))
-                                                  (expseq
-                                                   (list
-                                                    body
-                                                    (funcall (id 'f) (list (binary-op (op '+) (id index) (int-literal 1))))))
-                                                  (expseq empty))))
-                                   (expseq (list (funcall (id 'f) (list (id 'startval))))))))))]
+     (let [(fun-name (gensym '$for$))]
+       (canonicalize (let-vars
+                      (list (vardec 'startval 'int start)
+                            (vardec 'endval 'int end))
+                      (expseq (list (let-funs
+                                     (list (fundec fun-name
+                                                   (list (tyfield index (type-id 'int)))
+                                                   #f
+                                                   (if-statement
+                                                    (binary-op (op '<=) (id index) (id 'endval))
+                                                    (expseq
+                                                     (list
+                                                      body
+                                                      (funcall (id fun-name) (list (binary-op (op '+) (id index) (int-literal 1))))))
+                                                    (expseq empty))))
+                                     (expseq (list (funcall (id fun-name) (list (id 'startval)))))))))))]
     
     ; like for-loops, while loops should turn into a (let ...), which should in turn be canonicalized
     [(while-statement cond body)
-     (canonicalize (let-funs
-                    (list (fundec 'f empty #f
-                                  (if-statement cond
-                                                (expseq (list body (funcall (id 'f) empty)))
-                                                (expseq empty))))
-                    (expseq (list (funcall (id 'f) empty)))))]
+     (let [(fun-name (gensym '$while$))]
+       (canonicalize (let-funs
+                      (list (fundec fun-name empty #f
+                                    (if-statement cond
+                                                  (expseq (list body (funcall (id fun-name) empty)))
+                                                  (expseq empty))))
+                      (expseq (list (funcall (id fun-name) empty))))))]
     
     ; an if-statement of a literal value can have one branch eliminated
     [(if-statement c t e)

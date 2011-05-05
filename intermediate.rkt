@@ -190,7 +190,10 @@
   ;(displayln dag-table)
   (let [(cached-node (hash-ref dag-table ast #f))]
     (if cached-node #;false
-        (ins-combine (move-ins cached-node result-sym))
+        (begin
+          (displayln "i dagged ")
+          (display cached-node)
+          (ins-combine (move-ins cached-node result-sym)))
         (begin
           (hash-set! dag-table ast result-sym)
           (gen-helper ast result-sym loc-env)))))
@@ -248,7 +251,13 @@
                                (match field
                                  [(fieldval name val)
                                   (program-append 
-                                   (dag-gen val fieldval-loc loc-env)
+                                   (begin
+                                     (let [(cur-fieldval (dag-gen val fieldval-loc loc-env))]
+                                       (reset-dag-table!) ; we use the fieldval-loc temporary for each iteration, making
+                                       ; it volatile here if multiple fields of this record are identical
+                                       ; consider a{x=4, y=5, z=4}
+                                       ; TODO: optimize later
+                                       cur-fieldval))
                                    (ins-combine
                                     (lim-ins (* 4 offset) cur-element-loc)
                                     (binary-ins '+ result-holder cur-element-loc cur-element-loc)
@@ -494,15 +503,16 @@
                                                           (dag-gen arg param-sym loc-env )))
                                         args arg-sym-list)))
             ]
+       ;(reset-dag-table!)
            
-           (program-append (ins-combine (allocation f-loc))
-                           f-load-prog 
-                           param-gen-code
-                           ;(map push-ins arg-sym-list)
-                           (ins-combine (funcall-ins f-loc arg-sym-list result-sym)
-                                        ) ; the last argument is the return address
-                           ))]
-    
+       (program-append (ins-combine (allocation f-loc))
+                       f-load-prog 
+                       param-gen-code
+                       ;(map push-ins arg-sym-list)
+                       (ins-combine (funcall-ins f-loc arg-sym-list result-sym)
+                                    ) ; the last argument is the return address
+                       ))]
+
     [(break) (ins-combine (break-ins))]
     ))
 
@@ -516,6 +526,8 @@
             (lval-gen-code (gen-lval lval lval-loc loc-env)) ; I win at dominoes
             (index-loc (gen-temp))
             (index-gen-code (dag-gen index index-loc loc-env))]
+       ;(reset-dag-table!) ; in the worst case, the lvalue that called gen-lval generates some volatile code.  but if it
+       ; does, that code will call reset-dag-table.
        (program-append (ins-combine (allocation lval-loc) (allocation index-loc))
                        lval-gen-code ; puts a pointer to arr into lval-loc
                        (ins-combine (deref-ins lval-loc lval-loc)) ; puts the arr itself into lval-loc
