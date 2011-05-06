@@ -85,9 +85,11 @@ extern void assert_inbounds(array_t* arr_ptr, void* elem_ptr) {
   int size = arr_ptr->length;
   // size is the tiger size
   if (i < 0 || i >= size) {
-    char* msg = "Array index: out of bounds\n";
-    int len = 27;
-    write(2, msg, len);
+    write(2, "Array index: out of bounds; index was ", 38);
+    lt_print_int(i);
+    write(2, " but size was ", 14);
+    lt_print_int(size);
+    write(2, "\n", 1);
     abort();
   }
 }

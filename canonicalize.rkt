@@ -96,6 +96,15 @@
                                                (int-literal 1)
                                                (int-literal 0))))]
     
+    ; make <> polymorphic without adding more cases in later phases
+    [(binary-op (op '<>) a b)
+     (canonicalize (binary-op (op '=)
+                              (int-literal 0)
+                              (binary-op (op '=)
+                                         a
+                                         b)))]
+                              
+    
     ; evaluate constant arithmetic expressions
     [(binary-op (op arith) a b)
      (let ([a (canonicalize a)]

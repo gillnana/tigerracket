@@ -346,7 +346,7 @@
                 [(exp times exp) (binary-op (op '*) $1 $3)]
                 [(exp divide exp) (binary-op (op '/) $1 $3)]
                 [(exp equals exp) (binary-op (op '=) $1 $3)]
-                [(exp not-equals exp) (binary-op (op '<>) $1 $3)]
+                [(exp not-equals exp) (binary-op (op '=) (int-literal 0) (binary-op (op '=) $1 $3))]
                 [(exp less-than exp) (binary-op (op '<) $1 $3)]
                 [(exp less-or-equal exp) (binary-op (op '<=) $1 $3)]
                 [(exp greater-than exp) (binary-op (op '>) $1 $3)]

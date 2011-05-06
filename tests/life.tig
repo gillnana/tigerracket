@@ -7,30 +7,35 @@ let type aint = array of int
 	var height := 10
 	var width := 10
 	
-	function isAlive(grid:aint2, x1:int, y1:int):int = 
-		if x1 >= 0 & x1 < width & y1 >= 0 & y1 < height & grid[x1][y1]=1 then 1 else 0 
-	function numAliveNeighs(grid:aint2, x1:int, y1:int):int = 
+	function isAlive(grid:aint2, x1:int, y1:int):int = (
+      print("isAlive");
+		if x1 >= 0 & x1 < width & y1 >= 0 & y1 < height & grid[x1][y1]=1 then 1 else 0 )
+	function numAliveNeighs(grid:aint2, x1:int, y1:int):int = (
+      print("numAliveNeighs");
 		let var toReturn := 0 in 
 		for i:= -1 to 1 do
 			for j:= -1 to 1 do
 				toReturn := toReturn + isAlive(grid, x1 + i, y1 + j);
-		toReturn end
-	function willLive(grid:aint2, x1:int, y1:int):int = 
+		toReturn end )
+	function willLive(grid:aint2, x1:int, y1:int):int = (
+      print("willLive");
 		let var neighs := numAliveNeighs(grid,x1,y1) in
 		if neighs = 3 then 1 
 			else if neighs = 4 & grid[x1][y1]=1 
 				then 1 
-			else 0 end
-	function nextGen(cur:aint2, next:aint2) = 
+			else 0 end )
+	function nextGen(cur:aint2, next:aint2) = (
+      print("nextGen");
 		for i:= 0 to width do
 			for j:= 0 to height do
-				next[i][j] := willLive(cur, i, j)
-	function printgrid(grid:aint2) = 
+				next[i][j] := willLive(cur, i, j))
+	function printgrid(grid:aint2) = (
+      print("printgrid");
 		(for i :=0 to width do 
 			(for j := 0 to height do
 				print_int(isAlive(grid,i,j)); 
 			print("\n"));
-		print ("\n"))
+		print ("\n")) )
 	in
 	for i :=0 to width do 
 		(cur[i] := aint[10] of 0;
