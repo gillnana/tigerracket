@@ -136,10 +136,15 @@
                   ;; rec-id has a field-id
      
     
-    [(binary-op (op sym) arg1 arg2)
+    [(binary-op (and operator (op sym)) arg1 arg2)
      (let [(t1 (type-of-env arg1 te ve))
            (t2 (type-of-env arg2 te ve))]
        (cond [(eq? sym '=) (cond [(and (t-nil? t1) (t-nil? t2)) (error "type error: found illegal expression \"nil == nil\"")]
+                                 [(and (t-string? t1) (t-string? t2))
+                                  (begin
+                                    (set-op-op! operator 'string=)
+                                    (t-int)
+                                    )]
                                  [(same-type? (type-of-env arg1 te ve) (type-of-env arg2 te ve)) (t-int)]
                                  [else (error "type error: arguments for equality comparison must be of same type")])]
              [(and (t-int? t1) (t-int? t2)) (t-int)]

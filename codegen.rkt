@@ -174,6 +174,16 @@
      
     
     [(binary-ins op src1 src2 'ans) (void)]
+    [(binary-ins 'string= src1 src2 dest) 
+     (ln "#  BEGIN string comparison")
+     (lnload src1 "$a0" cur-block)
+     (lnload src2 "$a1" cur-block)
+     (ln "sub $sp, $sp, 16")
+     (ln "jal string_comp")
+     (ln "add $sp, $sp, 16")
+     (lnstore "$v0" dest cur-block)
+     (ln "#  END string comparison")
+     ]
     [(binary-ins op src1 src2 dest)
      (ln "#   BEGIN binop op="op", src1="src1", src2="src2", dest="dest)
      ;(ln "lw " TEMP1 COMMA (get-offset src1 temps) "($sp)")

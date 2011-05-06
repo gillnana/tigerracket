@@ -265,7 +265,7 @@
 (struct let-funs (bindings body) #:transparent)
 
 
-(struct op (op) #:transparent)
+(struct op (op) #:transparent #:mutable)
 (struct binary-op (op arg1 arg2) #:transparent)
 (struct unary-op (op arg1) #:transparent)
 (struct break () #:transparent)

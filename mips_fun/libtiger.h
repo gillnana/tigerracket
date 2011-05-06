@@ -27,6 +27,8 @@ extern void assert_nonnil(void* thing);
 
 extern void assert_inbounds(array_t* arr_ptr, void* elem_ptr);
 
+extern int string_comp(string_t* a, string_t* b);
+
 
 extern void lt_flush();
 extern void lt_print(string_t* str);

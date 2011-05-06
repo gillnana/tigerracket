@@ -59,7 +59,14 @@ alloc_block:
 	move	$fp,$sp
 	sw	$4,32($fp)
 	sw	$5,36($fp)
-	sw	$0,20($fp)
+	lw	$2,32($fp)
+	nop
+	sll	$2,$2,2
+	move	$4,$2
+	jal	malloc
+	nop
+
+	sw	$2,20($fp)
 	lw	$2,20($fp)
 	nop
 	bne	$2,$0,$L4
@@ -294,7 +301,13 @@ $L17:
 	.rdata
 	.align	2
 $LC2:
-	.ascii	"Array index: out of bounds\012\000"
+	.ascii	"Array index: out of bounds; index was \000"
+	.align	2
+$LC3:
+	.ascii	" but size was \000"
+	.align	2
+$LC4:
+	.ascii	"\012\000"
 	.text
 	.align	2
 	.globl	assert_inbounds
@@ -302,20 +315,20 @@ $LC2:
 	.ent	assert_inbounds
 	.type	assert_inbounds, @function
 assert_inbounds:
-	.frame	$fp,40,$31		# vars= 16, regs= 2/0, args= 16, gp= 0
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, gp= 0
 	.mask	0xc0000000,-4
 	.fmask	0x00000000,0
 	.set	noreorder
 	.set	nomacro
 	
-	addiu	$sp,$sp,-40
-	sw	$31,36($sp)
-	sw	$fp,32($sp)
+	addiu	$sp,$sp,-32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
 	move	$fp,$sp
-	sw	$4,40($fp)
-	sw	$5,44($fp)
-	lw	$3,44($fp)
-	lw	$2,40($fp)
+	sw	$4,32($fp)
+	sw	$5,36($fp)
+	lw	$3,36($fp)
+	lw	$2,32($fp)
 	nop
 	subu	$2,$3,$2
 	bgez	$2,$L19
@@ -325,33 +338,51 @@ assert_inbounds:
 $L19:
 	sra	$2,$2,2
 	addiu	$2,$2,-1
-	sw	$2,28($fp)
-	lw	$2,40($fp)
+	sw	$2,20($fp)
+	lw	$2,32($fp)
 	nop
 	lw	$2,0($2)
 	nop
-	sw	$2,24($fp)
-	lw	$2,28($fp)
+	sw	$2,16($fp)
+	lw	$2,20($fp)
 	nop
 	bltz	$2,$L20
 	nop
 
-	lw	$3,28($fp)
-	lw	$2,24($fp)
+	lw	$3,20($fp)
+	lw	$2,16($fp)
 	nop
 	slt	$2,$3,$2
 	bne	$2,$0,$L22
 	nop
 
 $L20:
-	lui	$2,%hi($LC2)
-	addiu	$2,$2,%lo($LC2)
-	sw	$2,20($fp)
-	li	$2,27			# 0x1b
-	sw	$2,16($fp)
 	li	$4,2			# 0x2
-	lw	$5,20($fp)
-	lw	$6,16($fp)
+	lui	$2,%hi($LC2)
+	addiu	$5,$2,%lo($LC2)
+	li	$6,38			# 0x26
+	jal	write
+	nop
+
+	lw	$4,20($fp)
+	jal	lt_print_int
+	nop
+
+	li	$4,2			# 0x2
+	lui	$2,%hi($LC3)
+	addiu	$5,$2,%lo($LC3)
+	li	$6,14			# 0xe
+	jal	write
+	nop
+
+	lw	$4,16($fp)
+	jal	lt_print_int
+	nop
+
+	li	$4,2			# 0x2
+	lui	$2,%hi($LC4)
+	addiu	$5,$2,%lo($LC4)
+	li	$6,1			# 0x1
 	jal	write
 	nop
 
@@ -360,9 +391,9 @@ $L20:
 
 $L22:
 	move	$sp,$fp
-	lw	$31,36($sp)
-	lw	$fp,32($sp)
-	addiu	$sp,$sp,40
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addiu	$sp,$sp,32
 	j	$31
 	nop
 
@@ -370,6 +401,89 @@ $L22:
 	.set	reorder
 	.end	assert_inbounds
 	.size	assert_inbounds, .-assert_inbounds
+	.align	2
+	.globl	string_comp
+	.set	nomips16
+	.ent	string_comp
+	.type	string_comp, @function
+string_comp:
+	.frame	$fp,16,$31		# vars= 8, regs= 1/0, args= 0, gp= 0
+	.mask	0x40000000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-16
+	sw	$fp,12($sp)
+	move	$fp,$sp
+	sw	$4,16($fp)
+	sw	$5,20($fp)
+	lw	$2,16($fp)
+	nop
+	lw	$2,0($2)
+	nop
+	sw	$2,4($fp)
+	lw	$2,20($fp)
+	nop
+	lw	$3,0($2)
+	lw	$2,4($fp)
+	nop
+	beq	$3,$2,$L24
+	nop
+
+	move	$2,$0
+	j	$L25
+	nop
+
+$L24:
+	sw	$0,0($fp)
+	j	$L26
+	nop
+
+$L28:
+	lw	$2,0($fp)
+	lw	$3,16($fp)
+	sll	$2,$2,2
+	addu	$2,$3,$2
+	lw	$3,4($2)
+	lw	$2,0($fp)
+	lw	$4,20($fp)
+	sll	$2,$2,2
+	addu	$2,$4,$2
+	lw	$2,4($2)
+	nop
+	beq	$3,$2,$L27
+	nop
+
+	move	$2,$0
+	j	$L25
+	nop
+
+$L27:
+	lw	$2,0($fp)
+	nop
+	addiu	$2,$2,1
+	sw	$2,0($fp)
+$L26:
+	lw	$3,0($fp)
+	lw	$2,4($fp)
+	nop
+	slt	$2,$3,$2
+	bne	$2,$0,$L28
+	nop
+
+	li	$2,1			# 0x1
+$L25:
+	move	$sp,$fp
+	lw	$fp,12($sp)
+	addiu	$sp,$sp,16
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	string_comp
+	.size	string_comp, .-string_comp
 	.align	2
 	.globl	lt_print
 	.set	nomips16
@@ -394,10 +508,10 @@ lt_print:
 	sw	$2,20($fp)
 	sw	$0,16($fp)
 	sw	$0,16($fp)
-	j	$L24
+	j	$L31
 	nop
 
-$L25:
+$L32:
 	lw	$2,16($fp)
 	lw	$3,40($fp)
 	sll	$2,$2,2
@@ -417,12 +531,12 @@ $L25:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L24:
+$L31:
 	lw	$3,16($fp)
 	lw	$2,20($fp)
 	nop
 	slt	$2,$3,$2
-	bne	$2,$0,$L25
+	bne	$2,$0,$L32
 	nop
 
 	move	$sp,$fp
@@ -460,34 +574,34 @@ lt_print_int:
 	sw	$2,20($fp)
 	lw	$2,20($fp)
 	nop
-	bgez	$2,$L29
+	bgez	$2,$L36
 	nop
 
 	lw	$2,20($fp)
 	nop
 	subu	$2,$0,$2
 	sw	$2,20($fp)
-	j	$L29
+	j	$L36
 	nop
 
-$L30:
+$L37:
 	lw	$2,24($fp)
 	nop
 	sll	$2,$2,1
 	sll	$3,$2,2
 	addu	$2,$2,$3
 	sw	$2,24($fp)
-$L29:
+$L36:
 	lw	$3,24($fp)
 	lw	$2,20($fp)
 	nop
 	slt	$2,$2,$3
-	beq	$2,$0,$L30
+	beq	$2,$0,$L37
 	nop
 
 	lw	$2,20($fp)
 	nop
-	beq	$2,$0,$L31
+	beq	$2,$0,$L38
 	nop
 
 	lw	$3,24($fp)
@@ -499,11 +613,11 @@ $L29:
 	mfhi	$3
 	mflo	$2
 	sw	$2,24($fp)
-$L31:
+$L38:
 	sw	$0,16($fp)
 	lw	$2,48($fp)
 	nop
-	bgez	$2,$L32
+	bgez	$2,$L39
 	nop
 
 	lw	$2,16($fp)
@@ -515,7 +629,7 @@ $L31:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L32:
+$L39:
 	lw	$2,16($fp)
 	lw	$4,20($fp)
 	lw	$3,24($fp)
@@ -558,7 +672,7 @@ $L32:
 	sw	$2,16($fp)
 	lw	$2,24($fp)
 	nop
-	bne	$2,$0,$L32
+	bne	$2,$0,$L39
 	nop
 
 	addiu	$2,$fp,28
@@ -645,18 +759,18 @@ lt_ord:
 	nop
 	lw	$2,0($2)
 	nop
-	beq	$2,$0,$L37
+	beq	$2,$0,$L44
 	nop
 
 	lw	$2,8($fp)
 	nop
 	lw	$2,4($2)
-	j	$L38
+	j	$L45
 	nop
 
-$L37:
+$L44:
 	li	$2,-1			# 0xffffffffffffffff
-$L38:
+$L45:
 	move	$sp,$fp
 	lw	$fp,4($sp)
 	addiu	$sp,$sp,8
@@ -758,10 +872,10 @@ lt_substring:
 
 	sw	$2,20($fp)
 	sw	$0,16($fp)
-	j	$L45
+	j	$L52
 	nop
 
-$L46:
+$L53:
 	lw	$5,16($fp)
 	lw	$3,40($fp)
 	lw	$2,16($fp)
@@ -779,12 +893,12 @@ $L46:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L45:
+$L52:
 	lw	$3,16($fp)
 	lw	$2,40($fp)
 	nop
 	slt	$2,$3,$2
-	bne	$2,$0,$L46
+	bne	$2,$0,$L53
 	nop
 
 	lw	$2,20($fp)
@@ -838,10 +952,10 @@ lt_concat:
 
 	sw	$2,20($fp)
 	sw	$0,16($fp)
-	j	$L49
+	j	$L56
 	nop
 
-$L50:
+$L57:
 	lw	$5,16($fp)
 	lw	$2,16($fp)
 	lw	$3,48($fp)
@@ -856,19 +970,19 @@ $L50:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L49:
+$L56:
 	lw	$3,16($fp)
 	lw	$2,32($fp)
 	nop
 	slt	$2,$3,$2
-	bne	$2,$0,$L50
+	bne	$2,$0,$L57
 	nop
 
 	sw	$0,16($fp)
-	j	$L51
+	j	$L58
 	nop
 
-$L52:
+$L59:
 	lw	$3,16($fp)
 	lw	$2,32($fp)
 	nop
@@ -886,12 +1000,12 @@ $L52:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L51:
+$L58:
 	lw	$3,16($fp)
 	lw	$2,28($fp)
 	nop
 	slt	$2,$3,$2
-	bne	$2,$0,$L52
+	bne	$2,$0,$L59
 	nop
 
 	lw	$2,20($fp)
@@ -924,16 +1038,16 @@ lt_not:
 	sw	$4,8($fp)
 	lw	$2,8($fp)
 	nop
-	beq	$2,$0,$L55
+	beq	$2,$0,$L62
 	nop
 
 	move	$2,$0
-	j	$L56
+	j	$L63
 	nop
 
-$L55:
+$L62:
 	li	$2,1			# 0x1
-$L56:
+$L63:
 	move	$sp,$fp
 	lw	$fp,4($sp)
 	addiu	$sp,$sp,8
@@ -994,11 +1108,6 @@ lt_flush:
 	.set	reorder
 	.end	lt_flush
 	.size	lt_flush, .-lt_flush
-	.rdata
-	.align	2
-$LC3:
-	.ascii	"\012\000"
-	.text
 	.align	2
 	.globl	call_test
 	.set	nomips16
@@ -1019,8 +1128,8 @@ call_test:
 	sw	$5,36($fp)
 	sw	$6,40($fp)
 	sw	$7,44($fp)
-	lui	$2,%hi($LC3)
-	addiu	$2,$2,%lo($LC3)
+	lui	$2,%hi($LC4)
+	addiu	$2,$2,%lo($LC4)
 	sw	$2,16($fp)
 	li	$4,1			# 0x1
 	lw	$5,16($fp)

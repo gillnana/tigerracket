@@ -94,6 +94,20 @@ extern void assert_inbounds(array_t* arr_ptr, void* elem_ptr) {
   }
 }
 
+extern int string_comp(string_t* a, string_t* b) {
+  int size = a->length;
+  if (size != b->length) {
+    return 0;
+  }
+  int i;
+  for (i=0; i<size; i++) {
+    if (a->values[i] != b->values[i]) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
 extern void lt_print(string_t* str) {
   int len = str->length;
   int i=0;
