@@ -1,8 +1,13 @@
 let function f():int = 1
+    function q() = ()
 	in for x := 1 to 10 do
 		if x = 4 then
-			let function g():int = x in
-			f := g
+			let function g():int = x 
+             function h() = x := 55
+         in
+			    f := g;
+             q := h
 			end;
+   q(); 
 	print_int(f())
 end

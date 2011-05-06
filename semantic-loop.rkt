@@ -58,18 +58,25 @@
                  bindings))]
     
     [(let-funs bindings body)
-     (map (match-lambda
-            [(fundec id tyfields type-id (stdlibfxn _ _))
-             (void)]
-            [(fundec id tyfields type-id body)
-             (vls body #f
-                  (foldl (match-lambda*
-                           [(list (tyfield name type-id) env-accum)
-                            (cons (iterator-binding name #f) env-accum)])
-                         env
-                         tyfields))
-             ])
-          bindings)
+     (begin
+       (map (match-lambda
+              [(fundec id tyfields type-id (stdlibfxn _ _))
+               (void)]
+              [(fundec id tyfields type-id inner-body)
+               (vls inner-body #f
+                    (foldl (match-lambda*
+                             [(list (tyfield name type-id) env-accum)
+                              (cons (iterator-binding name #f) env-accum)])
+                           env
+                           tyfields))
+               ])
+            bindings)
+       (vls body in-loop?
+            (foldl (match-lambda*
+                     [(list (fundec id tyfields type-id inner-body) env-accum)
+                      (cons (iterator-binding id #f) env-accum)])
+                   env
+                   bindings)))
      ]
     
     [(int-literal val) (void)]
