@@ -176,6 +176,7 @@
     (string-append str (string-lex input-port)))
   ((lexer
     [(repetition 1 +inf.0 (union alphabetic
+                                 (char-range #\0 #\9)
                                  whitespace ; excludes newlines
                                  (intersection punctuation 
                                                (complement "\\")
