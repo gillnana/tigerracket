@@ -191,8 +191,8 @@
   (let [(cached-node (hash-ref dag-table ast #f))]
     (if cached-node #;false
         (begin
-          (displayln "i dagged ")
-          (display cached-node)
+          ;(displayln "i dagged ")
+          ;(display cached-node)
           (ins-combine (move-ins cached-node result-sym)))
         (begin
           (hash-set! dag-table ast result-sym)
@@ -526,8 +526,9 @@
             (lval-gen-code (gen-lval lval lval-loc loc-env)) ; I win at dominoes
             (index-loc (gen-temp))
             (index-gen-code (dag-gen index index-loc loc-env))]
-       ;(reset-dag-table!) ; in the worst case, the lvalue that called gen-lval generates some volatile code.  but if it
+       (reset-dag-table!) ; in the worst case, the lvalue that called gen-lval generates some volatile code.  but if it
        ; does, that code will call reset-dag-table.
+       ; TODO our program needs this but we don't know why.  figure out why.
        (program-append (ins-combine (allocation lval-loc) (allocation index-loc))
                        lval-gen-code ; puts a pointer to arr into lval-loc
                        (ins-combine (deref-ins lval-loc lval-loc)) ; puts the arr itself into lval-loc

@@ -59,14 +59,7 @@ alloc_block:
 	move	$fp,$sp
 	sw	$4,32($fp)
 	sw	$5,36($fp)
-	lw	$2,32($fp)
-	nop
-	sll	$2,$2,2
-	move	$4,$2
-	jal	malloc
-	nop
-
-	sw	$2,20($fp)
+	sw	$0,20($fp)
 	lw	$2,20($fp)
 	nop
 	bne	$2,$0,$L4

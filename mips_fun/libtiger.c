@@ -33,7 +33,7 @@ extern int* alloc_block(int num_words, int initval) {
   if (!ans) {
     out_of_memory_fail();
   }
-  
+
   int i;
   //  for (i=0; i<num_words; i++) {
   for (i=0; i<num_words; i++) { 
