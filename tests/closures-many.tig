@@ -1,0 +1,14 @@
+let
+   function f():int = 15
+in
+   f();
+   f();
+   f();
+   f();
+   f();
+   f();
+   f();
+   f();
+   f();
+   f();
+end

@@ -1,0 +1,5 @@
+let var a:int := 10 in
+  while(a > 1) do
+   print_int(3)
+  end
+

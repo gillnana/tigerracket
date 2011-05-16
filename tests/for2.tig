@@ -1,0 +1,13 @@
+for q := 2 to 7 do
+   (print_int(q);
+   print("\n");
+   let
+      var q : int := 15
+   in
+      print_int(q);
+      print("\n")
+   end;
+   print_int(q);
+   print("\n");
+)
+

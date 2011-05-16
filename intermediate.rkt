@@ -120,14 +120,12 @@
 
 
 (define (lookup id loc-env)
-  (let [(result (ormap (match-lambda 
-                         [(location-binding var loc)
-                          (and (eq? var id)
-                               loc)])
-                       loc-env))]
-    (if result
-        result
-        (error (format "internal error: unbound identifier ~a" id)))))
+  (or (ormap (match-lambda 
+               [(location-binding var loc)
+                (and (eq? var id)
+                     loc)])
+             loc-env)
+      (error (format "internal error: unbound identifier ~a" id))))
   
 
 
@@ -157,8 +155,6 @@
                                    inslist 
                                    (rest (parent-fxn))
                                    (filter-map (match-lambda
-                                                ; TODO: mem-loc wtf what do?
-                                                 ; TODO: IMPL
                                                  [(allocation loc) loc]
                                                  [_ #f])
                                                inslist)
@@ -174,7 +170,7 @@
 (define (program-append . plist)
   ;(displayln plist)
   ;ASSERT EVRYTHING A PROGRAM
-  (map (λ (prog) 
+  (map (λ (prog)
          (when (not (program? prog))
            (error (format "program-append expected a program but found garbage ~a" prog))))
        plist)
@@ -435,6 +431,7 @@
                            ; case for tiger-defined function
                            [(fundec id tyfields type-id body)
                             (let* ([fun-label (gen-label)]
+                                   [recur-label (gen-label)]
                                    [sym (gen-label-loc)] ; the location that holds the label of this function
                                    [return-val-loc (gen-temp)] ; the location that the function will put its answer into 
                                    ;during the return-ins
@@ -484,6 +481,22 @@
          (program-append fn-assign-program
                          (dag-gen body result-sym inner-loc-env)))))]
      
+    [(funcall (id fun-id) args)
+     (reset-dag-table!)
+     (let* [(f (lookup (id-name fun-id) loc-env))
+            (arg-sym-list (build-list (length args) (λ (ignore) (gen-temp))))
+            (label-here (gen-label))
+            (label-holder (gen-temp))
+            ; TODO: does a param-loc represent parameters passed to *this* function,
+            ;       or parameters that this function passes to called functions
+            (param-gen-code (apply program-append
+                                   (ins-combine (allocation label-holder))
+                                   (map (λ (arg param-sym)
+                                          (program-append (ins-combine (allocation param-sym))
+                                                          (dag-gen arg param-sym loc-env )))
+                                        args arg-sym-list)))]
+       (program-append param-gen-code
+                       (ins-combine (funcall-ins f 
     
     [(funcall fun-id args)
      (reset-dag-table!)
