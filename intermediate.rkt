@@ -67,7 +67,7 @@
 ;(struct funcall-ins (labloc num-params return-val) #:transparent) ;num-params is a statically determined integer.  the return value of the funcall is placed in the return-val location
 
 ; this is a better representation; you don't always put arguments on the stack. you sometimes use $a0-$a3
-(struct funcall-ins (labloc params dest) #:prefab)
+(struct funcall-ins (labloc params dest tail-rec?) #:prefab)
 
 (struct return-ins (return-val-loc) #:prefab) ;represents an instruction that puts the return value of a function in the location it should go, wherever that may be
 
@@ -480,23 +480,6 @@
          (reset-dag-table!)
          (program-append fn-assign-program
                          (dag-gen body result-sym inner-loc-env)))))]
-     
-    [(funcall (id fun-id) args tail-rec?)
-     (reset-dag-table!)
-     (let* [(f (lookup (id-name fun-id) loc-env))
-            (arg-sym-list (build-list (length args) (λ (ignore) (gen-temp))))
-            (label-here (gen-label))
-            (label-holder (gen-temp))
-            ; TODO: does a param-loc represent parameters passed to *this* function,
-            ;       or parameters that this function passes to called functions
-            (param-gen-code (apply program-append
-                                   (ins-combine (allocation label-holder))
-                                   (map (λ (arg param-sym)
-                                          (program-append (ins-combine (allocation param-sym))
-                                                          (dag-gen arg param-sym loc-env )))
-                                        args arg-sym-list)))]
-       (program-append param-gen-code
-                       (ins-combine (funcall-ins f 
     
     [(funcall fun-id args tail-rec?)
      (reset-dag-table!)
@@ -522,7 +505,7 @@
                        f-load-prog 
                        param-gen-code
                        ;(map push-ins arg-sym-list)
-                       (ins-combine (funcall-ins f-loc arg-sym-list result-sym)
+                       (ins-combine (funcall-ins f-loc arg-sym-list result-sym tail-rec?)
                                     ) ; the last argument is the return address
                        ))]
 

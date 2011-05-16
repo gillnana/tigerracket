@@ -40,6 +40,7 @@
        (ln (stack-setup locals))
        (create-activation-record locals cb)
        (ln (labelize lbl) "recur:")
+       (fill-activation-record locals cb)
        (ln "#      done setting up activation record")
        ; assume the variables this function has access to are sorted (?), including parameters to this fxn 
        
@@ -238,7 +239,7 @@
         ['>= "blt"])
       " " TEMP1 COMMA TEMP2 COMMA lbl)]
     
-    [(funcall-ins labloc args dest)
+    [(funcall-ins labloc args dest #f)
      (begin
        (ln "#     BEGIN FUNCALL labloc="labloc", args="args", dest="dest)
        (ln (push AR_CURRENT))
@@ -269,6 +270,33 @@
        (lnstore RETURN_REGISTER dest cur-block)
        (ln "#     END   FUNCALL labloc="labloc", args=" args ", dest="dest)
        )]
+    
+    ;recursive tail call case
+     [(funcall-ins labloc args dest #t)
+      (begin
+       (ln "#     BEGIN RECURSIVE FUNCALL labloc="labloc", args="args", dest="dest)
+       ;(ln (push AR_CURRENT))
+       ;(ln "sub $sp, $sp, " (* 4 (max (length args) 4)))
+       (map (λ (arg num)
+              ; note: a param-loc always refers to the parameters of the *current* function.
+              (when (> 4 num) 
+                (lnload arg (string-append "$a" (number->string num)) cur-block))
+              
+              (lnload arg TEMP0 cur-block)
+              (ln "sw " TEMP0 COMMA (* 4 num) "($sp)")
+              )
+            args
+            (build-list (length args) values))
+       
+       ;(lnload labloc TEMP2 cur-block)
+
+       
+       ;(ln "add $sp, $sp, " (* 4 (max (length args) 4))) 
+       ;(ln (pop AR_CURRENT))
+       ;(lnstore RETURN_REGISTER dest cur-block)
+       (ln "j " (fxn-block-label cur-block) "recur")
+       (ln "#     END  TAIL-RECURSIVE FUNCALL labloc="labloc", args=" args ", dest="dest)
+       )]
        
        
     
@@ -289,7 +317,11 @@
     (ln "add $sp, $sp, 16")
     (ln "sw " AR_CURRENT COMMA "(" RETURN_REGISTER ") # put the static parent's activation record in the first slot of the new activation record")
     (ln "move " AR_CURRENT COMMA RETURN_REGISTER " # set the current activation record to be the new one")
-    
+    ;(fill-activation-record local-vars cur-block)
+    ))
+
+(define (fill-activation-record local-vars cur-block)
+  (begin
     ; now we have a blank AR linked to previous
     ; now copy params in from stack
     (let* ([params (filter param-loc? local-vars)]
