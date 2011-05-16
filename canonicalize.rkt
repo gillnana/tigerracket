@@ -59,9 +59,9 @@
                                                     (expseq
                                                      (list
                                                       body
-                                                      (funcall (id fun-name) (list (binary-op (op '+) (id index) (int-literal 1))))))
+                                                      (funcall (id fun-name) (list (binary-op (op '+) (id index) (int-literal 1))) #t)))
                                                     (expseq empty))))
-                                     (expseq (list (funcall (id fun-name) (list (id startval)))))))))))]
+                                     (expseq (list (funcall (id fun-name) (list (id startval)) #f)))))))))]
     
     ; like for-loops, while loops should turn into a (let ...), which should in turn be canonicalized
     [(while-statement cond body)
@@ -69,9 +69,9 @@
        (canonicalize (let-funs
                       (list (fundec fun-name empty #f
                                     (if-statement cond
-                                                  (expseq (list body (funcall (id fun-name) empty)))
+                                                  (expseq (list body (funcall (id fun-name) empty #t)))
                                                   (expseq empty))))
-                      (expseq (list (funcall (id fun-name) empty))))))]
+                      (expseq (list (funcall (id fun-name) empty #f))))))]
     
     ; an if-statement of a literal value can have one branch eliminated
     [(if-statement c t e)
@@ -131,7 +131,7 @@
     
     [(array-access id index return-t) (array-access (canonicalize id) (canonicalize index) return-t)]
     
-    [(funcall fun-id args) (funcall fun-id (map canonicalize args))]
+    [(funcall fun-id args tail-rec?) (funcall fun-id (map canonicalize args) tail-rec?)]
     
     [(record-creation type-id fieldvals) (record-creation type-id
                                                           (map
@@ -143,7 +143,34 @@
     [(assignment lvalue val) (assignment (canonicalize lvalue) (canonicalize val))]
     
     [(vardec id type-id val) (vardec id type-id (canonicalize val))]
-    [(fundec id tyfields type-id body) (fundec id tyfields type-id (canonicalize body))]
+    [(fundec outer-id tyfields type-id body)
+     (local
+       [(define (set-tail-recursion! node)
+         (match node
+           [(funcall (id fun-id) _ _)
+            (when (equal? fun-id outer-id)
+              (set-funcall-tail-rec?! node #t))]
+           [(expseq (list))
+            (void)]
+           [(expseq list)
+            (set-tail-recursion! (first (reverse list)))]
+           [(if-statement _ case1 case2)
+            (begin
+              (set-tail-recursion! case1)
+              (set-tail-recursion! case2))]
+           [(or (let-vars _ body) (let-types _ body))
+            (set-tail-recursion! body)]
+           [(let-funs bindings body)
+            (or (ormap (match-lambda [(fundec id _ _ _)
+                                      (equal?  outer-id id)])
+                       bindings)
+                (set-tail-recursion! body))]
+           [_ (void)]))
+        (define new-body (canonicalize body))]
+       (begin
+         (set-tail-recursion! new-body)
+         (fundec outer-id tyfields type-id new-body)))]
+             
     
     [(let-vars bindings body) (let-vars (map canonicalize bindings) (canonicalize body))]
     [(let-funs bindings body) (let-funs (map canonicalize bindings) (canonicalize body))]

@@ -481,7 +481,7 @@
          (program-append fn-assign-program
                          (dag-gen body result-sym inner-loc-env)))))]
      
-    [(funcall (id fun-id) args)
+    [(funcall (id fun-id) args tail-rec?)
      (reset-dag-table!)
      (let* [(f (lookup (id-name fun-id) loc-env))
             (arg-sym-list (build-list (length args) (λ (ignore) (gen-temp))))
@@ -498,7 +498,7 @@
        (program-append param-gen-code
                        (ins-combine (funcall-ins f 
     
-    [(funcall fun-id args)
+    [(funcall fun-id args tail-rec?)
      (reset-dag-table!)
      ;TODO evaluate fun-id which might be any expression
      (let* [;(f (lookup (id-name fun-id) loc-env))

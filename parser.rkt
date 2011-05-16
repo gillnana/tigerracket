@@ -240,7 +240,7 @@
 (struct tydec (type-id ty) #:transparent) ; type declaration
 (struct vardec (id type-id val) #:transparent) ; type-id can be #f
 (struct fundec (id tyfields type-id body) #:transparent) ; type-id can be #f
-(struct funcall (fun-id args) #:transparent)
+(struct funcall (fun-id args tail-rec?) #:transparent #:mutable)
 
 ; types
 (struct type-id (name) #:transparent)
@@ -336,7 +336,7 @@
              [(string) (string-literal $1)]
              [(nil) (nil)])
     
-    (funcall [(exp open-paren funcall-args close-paren) (funcall $1 $3)])
+    (funcall [(exp open-paren funcall-args close-paren) (funcall $1 $3 #f)])
     (funcall-args [() empty]
                   [(exp) (cons $1 empty)]
                   [(exp comma funcall-args) (cons $1 $3)])

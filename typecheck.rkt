@@ -359,7 +359,7 @@
        (type-of-env exp new-te ve))]
     
     
-    [(funcall fun-id caller-args)
+    [(funcall fun-id caller-args tail-rec?)
      (let* [#;(f (var-lookup (id-name fun-id) ve))
             (f (type-of-env fun-id te ve))
             (fundef-args (t-fun-args f))]

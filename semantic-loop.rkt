@@ -88,7 +88,7 @@
     [(unary-op op arg1)
      (vls arg1 in-loop? env)]
     
-    [(funcall fun-id args)
+    [(funcall fun-id args tail-rec?)
      (map (λ (exp) (vls exp in-loop? env)) args)]
     
     [(record-creation type-id fieldvals)
