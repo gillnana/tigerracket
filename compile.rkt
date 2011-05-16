@@ -13,14 +13,18 @@
 (ln ".text")
 
 (gen-code 
- (gen-prog
-  (canonicalize
-    
-    (let [(ast (wrapstdlib (parse-stdin)))]
-      (type-of ast)
-      (verify-loop-semantics ast)
-      ast)
-    
-  )
+ (let [(int-code
+        (gen-prog
+         (canonicalize
+          
+          (let [(ast (wrapstdlib (parse-stdin)))]
+            (type-of ast)
+            (verify-loop-semantics ast)
+            ast)
+          
+          )
+         )
+        )]
+   (find-unsafe-blocks int-code)
+   int-code)
  )
-)

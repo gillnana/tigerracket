@@ -239,6 +239,7 @@
         ['>= "blt"])
       " " TEMP1 COMMA TEMP2 COMMA lbl)]
     
+    ;non-tail-recursive case
     [(funcall-ins labloc args dest #f)
      (begin
        (ln "#     BEGIN FUNCALL labloc="labloc", args="args", dest="dest)
@@ -246,7 +247,7 @@
        (ln "sub $sp, $sp, " (* 4 (max (length args) 4)))
        (map (λ (arg num)
               ; note: a param-loc always refers to the parameters of the *current* function.
-              (when (> 4 num) 
+              (when (< num 4) 
                 (lnload arg (string-append "$a" (number->string num)) cur-block))
               
               (lnload arg TEMP0 cur-block)
@@ -279,11 +280,11 @@
        ;(ln "sub $sp, $sp, " (* 4 (max (length args) 4)))
        (map (λ (arg num)
               ; note: a param-loc always refers to the parameters of the *current* function.
-              (when (> 4 num) 
+              (when (< num 4)
                 (lnload arg (string-append "$a" (number->string num)) cur-block))
               
               (lnload arg TEMP0 cur-block)
-              (ln "sw " TEMP0 COMMA (* 4 num) "($sp)")
+              (ln "sw " TEMP0 COMMA (* 4 (+ 1 num)) "($sp)")
               )
             args
             (build-list (length args) values))
@@ -294,7 +295,7 @@
        ;(ln "add $sp, $sp, " (* 4 (max (length args) 4))) 
        ;(ln (pop AR_CURRENT))
        ;(lnstore RETURN_REGISTER dest cur-block)
-       (ln "j " (fxn-block-label cur-block) "recur")
+       (ln "j " (label-l (fxn-block-label cur-block)) "recur")
        (ln "#     END  TAIL-RECURSIVE FUNCALL labloc="labloc", args=" args ", dest="dest)
        )]
        
@@ -496,5 +497,49 @@
 
 (define (labelize label)
   (string-append (symbol->string label)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; REMOVES UNSAFE TAIL RECURSION ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (find-unsafe-blocks prog)
+  (local ([define unsafe-blocks (make-hash)]
+          [define (block-unsafe? block)
+            (match block
+              [(fxn-block _ _ _ locals)
+               (map (λ (loc) 
+                      (let-values ([(nest-depth offset) (find-static loc block)])
+                        (when (> nest-depth 0)
+                            (hash-set! unsafe-blocks block #t)))) 
+                    locals)]
+              )]
+          [define (de-tail-recursify block ignore)
+            (displayln block)
+            (match block
+              [(fxn-block inslist _ _ _)
+               (map (λ (ins)
+                      (match ins
+                        [(and unsafe-ins (funcall-ins _ _ _ #t))
+                         (set-funcall-ins-tail-rec?! #f)]
+                        [else (void)]))
+                    inslist)]
+              )
+            ]
+          )
+                 
+    (match prog
+      [(program empty fxnlist)
+       (begin (map block-unsafe? fxnlist)
+              ;(displayln unsafe-blocks)
+              ; unsafe-blocks on forclosure2.tig is empty.  why is it empty?
+              (hash-map unsafe-blocks de-tail-recursify))])))
+              
+                        
+                        
+     
+     
+     
+     
+
 
 (check-expect (begin (ln "wossar") (ln "foop") (get-output-string)) "wossar\nfoop\n")

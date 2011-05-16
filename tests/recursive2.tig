@@ -1,9 +1,9 @@
 let
-  function fact(x:int):int = 
+  function fact(x:int, acc:int):int = 
     if x > 0 then
-       x * fact(x-1)
+       fact(x-1, x*acc)
     else
-       1
+       acc
 in
-  print_int(fact(3))
+  print_int(fact(3,1))
 end

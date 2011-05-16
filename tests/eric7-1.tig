@@ -21,7 +21,7 @@ let
           let
            var origHigh := high
            function loop(low : int, high : int) : int =
-            (print("loop");
+            (/* (print("loop"); */
             if low > high then
              (swap(origHigh,low);low)
             else
@@ -49,13 +49,14 @@ let
    print("]"))
 in
  let
-  var size := 2
+  var size := 5
   var arr := intarray[size] of 65
   function write() = (printarray(arr,size);print("\n"))
  in
   arr[0] := 67;
   arr[1] := 69;
-  /*arr[2] := 75;*/
+  arr[2] := 75;
+  arr[3] := 81;
   write(); 
   sort(arr,size);
   write()

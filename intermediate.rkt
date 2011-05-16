@@ -18,7 +18,7 @@
 
 (struct program (inslist fxnlist) #:prefab)
 
-(struct fxn-block (label ins-list static-link local-vars)  #:prefab); static links do not yet involve escaping
+(struct fxn-block (label ins-list static-link local-vars) #:prefab); static links do not yet involve escaping
 ; static links are other function blocks
 
 (define parent-fxn (make-parameter (list 'TOP_LEVEL)))
@@ -67,7 +67,7 @@
 ;(struct funcall-ins (labloc num-params return-val) #:transparent) ;num-params is a statically determined integer.  the return value of the funcall is placed in the return-val location
 
 ; this is a better representation; you don't always put arguments on the stack. you sometimes use $a0-$a3
-(struct funcall-ins (labloc params dest tail-rec?) #:prefab)
+(struct funcall-ins (labloc params dest [tail-rec? #:mutable]) #:prefab)
 
 (struct return-ins (return-val-loc) #:prefab) ;represents an instruction that puts the return value of a function in the location it should go, wherever that may be
 
