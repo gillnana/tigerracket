@@ -504,23 +504,63 @@
 
 (define (find-unsafe-blocks prog)
   (local ([define unsafe-blocks (make-hash)]
+          
           [define (block-unsafe? block)
+            (define (check-loc! loc)
+              (when (not (eq? loc 'ans))
+                (let-values ([(nest-depth offset) (find-static loc block)])
+                  (when (> nest-depth 0)
+                    (hash-set! unsafe-blocks block #t)))))
             (match block
-              [(fxn-block _ _ _ locals)
-               (map (λ (loc) 
-                      (let-values ([(nest-depth offset) (find-static loc block)])
-                        (when (> nest-depth 0)
-                            (hash-set! unsafe-blocks block #t)))) 
-                    locals)]
-              )]
+;              [(fxn-block _ _ _ locals)
+;                 (map check-loc! locals)]
+              ; for each instruction, check the locations it uses
+              [(fxn-block _ inslist _ _)
+               (map (match-lambda
+                      [(funcall-ins labloc params dest _)
+                       (begin (check-loc! labloc)
+                              (check-loc! dest)
+                              (map check-loc! params))]
+                      [(or (lim-ins _ l)
+                           (cond-jump-ins l _)
+                           (push-ins l)
+                           (return-ins l)
+                           (closure-ins _ l)) 
+                       (check-loc! l)]
+                      [(or (move-ins a b)
+                           (unary-ins _ a b)
+                           (cond-jump-relop-ins _ a b _)
+                           (array-allocate-ins a b)
+                           (deref-ins a b)
+                           (ref-ins a b)
+                           (deref-assign-ins a b)
+                           (array-bounds-check-ins a b)
+                           (malloc-ins a b))
+                       (begin
+                         (check-loc! a)
+                         (check-loc! b))]
+                      [(or (binary-ins _ a b c)
+                           (array-malloc-ins a b c))
+                       (begin
+                         (check-loc! a)
+                         (check-loc! b)
+                         (check-loc! c))]
+                      [(or (allocation _)
+                           (label _)
+                           )
+                       (void)]
+                      )
+                    inslist)
+                    ])]
+          
           [define (de-tail-recursify block ignore)
             (displayln block)
             (match block
-              [(fxn-block inslist _ _ _)
+              [(fxn-block _ inslist _ _)
                (map (λ (ins)
                       (match ins
-                        [(and unsafe-ins (funcall-ins _ _ _ #t))
-                         (set-funcall-ins-tail-rec?! #f)]
+                        [(funcall-ins _ _ _ #t)
+                         (set-funcall-ins-tail-rec?! ins #f)]
                         [else (void)]))
                     inslist)]
               )
@@ -528,7 +568,7 @@
           )
                  
     (match prog
-      [(program empty fxnlist)
+      [(program (list) fxnlist)
        (begin (map block-unsafe? fxnlist)
               ;(displayln unsafe-blocks)
               ; unsafe-blocks on forclosure2.tig is empty.  why is it empty?
