@@ -7,3 +7,4 @@ a.out
 .tmp*
 tmp.s
 erictest
+tests/.nfs*
