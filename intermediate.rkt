@@ -345,7 +345,7 @@
     [(let-types decs body)
      (dag-gen body result-sym loc-env)]
      
-    [(if-statement cond then (expseq empty))
+    [(if-statement cond then (expseq (list)))
      (let* [(end-label (gen-label))
             (then-register (gen-temp))
             (cond-gen-code (create-conditional-jump cond end-label loc-env))
