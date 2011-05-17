@@ -1,0 +1,7 @@
+let
+  var s := "do\n"
+in
+  while 1
+  do print(s)
+end
+

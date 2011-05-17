@@ -510,7 +510,12 @@
               (when (not (eq? loc 'ans))
                 (let-values ([(nest-depth offset) (find-static loc block)])
                   (when (> nest-depth 0)
-                    (hash-set! unsafe-blocks block #t)))))
+                    (hash-set! unsafe-blocks 
+                               ; the unsafe block is the one that was closed over
+                               (list-ref (fxn-block-static-link block)
+                                         (- nest-depth 1))
+                               
+                               #t)))))
             (match block
 ;              [(fxn-block _ _ _ locals)
 ;                 (map check-loc! locals)]
@@ -518,14 +523,16 @@
               [(fxn-block _ inslist _ _)
                (map (match-lambda
                       [(funcall-ins labloc params dest _)
-                       (begin (check-loc! labloc)
-                              (check-loc! dest)
-                              (map check-loc! params))]
+                       (begin 
+                         (check-loc! labloc)
+                         (check-loc! dest)
+                         (map check-loc! params))]
                       [(or (lim-ins _ l)
                            (cond-jump-ins l _)
                            (push-ins l)
                            (return-ins l)
-                           (closure-ins _ l)) 
+                           (closure-ins _ l)
+                           (malloc-ins _ l))
                        (check-loc! l)]
                       [(or (move-ins a b)
                            (unary-ins _ a b)
@@ -534,8 +541,7 @@
                            (deref-ins a b)
                            (ref-ins a b)
                            (deref-assign-ins a b)
-                           (array-bounds-check-ins a b)
-                           (malloc-ins a b))
+                           (array-bounds-check-ins a b))
                        (begin
                          (check-loc! a)
                          (check-loc! b))]
@@ -547,6 +553,7 @@
                          (check-loc! c))]
                       [(or (allocation _)
                            (label _)
+                           (uncond-jump-ins _)
                            )
                        (void)]
                       )
@@ -572,7 +579,10 @@
        (begin (map block-unsafe? fxnlist)
               ;(displayln unsafe-blocks)
               ; unsafe-blocks on forclosure2.tig is empty.  why is it empty?
-              (hash-map unsafe-blocks de-tail-recursify))])))
+              (hash-map unsafe-blocks de-tail-recursify)
+              (void)
+              )
+       ])))
               
                         
                         
